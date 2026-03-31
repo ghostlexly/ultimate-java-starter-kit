@@ -5,10 +5,12 @@ import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface DemoCustomerRepository extends JpaRepository<Customer, UUID> {
+public interface DemoCustomerRepository
+    extends JpaRepository<Customer, UUID>, JpaSpecificationExecutor<Customer> {
 
   // Needs to be in a @Transactional to loads the account relation which is set as Lazy
   List<Customer> findByCountryCodeAndAccountRole(String countryCode, Role role);

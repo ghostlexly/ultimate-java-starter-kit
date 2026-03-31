@@ -1,7 +1,7 @@
 package com.lunisoft.ultimatejavastarterkit.module.demo.usecase;
 
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
-import com.lunisoft.ultimatejavastarterkit.module.demo.dto.SearchCustomerResponse;
+import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoSearchCustomerResponse;
 import com.lunisoft.ultimatejavastarterkit.module.demo.repository.DemoCustomerRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -14,16 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @RequiredArgsConstructor
 @Service
-public class SearchCustomerUseCase {
+public class DemoSearchCustomerUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
 
   @Transactional(readOnly = true)
-  public List<SearchCustomerResponse> execute(String countryCode, Role role) {
+  public List<DemoSearchCustomerResponse> execute(String countryCode, Role role) {
+
     return demoCustomerRepository
         .findByCountryCodeAndAccountRole(countryCode, role)
         .stream()
-        .map(customer -> new SearchCustomerResponse(
+        .map(customer -> new DemoSearchCustomerResponse(
             customer.getId(),
             customer.getAccount().getEmail(),
             customer.getCountryCode(),
