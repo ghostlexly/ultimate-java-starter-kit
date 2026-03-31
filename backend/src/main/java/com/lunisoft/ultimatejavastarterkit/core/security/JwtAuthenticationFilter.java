@@ -1,37 +1,32 @@
 package com.lunisoft.ultimatejavastarterkit.core.security;
 
-import com.lunisoft.ultimatejavastarterkit.entity.Role;
-import com.lunisoft.ultimatejavastarterkit.repository.SessionRepository;
+import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
+import com.lunisoft.ultimatejavastarterkit.module.auth.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.time.Instant;
-import java.util.UUID;
-
 /**
  * Extracts and validates JWT from cookie or Authorization header. Sets the SecurityContext
  * authentication if the token is valid and the session exists.
  */
+@RequiredArgsConstructor
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final SessionRepository sessionRepository;
-
-  public JwtAuthenticationFilter(
-      JwtTokenProvider jwtTokenProvider, SessionRepository sessionRepository) {
-    this.jwtTokenProvider = jwtTokenProvider;
-    this.sessionRepository = sessionRepository;
-  }
 
   @Override
   protected void doFilterInternal(
@@ -56,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
               new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
           SecurityContextHolder.getContext().setAuthentication(auth);
         }
-      } catch (Exception ignored) {
+      } catch (Exception _) {
         // Invalid token — continue unauthenticated
       }
     }

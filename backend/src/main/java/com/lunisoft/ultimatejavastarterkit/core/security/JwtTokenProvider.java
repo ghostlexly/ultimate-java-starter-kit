@@ -1,7 +1,7 @@
 package com.lunisoft.ultimatejavastarterkit.core.security;
 
 import com.lunisoft.ultimatejavastarterkit.config.JwtProperties;
-import com.lunisoft.ultimatejavastarterkit.entity.Role;
+import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import org.springframework.stereotype.Component;

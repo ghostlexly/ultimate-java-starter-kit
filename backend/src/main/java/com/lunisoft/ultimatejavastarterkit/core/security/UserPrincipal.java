@@ -1,6 +1,6 @@
 package com.lunisoft.ultimatejavastarterkit.core.security;
 
-import com.lunisoft.ultimatejavastarterkit.entity.Role;
+import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
