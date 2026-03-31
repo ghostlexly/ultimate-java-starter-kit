@@ -1,24 +1,27 @@
 .PHONY: start stop dev test clean build generate-keys
 
-start:
+help: ## Show this help page
+	@grep -E '(^[a-zA-Z0-9_-]+:.*?##.*$$)|(^##)' Makefile | awk 'BEGIN {FS = ":.*?##"}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
+
+start: ## Start the containers
 	docker compose up -d
 
-stop:
+stop: ## Stop the containers
 	docker compose down
 
-dev:
-	if [ -f .env ]; then set -a && . ./.env && set +a; fi && cd backend && ./mvnw spring-boot:run
+dev: ## Start the development backend
+	cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
-test:
+test: ## Run unit tests
 	cd backend && ./mvnw test
 
-clean:
+clean: ## Maven Clean
 	cd backend && ./mvnw clean
 
-build:
+build: ## Maven Build
 	cd backend && ./mvnw package -DskipTests
 
-generate-keys:
+generate-keys: ## Generate SSH keys
 	./backend/scripts/generate-jwt-keys.sh
 
 db-reset:
