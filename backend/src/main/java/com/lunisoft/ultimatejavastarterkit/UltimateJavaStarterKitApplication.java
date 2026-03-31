@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @ConfigurationPropertiesScan
 @EnableAsync
 public class UltimateJavaStarterKitApplication {
-  public static void main(String[] args) {
+  static void main(String[] args) {
     SpringApplication.run(UltimateJavaStarterKitApplication.class, args);
   }
 }
