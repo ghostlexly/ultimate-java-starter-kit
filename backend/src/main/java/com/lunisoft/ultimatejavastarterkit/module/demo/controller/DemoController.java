@@ -53,7 +53,6 @@ public class DemoController {
       @RequestParam(required = false) String email,
       @RequestParam(required = false) String countryCode) {
 
-    // Convert 1-based page (user-facing) to 0-based (Spring Data internal)
     DemoPaginatedCustomerResponse response =
         demoPaginateCustomerUseCase.execute(page - 1, size, email, countryCode);
 
