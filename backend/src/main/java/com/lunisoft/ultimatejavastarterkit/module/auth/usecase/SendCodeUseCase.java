@@ -61,18 +61,7 @@ public class SendCodeUseCase {
     verificationTokenRepository
         .findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
             account.getId(), VerificationType.LOGIN_CODE)
-        .ifPresent(
-            lastToken -> {
-              long secondsSince =
-                  Duration.between(lastToken.getCreatedAt(), Instant.now()).toSeconds();
-              if (secondsSince < AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS) {
-                long remaining = AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS - secondsSince;
-                throw new BusinessRuleException(
-                    "Please wait " + remaining + " seconds before requesting a new code.",
-                    "LOGIN_CODE_COOLDOWN",
-                    HttpStatus.TOO_MANY_REQUESTS);
-              }
-            });
+        .ifPresent(this::checkCooldown);
 
     String code = String.format("%04d", SECURE_RANDOM.nextInt(10000));
 
@@ -86,5 +75,17 @@ public class SendCodeUseCase {
     verificationTokenRepository.save(token);
 
     eventPublisher.publishEvent(new LoginCodeRequestedEvent(email, code));
+  }
+
+  private void checkCooldown(VerificationToken lastToken) {
+    long secondsSince = Duration.between(lastToken.getCreatedAt(), Instant.now()).toSeconds();
+
+    if (secondsSince < AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS) {
+      long remaining = AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS - secondsSince;
+      throw new BusinessRuleException(
+          "Please wait " + remaining + " seconds before requesting a new code.",
+          "LOGIN_CODE_COOLDOWN",
+          HttpStatus.TOO_MANY_REQUESTS);
+    }
   }
 }

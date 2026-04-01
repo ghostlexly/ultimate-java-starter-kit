@@ -1,5 +1,6 @@
 package com.lunisoft.ultimatejavastarterkit.module.demo.controller;
 
+import com.lunisoft.ultimatejavastarterkit.core.ratelimit.RateLimit;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoPaginatedCustomerResponse;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoSearchCustomerResponse;
@@ -67,5 +68,13 @@ public class DemoController {
   @GetMapping("simple-message-response")
   public ResponseEntity<String> simpleMessageResponse() {
     return ResponseEntity.ok("Success");
+  }
+
+  @GetMapping("rate-limited")
+  @RateLimit(requests = 5, periodSeconds = 60)
+  public ResponseEntity<Map<String, String>> rateLimited() {
+    return ResponseEntity.ok(
+        Map.of(
+            "message", "Send multiple requests to this endpoint to see rate limiting in action."));
   }
 }

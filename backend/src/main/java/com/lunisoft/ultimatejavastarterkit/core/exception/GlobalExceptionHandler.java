@@ -5,9 +5,10 @@ import com.lunisoft.ultimatejavastarterkit.core.dto.Violation;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Arrays;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,11 +16,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /** Global exception handler that produces consistent JSON error responses. */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
   /** Handles custom business rule violations thrown from services/use cases. */
   @ExceptionHandler(BusinessRuleException.class)
   public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex) {
@@ -27,6 +26,16 @@ public class GlobalExceptionHandler {
         new ErrorResponse("BusinessRuleException", ex.getMessage(), ex.getCode(), null);
 
     return ResponseEntity.status(ex.getStatus()).body(response);
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+      HttpRequestMethodNotSupportedException ex) {
+    ErrorResponse response =
+        new ErrorResponse(
+            "MethodNotSupportedException", ex.getMessage(), "METHOD_NOT_SUPPORTED", null);
+
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
   }
 
   /**

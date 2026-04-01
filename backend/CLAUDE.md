@@ -1,0 +1,238 @@
+# CLAUDE.md - Java Spring Boot Conventions
+
+## Project Setup
+
+- Java 25, Spring Boot 4.x, Maven
+- PostgreSQL + Flyway migrations
+- Lombok, Bucket4j, JJWT (RSA256)
+- Stateless REST API with JWT authentication
+
+## Package Structure
+
+```
+module/
+  [feature]/
+    controller/    # REST endpoints
+    entity/        # JPA entities
+    repository/    # Spring Data repositories + Specifications
+    usecase/       # Business logic (one class = one action)
+    dto/           # Request/Response records
+    event/         # Domain events + listeners
+core/
+  dto/             # Shared DTOs (ErrorResponse, Violation)
+  exception/       # BusinessRuleException, GlobalExceptionHandler
+  security/        # JWT filter, provider, UserPrincipal
+  ratelimit/       # @RateLimit annotation + interceptor
+config/            # SecurityConfig, JpaConfig, WebConfig, JwtProperties
+shared/
+  entity/          # BaseEntity, AppConfigEntity
+  repository/      # Shared repositories
+```
+
+## Naming Conventions
+
+- **Packages**: singular lowercase (`usecase`, `repository`, `controller`)
+- **Use cases**: `[Verb][Entity]UseCase` with single `execute()` method
+- **Controllers**: `[Entity]Controller`
+- **Repositories**: `[Entity]Repository`
+- **Specifications**: `[Entity]Specification` (static methods, private constructor)
+- **DTOs**: Java records, named `[Purpose][Entity][Request|Response]`
+- **Entities**: singular PascalCase, extend `BaseEntity`
+- **Events**: `[Name]Event` / `[Name]Listener`
+- **Constants**: `[Feature]Constants` with `UPPER_SNAKE_CASE` fields
+- **Prefix with module name** when a class name could conflict across modules (e.g. `DemoCustomerRepository`)
+
+## Annotation Ordering
+
+### Controllers
+```java
+@RequiredArgsConstructor
+@RestController
+@RequestMapping("/api/[feature]")
+@PreAuthorize("hasRole('ROLE')")  // if needed
+```
+
+### Use Cases / Services
+```java
+@RequiredArgsConstructor
+@Service
+```
+
+### Entities
+```java
+@Getter
+@Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "table_name")
+```
+
+### Config
+```java
+@RequiredArgsConstructor  // if has dependencies
+@Configuration
+@EnableWebSecurity        // if security config
+@EnableMethodSecurity     // if security config
+```
+
+## Lombok Usage
+
+- **Entities**: `@Getter @Setter @NoArgsConstructor` (never `@Data` — Hibernate pitfall)
+- **Controllers / Use cases / Filters / Config**: `@RequiredArgsConstructor`
+- **Exceptions**: `@Getter`
+- **Logging**: `@Slf4j`
+- All injected dependencies must be `private final`
+
+## Use Case Pattern
+
+- One class per business action
+- Single public method: `execute(...)`
+- `@Transactional` on writes, `@Transactional(readOnly = true)` on reads
+- Extract helper logic into private methods (e.g. `enforceCooldown`, `buildSpec`)
+
+```java
+@RequiredArgsConstructor
+@Service
+public class CreateProfileUseCase {
+
+  private final CustomerRepository customerRepository;
+
+  @Transactional
+  public CustomerResponse execute(UUID accountId, RegisterCustomerRequest request) {
+    // ...
+
+    return new CustomerResponse(...);
+  }
+}
+```
+
+## Controller Pattern
+
+- Return `ResponseEntity<T>` always
+- `@Valid @RequestBody` for body validation
+- `@Validated` on class for `@RequestParam` / `@PathVariable` validation
+- `@AuthenticationPrincipal UserPrincipal principal` for authenticated user
+- Blank line before every `return`
+
+```java
+@PostMapping("/profile")
+public ResponseEntity<CustomerResponse> createProfile(
+    @AuthenticationPrincipal UserPrincipal principal,
+    @Valid @RequestBody RegisterCustomerRequest request) {
+
+  CustomerResponse response = createProfileUseCase.execute(principal.accountId(), request);
+
+  return ResponseEntity.ok(response);
+}
+```
+
+## Entity Pattern
+
+- Always extend `BaseEntity` (provides `id`, `createdAt`, `updatedAt`)
+- Use `FetchType.LAZY` for all relationships
+- Use `@Enumerated(EnumType.STRING)` for enums
+- Use `CascadeType.ALL` + `orphanRemoval = true` on parent collections
+
+## Repository Pattern
+
+- Extend `JpaRepository<Entity, UUID>`
+- Add `JpaSpecificationExecutor<Entity>` when dynamic filtering is needed
+- Return `Optional<T>` for single results, `List<T>` for collections
+- Use `JOIN FETCH` in `@Query` to avoid lazy loading issues
+- Use Specifications for complex/dynamic queries (not long `@Query` with `IS NULL OR`)
+
+## Specification Pattern
+
+```java
+public final class CustomerSpecification {
+
+  private CustomerSpecification() {}
+
+  public static Specification<Customer> fetchAccount() {
+    return (root, query, cb) -> {
+      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+        root.fetch("account");
+      }
+
+      return cb.conjunction();
+    };
+  }
+
+  public static Specification<Customer> hasEmail(String email) {
+    return (root, query, cb) ->
+        cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
+  }
+}
+```
+
+## DTOs
+
+- Always Java records (immutable, no Lombok needed)
+- Validation annotations directly on record fields
+- Nested records for paginated responses
+
+```java
+public record SendCodeRequest(
+    @NotBlank @Email String email
+) {}
+```
+
+## Error Handling
+
+- Throw `BusinessRuleException(message, code, HttpStatus)` from use cases
+- `GlobalExceptionHandler` catches all exceptions and returns `ErrorResponse`
+- Error codes are `UPPER_SNAKE_CASE` strings
+- All error responses follow the same structure: `{ type, message, code, violations }`
+
+## Rate Limiting
+
+```java
+@RateLimit(requests = 5, periodSeconds = 60)
+@GetMapping("/endpoint")
+public ResponseEntity<...> method() { ... }
+```
+
+## Code Style
+
+- Blank line before every `return` statement
+- Never write `if` on a single line
+- Extract complex lambda logic into private methods
+- Use `Optional.ifPresent(this::methodRef)` over `if (opt.isPresent()) { opt.get()... }`
+- Use `@NonNull` from `org.jspecify.annotations` when overriding `@NullMarked` methods
+- Constants as `private static final` (e.g. `SecureRandom`, `Duration`)
+- Comments on non-obvious code, Javadoc on public methods
+
+## Pagination
+
+- 1-based pages in API (`?page=1`), converted to 0-based internally (`page - 1`)
+- Response DTO includes: `content`, `totalItems`, `totalPages`, `isFirst`, `isLast`
+- Use `PageRequest.of(page, size, Sort.by("id").ascending())`
+
+## Validation
+
+- `@Valid` on `@RequestBody` → `MethodArgumentNotValidException`
+- `@Validated` on controller class for `@RequestParam` → `ConstraintViolationException`
+- Missing `@RequestParam` → `MissingServletRequestParameterException`
+- Wrong type (e.g. invalid enum) → `MethodArgumentTypeMismatchException`
+- All handled by `GlobalExceptionHandler` → 400 Bad Request
+
+## Security
+
+- JWT with RSA256 (private/public key pair)
+- Access token (short-lived) + Refresh token (long-lived)
+- `UserPrincipal` record implements `UserDetails`
+- `@PreAuthorize("hasRole('ROLE')")` for role-based access
+- Cookie-based token delivery (`HttpOnly`, `Secure` configurable)
+
+## Events
+
+- Event as record: `public record LoginCodeRequestedEvent(String email, String code) {}`
+- Listener with `@Async @EventListener` for non-blocking execution
+- Publish via `ApplicationEventPublisher.publishEvent(...)`
+
+## Database
+
+- Flyway migrations in `src/main/resources/db/migration/`
+- Naming: `V{version}__{description}.sql`
+- `spring.jpa.hibernate.ddl-auto=validate` (Flyway handles schema)
+- JPA auditing enabled via `@EnableJpaAuditing`
