@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17
+    image: postgres:17.9
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lunisoft}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe}
@@ -14,10 +14,46 @@ services:
       retries: 5
 
   redis:
-    image: redis:8-alpine
+    image: redis:8.2.2
     volumes:
       - redis_data:/data
+
+  caddy:
+    image: lunisoft/terracapital:caddy
+    build:
+      context: ./caddy
+    ports:
+      - mode: host
+        protocol: tcp
+        published: 80
+        target: 80
+      - mode: host
+        protocol: tcp
+        published: 443
+        target: 443
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    image: lunisoft/terracapital:frontend
+    build:
+      context: ./frontend
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: "curl -s http://localhost:3000 || exit 1"
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
   redis_data:
+  caddy_data:
+  caddy_config:

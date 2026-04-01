@@ -6,3 +6,19 @@ services:
   redis:
     ports:
       - "6379:6379"
+
+  caddy:
+    environment:
+      # Point API routes to host machine (where your IDE runs the backend)
+      - BACKEND_UPSTREAM=host.docker.internal:3000
+    extra_hosts:
+      # "host.docker.internal" points to the host machine (where your IDE runs the backend)
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    command: npm run dev -- --host
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules

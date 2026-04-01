@@ -1,5 +1,6 @@
 services:
   backend:
+    image: lunisoft/terracapital:backend
     build: ./backend
     ports:
       - "${APP_PORT:-3000}:3000"
@@ -14,4 +15,3 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    restart: unless-stopped
