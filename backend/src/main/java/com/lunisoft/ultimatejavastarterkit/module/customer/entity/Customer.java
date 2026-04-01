@@ -3,13 +3,6 @@ package com.lunisoft.ultimatejavastarterkit.module.customer.entity;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
 import com.lunisoft.ultimatejavastarterkit.shared.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@NoArgsConstructor
 @Entity
 @Table(name = "customer")
 public class Customer extends BaseEntity {
@@ -20,4 +13,20 @@ public class Customer extends BaseEntity {
 
   @Column(name = "country_code")
   private String countryCode;
+
+  public Account getAccount() {
+    return account;
+  }
+
+  public void setAccount(Account account) {
+    this.account = account;
+  }
+
+  public String getCountryCode() {
+    return countryCode;
+  }
+
+  public void setCountryCode(String countryCode) {
+    this.countryCode = countryCode;
+  }
 }

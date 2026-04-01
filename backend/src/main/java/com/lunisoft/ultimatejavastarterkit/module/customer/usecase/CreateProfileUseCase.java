@@ -7,19 +7,22 @@ import com.lunisoft.ultimatejavastarterkit.module.customer.dto.CustomerResponse;
 import com.lunisoft.ultimatejavastarterkit.module.customer.dto.RegisterCustomerRequest;
 import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.customer.repository.CustomerRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-@RequiredArgsConstructor
 @Service
 public class CreateProfileUseCase {
 
   private final CustomerRepository customerRepository;
   private final AccountRepository accountRepository;
+
+  public CreateProfileUseCase(CustomerRepository customerRepository, AccountRepository accountRepository) {
+    this.customerRepository = customerRepository;
+    this.accountRepository = accountRepository;
+  }
 
   @Transactional
   public CustomerResponse execute(UUID accountId, RegisterCustomerRequest request) {

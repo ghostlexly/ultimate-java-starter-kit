@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,16 +21,22 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * Extracts and validates JWT from cookie or Authorization header. Sets the SecurityContext
  * authentication if the token is valid and the session exists.
  */
-@RequiredArgsConstructor
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final SessionRepository sessionRepository;
 
+  public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, SessionRepository sessionRepository) {
+    this.jwtTokenProvider = jwtTokenProvider;
+    this.sessionRepository = sessionRepository;
+  }
+
   @Override
   protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      @NonNull HttpServletRequest request,
+      @NonNull HttpServletResponse response,
+      @NonNull FilterChain filterChain)
       throws ServletException, IOException {
 
     String token = resolveToken(request);

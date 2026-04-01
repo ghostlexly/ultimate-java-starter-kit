@@ -13,8 +13,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,9 +30,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
  * Intercepts requests to @RateLimit-annotated controller methods. Creates a token bucket per client
  * (IP or user ID) per endpoint.
  */
-@Slf4j
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
+  private final Logger log = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
   /** Wraps a bucket with its last access time for eviction. */
   private record BucketEntry(Bucket bucket, Instant lastAccess) {}

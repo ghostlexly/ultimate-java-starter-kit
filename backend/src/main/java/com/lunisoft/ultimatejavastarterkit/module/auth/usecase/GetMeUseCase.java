@@ -4,18 +4,20 @@ import com.lunisoft.ultimatejavastarterkit.core.exception.BusinessRuleException;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.auth.dto.MeResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 /** Returns the current authenticated user's info. */
-@RequiredArgsConstructor
 @Service
 public class GetMeUseCase {
 
   private final AccountRepository accountRepository;
+
+  public GetMeUseCase(AccountRepository accountRepository) {
+    this.accountRepository = accountRepository;
+  }
 
   public MeResponse execute(UUID accountId) {
     Account account =

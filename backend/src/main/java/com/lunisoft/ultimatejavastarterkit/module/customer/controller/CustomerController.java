@@ -6,13 +6,11 @@ import com.lunisoft.ultimatejavastarterkit.module.customer.dto.RegisterCustomerR
 import com.lunisoft.ultimatejavastarterkit.module.customer.usecase.CreateProfileUseCase;
 import com.lunisoft.ultimatejavastarterkit.module.customer.usecase.GetProfileUseCase;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/customer")
 @PreAuthorize("hasRole('CUSTOMER')")
@@ -20,6 +18,11 @@ public class CustomerController {
 
   private final CreateProfileUseCase createProfileUseCase;
   private final GetProfileUseCase getProfileUseCase;
+
+  public CustomerController(CreateProfileUseCase createProfileUseCase, GetProfileUseCase getProfileUseCase) {
+    this.createProfileUseCase = createProfileUseCase;
+    this.getProfileUseCase = getProfileUseCase;
+  }
 
   @PostMapping("/profile")
   public ResponseEntity<CustomerResponse> createProfile(

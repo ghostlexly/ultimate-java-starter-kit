@@ -3,15 +3,7 @@ package com.lunisoft.ultimatejavastarterkit.module.auth.entity;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
 import com.lunisoft.ultimatejavastarterkit.shared.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.time.Instant;
-
-@Getter
-@Setter
-@NoArgsConstructor
 @Entity
 @Table(name = "verification_token")
 public class VerificationToken extends BaseEntity {
@@ -34,4 +26,52 @@ public class VerificationToken extends BaseEntity {
 
   @Column(name = "expires_at", nullable = false)
   private Instant expiresAt;
+
+  public String getToken() {
+    return token;
+  }
+
+  public void setToken(String token) {
+    this.token = token;
+  }
+
+  public VerificationType getType() {
+    return type;
+  }
+
+  public void setType(VerificationType type) {
+    this.type = type;
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
+
+  public int getAttempts() {
+    return attempts;
+  }
+
+  public void setAttempts(int attempts) {
+    this.attempts = attempts;
+  }
+
+  public Account getAccount() {
+    return account;
+  }
+
+  public void setAccount(Account account) {
+    this.account = account;
+  }
+
+  public Instant getExpiresAt() {
+    return expiresAt;
+  }
+
+  public void setExpiresAt(Instant expiresAt) {
+    this.expiresAt = expiresAt;
+  }
 }

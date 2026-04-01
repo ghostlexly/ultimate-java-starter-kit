@@ -4,8 +4,9 @@
 
 - Java 25, Spring Boot 4.x, Maven
 - PostgreSQL + Flyway migrations
-- Lombok, Bucket4j, JJWT (RSA256)
+- Bucket4j, JJWT (RSA256)
 - Stateless REST API with JWT authentication
+- No Lombok — use manual getters/setters and constructors
 
 ## Package Structure
 
@@ -25,7 +26,7 @@ core/
   ratelimit/       # @RateLimit annotation + interceptor
 config/            # SecurityConfig, JpaConfig, WebConfig, JwtProperties
 shared/
-  entity/          # BaseEntity, AppConfigEntity
+  entity/          # BaseEntity
   repository/      # Shared repositories
 ```
 
@@ -45,66 +46,62 @@ shared/
 ## Annotation Ordering
 
 ### Controllers
+
 ```java
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/[feature]")
 @PreAuthorize("hasRole('ROLE')")  // if needed
 ```
 
 ### Use Cases / Services
+
 ```java
-@RequiredArgsConstructor
 @Service
 ```
 
 ### Entities
+
 ```java
-@Getter
-@Setter
-@NoArgsConstructor
 @Entity
 @Table(name = "table_name")
 ```
 
 ### Config
+
 ```java
-@RequiredArgsConstructor  // if has dependencies
 @Configuration
 @EnableWebSecurity        // if security config
 @EnableMethodSecurity     // if security config
 ```
 
-## Lombok Usage
+## Constructor Injection
 
-- **Entities**: `@Getter @Setter @NoArgsConstructor` (never `@Data` — Hibernate pitfall)
-- **Controllers / Use cases / Filters / Config**: `@RequiredArgsConstructor`
-- **Exceptions**: `@Getter`
-- **Logging**: `@Slf4j`
-- All injected dependencies must be `private final`
+- All dependencies are `private final` fields
+- Logging via `private final Logger log = LoggerFactory.getLogger(ClassName.class)`
+
+```java
+
+@Service
+public class CreateProfileUseCase {
+
+    private final CustomerRepository customerRepository;
+    private final AccountRepository accountRepository;
+
+    public CreateProfileUseCase(
+            CustomerRepository customerRepository,
+            AccountRepository accountRepository) {
+        this.customerRepository = customerRepository;
+        this.accountRepository = accountRepository;
+    }
+}
+```
 
 ## Use Case Pattern
 
 - One class per business action
 - Single public method: `execute(...)`
 - `@Transactional` on writes, `@Transactional(readOnly = true)` on reads
-- Extract helper logic into private methods (e.g. `enforceCooldown`, `buildSpec`)
-
-```java
-@RequiredArgsConstructor
-@Service
-public class CreateProfileUseCase {
-
-  private final CustomerRepository customerRepository;
-
-  @Transactional
-  public CustomerResponse execute(UUID accountId, RegisterCustomerRequest request) {
-    // ...
-
-    return new CustomerResponse(...);
-  }
-}
-```
+- Extract helper logic into private methods (e.g. `checkCooldown`, `buildSpec`)
 
 ## Controller Pattern
 
@@ -167,7 +164,7 @@ public final class CustomerSpecification {
 
 ## DTOs
 
-- Always Java records (immutable, no Lombok needed)
+- Always Java records (immutable)
 - Validation annotations directly on record fields
 - Nested records for paginated responses
 
@@ -210,11 +207,11 @@ public ResponseEntity<...> method() { ... }
 
 ## Validation
 
-- `@Valid` on `@RequestBody` → `MethodArgumentNotValidException`
-- `@Validated` on controller class for `@RequestParam` → `ConstraintViolationException`
-- Missing `@RequestParam` → `MissingServletRequestParameterException`
-- Wrong type (e.g. invalid enum) → `MethodArgumentTypeMismatchException`
-- All handled by `GlobalExceptionHandler` → 400 Bad Request
+- `@Valid` on `@RequestBody` -> `MethodArgumentNotValidException`
+- `@Validated` on controller class for `@RequestParam` -> `ConstraintViolationException`
+- Missing `@RequestParam` -> `MissingServletRequestParameterException`
+- Wrong type (e.g. invalid enum) -> `MethodArgumentTypeMismatchException`
+- All handled by `GlobalExceptionHandler` -> 400 Bad Request
 
 ## Security
 

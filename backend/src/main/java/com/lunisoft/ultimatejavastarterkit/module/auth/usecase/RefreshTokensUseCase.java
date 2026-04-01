@@ -10,18 +10,21 @@ import io.jsonwebtoken.Claims;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Validates the refresh token, extends the session, and returns new JWT tokens. */
-@RequiredArgsConstructor
 @Service
 public class RefreshTokensUseCase {
 
   private final SessionRepository sessionRepository;
   private final JwtTokenProvider jwtTokenProvider;
+
+  public RefreshTokensUseCase(SessionRepository sessionRepository, JwtTokenProvider jwtTokenProvider) {
+    this.sessionRepository = sessionRepository;
+    this.jwtTokenProvider = jwtTokenProvider;
+  }
 
   @Transactional
   public AuthResponse execute(String refreshToken) {

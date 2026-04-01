@@ -6,15 +6,7 @@ import com.lunisoft.ultimatejavastarterkit.module.auth.entity.VerificationToken;
 import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.shared.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
 import java.util.List;
-
-@Getter
-@Setter
-@NoArgsConstructor
 @Entity
 @Table(
     name = "account",
@@ -52,4 +44,84 @@ public class Account extends BaseEntity {
 
   @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<VerificationToken> verificationTokens;
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public Role getRole() {
+    return role;
+  }
+
+  public void setRole(Role role) {
+    this.role = role;
+  }
+
+  public String getProviderId() {
+    return providerId;
+  }
+
+  public void setProviderId(String providerId) {
+    this.providerId = providerId;
+  }
+
+  public String getProviderAccountId() {
+    return providerAccountId;
+  }
+
+  public void setProviderAccountId(String providerAccountId) {
+    this.providerAccountId = providerAccountId;
+  }
+
+  public boolean isEmailVerified() {
+    return emailVerified;
+  }
+
+  public void setEmailVerified(boolean emailVerified) {
+    this.emailVerified = emailVerified;
+  }
+
+  public List<Session> getSessions() {
+    return sessions;
+  }
+
+  public void setSessions(List<Session> sessions) {
+    this.sessions = sessions;
+  }
+
+  public Customer getCustomer() {
+    return customer;
+  }
+
+  public void setCustomer(Customer customer) {
+    this.customer = customer;
+  }
+
+  public Admin getAdmin() {
+    return admin;
+  }
+
+  public void setAdmin(Admin admin) {
+    this.admin = admin;
+  }
+
+  public List<VerificationToken> getVerificationTokens() {
+    return verificationTokens;
+  }
+
+  public void setVerificationTokens(List<VerificationToken> verificationTokens) {
+    this.verificationTokens = verificationTokens;
+  }
 }

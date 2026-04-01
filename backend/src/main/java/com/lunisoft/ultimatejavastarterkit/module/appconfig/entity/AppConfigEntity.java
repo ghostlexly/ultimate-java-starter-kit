@@ -2,13 +2,6 @@ package com.lunisoft.ultimatejavastarterkit.module.appconfig.entity;
 
 import com.lunisoft.ultimatejavastarterkit.shared.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@NoArgsConstructor
 @Entity
 @Table(name = "app_config")
 public class AppConfigEntity extends BaseEntity {
@@ -17,4 +10,20 @@ public class AppConfigEntity extends BaseEntity {
   private String key;
 
   private String value;
+
+  public String getKey() {
+    return key;
+  }
+
+  public void setKey(String key) {
+    this.key = key;
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
 }

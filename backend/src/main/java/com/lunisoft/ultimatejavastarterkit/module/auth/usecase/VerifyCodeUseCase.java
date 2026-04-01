@@ -12,7 +12,6 @@ import com.lunisoft.ultimatejavastarterkit.module.auth.entity.VerificationType;
 import com.lunisoft.ultimatejavastarterkit.module.auth.repository.SessionRepository;
 import com.lunisoft.ultimatejavastarterkit.module.auth.repository.VerificationTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ import java.time.temporal.ChronoUnit;
  * Validates the login code, creates a session and returns JWT tokens. Includes brute-force
  * protection (max 5 attempts per code).
  */
-@RequiredArgsConstructor
 @Service
 public class VerifyCodeUseCase {
 
@@ -32,6 +30,17 @@ public class VerifyCodeUseCase {
   private final VerificationTokenRepository verificationTokenRepository;
   private final SessionRepository sessionRepository;
   private final JwtTokenProvider jwtTokenProvider;
+
+  public VerifyCodeUseCase(
+      AccountRepository accountRepository,
+      VerificationTokenRepository verificationTokenRepository,
+      SessionRepository sessionRepository,
+      JwtTokenProvider jwtTokenProvider) {
+    this.accountRepository = accountRepository;
+    this.verificationTokenRepository = verificationTokenRepository;
+    this.sessionRepository = sessionRepository;
+    this.jwtTokenProvider = jwtTokenProvider;
+  }
 
   @Transactional(noRollbackFor = BusinessRuleException.class)
   public AuthResponse execute(String email, String code, HttpServletRequest request) {

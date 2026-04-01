@@ -4,7 +4,6 @@ import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoPaginatedCustomerResponse;
 import com.lunisoft.ultimatejavastarterkit.module.demo.repository.DemoCustomerSpecification;
 import com.lunisoft.ultimatejavastarterkit.module.demo.repository.DemoCustomerRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,11 +17,14 @@ import org.springframework.stereotype.Service;
  * <p>Each non-null filter adds a WHERE clause via Specification. Filters are composable: adding a
  * new one is just another .and() call.
  */
-@RequiredArgsConstructor
 @Service
 public class DemoPaginateCustomerUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
+
+  public DemoPaginateCustomerUseCase(DemoCustomerRepository demoCustomerRepository) {
+    this.demoCustomerRepository = demoCustomerRepository;
+  }
 
   public DemoPaginatedCustomerResponse execute(int page, int size, String email, String countryCode) {
     Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());

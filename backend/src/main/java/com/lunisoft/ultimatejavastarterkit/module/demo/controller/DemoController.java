@@ -10,7 +10,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@RequiredArgsConstructor
 @RestController
 @Validated // Validates request parameters only (countryCode and role) (note: doesn't validate body)
 @RequestMapping("/api/demo")
@@ -27,6 +25,13 @@ public class DemoController {
 
   private final DemoSearchCustomerUseCase demoSearchCustomerUseCase;
   private final DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
+
+  public DemoController(
+      DemoSearchCustomerUseCase demoSearchCustomerUseCase,
+      DemoPaginateCustomerUseCase demoPaginateCustomerUseCase) {
+    this.demoSearchCustomerUseCase = demoSearchCustomerUseCase;
+    this.demoPaginateCustomerUseCase = demoPaginateCustomerUseCase;
+  }
 
   /**
    * Demo endpoint: search customers by country code and account role. Example: GET

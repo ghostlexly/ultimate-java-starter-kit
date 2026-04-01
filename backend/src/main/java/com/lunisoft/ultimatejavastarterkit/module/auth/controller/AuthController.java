@@ -12,14 +12,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -31,6 +29,17 @@ public class AuthController {
   private final VerifyCodeUseCase verifyCodeUseCase;
   private final RefreshTokensUseCase refreshTokensUseCase;
   private final GetMeUseCase getMeUseCase;
+
+  public AuthController(
+      SendCodeUseCase sendCodeUseCase,
+      VerifyCodeUseCase verifyCodeUseCase,
+      RefreshTokensUseCase refreshTokensUseCase,
+      GetMeUseCase getMeUseCase) {
+    this.sendCodeUseCase = sendCodeUseCase;
+    this.verifyCodeUseCase = verifyCodeUseCase;
+    this.refreshTokensUseCase = refreshTokensUseCase;
+    this.getMeUseCase = getMeUseCase;
+  }
 
   @PostMapping("/send-code")
   public ResponseEntity<Map<String, String>> sendCode(@Valid @RequestBody SendCodeRequest request) {
