@@ -4,7 +4,10 @@ help: ## Show this help page
 	@grep -E '(^[a-zA-Z0-9_-]+:.*?##.*$$)|(^##)' Makefile | awk 'BEGIN {FS = ":.*?##"}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
 
 start: ## Start the containers
-	docker compose up -d
+	docker compose up -d --renew-anon-volumes
+
+start-prod: ## Start the production environment (ignores compose.override.yml)
+	docker compose -f compose.yml up -d --renew-anon-volumes
 
 stop: ## Stop the containers
 	docker compose down

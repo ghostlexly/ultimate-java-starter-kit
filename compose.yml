@@ -14,7 +14,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:8.2.2
+    image: redis:8.6.2-alpine
     volumes:
       - redis_data:/data
 
@@ -51,6 +51,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend:
+    image: lunisoft/terracapital:backend
+    build: ./backend
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      POSTGRES_DATABASE_URL: ${POSTGRES_DATABASE_URL}
+      POSTGRES_USER: ${POSTGRES_USER:-lunisoft}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe}
+      APP_JWT_PRIVATE_KEY: ${APP_JWT_PRIVATE_KEY}
+      APP_JWT_PUBLIC_KEY: ${APP_JWT_PUBLIC_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
 volumes:
   postgres_data:

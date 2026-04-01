@@ -27,7 +27,7 @@ COPY ./package-lock.json ./
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 
 # Copy project specific files
-COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/.output ./.output
 COPY ./public ./public
 
 ENV NODE_ENV=production
