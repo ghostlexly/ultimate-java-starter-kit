@@ -2,11 +2,12 @@
 
 ## Project Setup
 
-- Java 25, Spring Boot 4.x, Maven
+- Java 25, Spring Boot 4.x, Spring Security 7.x, Maven
 - PostgreSQL + Flyway migrations
 - Bucket4j, JJWT (RSA256)
 - Stateless REST API with JWT authentication
 - No Lombok — use manual getters/setters and constructors
+- Use Java 25 features: unnamed variables (`_`), pattern matching, records, etc.
 
 ## Package Structure
 
@@ -22,7 +23,7 @@ module/
 core/
   dto/             # Shared DTOs (ErrorResponse, Violation)
   exception/       # BusinessRuleException, GlobalExceptionHandler
-  security/        # JWT filter, provider, UserPrincipal
+  security/        # JWT filter, provider, UserPrincipal, @PublicEndpoint + scanner
   ratelimit/       # @RateLimit annotation + interceptor
 config/            # SecurityConfig, JpaConfig, WebConfig, JwtProperties
 shared/
@@ -48,9 +49,10 @@ shared/
 ### Controllers
 
 ```java
+@PublicEndpoint                    // if public (class or method level)
 @RestController
 @RequestMapping("/api/[feature]")
-@PreAuthorize("hasRole('ROLE')")  // if needed
+@PreAuthorize("hasRole('ROLE')")   // if role-restricted (class or method level)
 ```
 
 ### Use Cases / Services
@@ -198,6 +200,31 @@ public ResponseEntity<...> method() { ... }
 - Use `@NonNull` from `org.jspecify.annotations` when overriding `@NullMarked` methods
 - Constants as `private static final` (e.g. `SecureRandom`, `Duration`)
 - Comments on non-obvious code, Javadoc on public methods
+- Always null-check return values that can be null — never assume a method returns non-null unless documented
+- Use `HttpMethod` enum (not `String`) for HTTP method references
+- Prefer streams and functional style over imperative loops when it improves readability
+- Avoid duplicated overloaded methods — find a generic approach instead
+
+## Spring Boot 4 / Spring Security 7 / Java 25
+
+### Removed APIs (do NOT use)
+- ❌ `AntPathRequestMatcher` — removed in Spring Security 7
+- ✅ Use `PathPatternRequestMatcher.pathPattern(HttpMethod, String)` or `PathPatternRequestMatcher.pathPattern(String)` instead
+
+### Prefer Spring built-in infrastructure over manual reflection
+- ❌ Manual reflection to scan `@GetMapping`, `@PostMapping`, etc. on controller methods
+- ✅ Use `RequestMappingHandlerMapping.getHandlerMethods()` — Spring already knows all registered routes, HTTP methods, and path patterns
+- ✅ Use `AnnotatedElementUtils.hasAnnotation()` for annotation detection — handles meta-annotations and works on both classes and methods
+
+### Java 25 features to use
+- Unnamed variables: `_ -> false` instead of `request -> false`
+- Pattern matching for `instanceof` and `switch`
+- Records for DTOs and events
+- `var` for local variables when the type is obvious from the right-hand side
+
+### Custom annotations
+- When creating annotations that work like `@PreAuthorize`, always support both `ElementType.TYPE` (class-level) and `ElementType.METHOD` (method-level)
+- Check both the method and its declaring class when scanning: `AnnotatedElementUtils.hasAnnotation(method, ...) || AnnotatedElementUtils.hasAnnotation(beanType, ...)`
 
 ## Pagination
 
@@ -218,13 +245,16 @@ public ResponseEntity<...> method() { ... }
 - JWT with RSA256 (private/public key pair)
 - Access token (short-lived) + Refresh token (long-lived)
 - `UserPrincipal` record implements `UserDetails`
-- `@PreAuthorize("hasRole('ROLE')")` for role-based access
+- `@PreAuthorize("hasRole('ROLE')")` for role-based access on class or method level
+- `@PublicEndpoint` for public routes (no authentication required), on class or method level
+- Public routes are auto-discovered at startup by `PublicEndpointScanner` — never hardcode routes in `SecurityConfig`
 - Cookie-based token delivery (`HttpOnly`, `Secure` configurable)
 
 ## Events
 
 - Event as record: `public record LoginCodeRequestedEvent(String email, String code) {}`
 - Listener with `@Async @EventListener` for non-blocking execution
+- Listener with `@EventListener` (no `@Async`) for synchronous execution within the same transaction (rollback on failure)
 - Publish via `ApplicationEventPublisher.publishEvent(...)`
 
 ## Database

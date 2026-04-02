@@ -1,6 +1,7 @@
 package com.lunisoft.ultimatejavastarterkit.module.demo.controller;
 
 import com.lunisoft.ultimatejavastarterkit.core.ratelimit.RateLimit;
+import com.lunisoft.ultimatejavastarterkit.core.security.PublicEndpoint;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoPaginatedCustomerResponse;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoSearchCustomerResponse;
@@ -81,5 +82,12 @@ public class DemoController {
     return ResponseEntity.ok(
         Map.of(
             "message", "Send multiple requests to this endpoint to see rate limiting in action."));
+  }
+
+  @GetMapping("accessible-to-public")
+  @PublicEndpoint
+  public ResponseEntity<Map<String, String>> accessibleToPublic() {
+    return ResponseEntity.ok(
+        Map.of("message", "This endpoint is accessible to public without any authentication."));
   }
 }

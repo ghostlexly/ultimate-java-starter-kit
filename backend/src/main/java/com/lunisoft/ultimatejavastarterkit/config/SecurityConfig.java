@@ -1,6 +1,7 @@
 package com.lunisoft.ultimatejavastarterkit.config;
 
 import com.lunisoft.ultimatejavastarterkit.core.security.JwtAuthenticationFilter;
+import com.lunisoft.ultimatejavastarterkit.core.security.PublicEndpointScanner;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,9 +23,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final PublicEndpointScanner publicEndpointScanner;
 
-  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+  public SecurityConfig(
+      JwtAuthenticationFilter jwtAuthenticationFilter,
+      PublicEndpointScanner publicEndpointScanner) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    this.publicEndpointScanner = publicEndpointScanner;
   }
 
   @Bean
@@ -35,11 +40,8 @@ public class SecurityConfig {
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers(
-                        "/api/auth/send-code", "/api/auth/verify-code", "/api/auth/refresh")
+                auth.requestMatchers(publicEndpointScanner.getRequestMatcher())
                     .permitAll()
-                    .requestMatchers("/api/admin/**")
-                    .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

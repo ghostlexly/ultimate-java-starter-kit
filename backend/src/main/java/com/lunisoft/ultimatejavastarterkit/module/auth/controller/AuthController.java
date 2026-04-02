@@ -1,6 +1,7 @@
 package com.lunisoft.ultimatejavastarterkit.module.auth.controller;
 
 import com.lunisoft.ultimatejavastarterkit.core.exception.BusinessRuleException;
+import com.lunisoft.ultimatejavastarterkit.core.security.PublicEndpoint;
 import com.lunisoft.ultimatejavastarterkit.core.security.UserPrincipal;
 import com.lunisoft.ultimatejavastarterkit.module.auth.dto.*;
 import com.lunisoft.ultimatejavastarterkit.module.auth.usecase.GetMeUseCase;
@@ -41,6 +42,7 @@ public class AuthController {
     this.getMeUseCase = getMeUseCase;
   }
 
+  @PublicEndpoint
   @PostMapping("/send-code")
   public ResponseEntity<Map<String, String>> sendCode(@Valid @RequestBody SendCodeRequest request) {
     sendCodeUseCase.execute(request.email());
@@ -48,6 +50,7 @@ public class AuthController {
     return ResponseEntity.ok(Map.of("message", "Login code sent successfully."));
   }
 
+  @PublicEndpoint
   @PostMapping("/verify-code")
   public ResponseEntity<AuthResponse> verifyCode(
       @Valid @RequestBody VerifyCodeRequest request,
@@ -60,6 +63,7 @@ public class AuthController {
     return ResponseEntity.ok(response);
   }
 
+  @PublicEndpoint
   @PostMapping("/refresh")
   public ResponseEntity<AuthResponse> refreshTokens(
       @Valid @RequestBody(required = false) RefreshTokenRequest request,

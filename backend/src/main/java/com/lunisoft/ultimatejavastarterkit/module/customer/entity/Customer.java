@@ -3,6 +3,7 @@ package com.lunisoft.ultimatejavastarterkit.module.customer.entity;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
 import com.lunisoft.ultimatejavastarterkit.shared.entity.BaseEntity;
 import jakarta.persistence.*;
+
 @Entity
 @Table(name = "customer")
 public class Customer extends BaseEntity {

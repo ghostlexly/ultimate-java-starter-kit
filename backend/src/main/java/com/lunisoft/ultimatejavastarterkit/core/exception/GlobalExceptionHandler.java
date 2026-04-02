@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -30,6 +31,24 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(ex.getStatus()).body(response);
   }
 
+  /**
+   * Handles body validation failures (POST's or PATCH's body is not set). Example: POST
+   * /api/auth/send-code with { } triggers the MessageNotReadableException.
+   */
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleMessageNotReadable(
+      HttpMessageNotReadableException ex) {
+    ErrorResponse response =
+        new ErrorResponse(
+            "MessageNotReadableException",
+            "Required request body is missing",
+            "MESSAGE_NOT_READABLE",
+            null);
+
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+  }
+
+  /** Handles errors when we send a wrong request type. Example: POST to a PATCH endpoint. */
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
   public ResponseEntity<ErrorResponse> handleMethodNotSupported(
       HttpRequestMethodNotSupportedException ex) {
