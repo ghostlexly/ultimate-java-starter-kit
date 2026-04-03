@@ -63,8 +63,8 @@ class DemoPaginateCustomerUseCaseTest {
     var result = demoPaginateCustomerUseCase.execute(0, 10, null, null);
 
     assertThat(result.content()).isEmpty();
-    assertThat(result.totalItems()).isZero(0);
-    assertThat(result.totalPages()).isZero(0);
+    assertThat(result.totalItems()).isZero();
+    assertThat(result.totalPages()).isZero();
     assertThat(result.isFirst()).isTrue();
     assertThat(result.isLast()).isTrue();
   }
