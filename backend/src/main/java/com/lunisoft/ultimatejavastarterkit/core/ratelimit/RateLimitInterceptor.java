@@ -92,7 +92,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     ErrorResponse errorResponse =
         new ErrorResponse(
             "RateLimitException",
-            "Rate limit exceeded. Try again in " + waitSeconds + " seconds.",
+            "Rate limit exceeded. Try again in %s seconds.".formatted(waitSeconds),
             "RATE_LIMIT_EXCEEDED",
             null);
 

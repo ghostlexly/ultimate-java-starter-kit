@@ -204,6 +204,7 @@ public ResponseEntity<...> method() { ... }
 - Use `HttpMethod` enum (not `String`) for HTTP method references
 - Prefer streams and functional style over imperative loops when it improves readability
 - Avoid duplicated overloaded methods — find a generic approach instead
+- Use `"text %s".formatted(var)` instead of string concatenation (`+`) for building strings with variables
 
 ## Spring Boot 4 / Spring Security 7 / Java 25
 
@@ -217,6 +218,7 @@ public ResponseEntity<...> method() { ... }
 - ✅ Use `AnnotatedElementUtils.hasAnnotation()` for annotation detection — handles meta-annotations and works on both classes and methods
 
 ### Java 25 features to use
+- Always prefer the modern, idiomatic Java 25 way of doing things — use the standard recommendations and best practices for Java 25 APIs and language features
 - Unnamed variables: `_ -> false` instead of `request -> false`
 - Pattern matching for `instanceof` and `switch`
 - Records for DTOs and events

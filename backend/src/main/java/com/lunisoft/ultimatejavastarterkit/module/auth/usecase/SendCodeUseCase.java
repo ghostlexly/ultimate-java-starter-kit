@@ -72,7 +72,7 @@ public class SendCodeUseCase {
             account.getId(), VerificationType.LOGIN_CODE)
         .ifPresent(this::checkCooldown);
 
-    String code = String.format("%04d", SECURE_RANDOM.nextInt(10000));
+    String code = "%04d".formatted(SECURE_RANDOM.nextInt(10000));
 
     VerificationToken token = new VerificationToken();
     token.setToken(UUID.randomUUID().toString());
@@ -92,7 +92,7 @@ public class SendCodeUseCase {
     if (secondsSince < AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS) {
       long remaining = AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS - secondsSince;
       throw new BusinessRuleException(
-          "Please wait " + remaining + " seconds before requesting a new code.",
+          "Please wait %s seconds before requesting a new code.".formatted(remaining),
           "LOGIN_CODE_COOLDOWN",
           HttpStatus.TOO_MANY_REQUESTS);
     }

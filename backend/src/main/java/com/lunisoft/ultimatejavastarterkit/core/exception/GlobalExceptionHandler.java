@@ -117,7 +117,7 @@ public class GlobalExceptionHandler {
     ErrorResponse response =
         new ErrorResponse(
             "ValidationException",
-            "Required parameter '" + ex.getParameterName() + "' is missing.",
+            "Required parameter '%s' is missing.".formatted(ex.getParameterName()),
             "MISSING_PARAMETER",
             null);
 
@@ -143,14 +143,10 @@ public class GlobalExceptionHandler {
                   .map(Object::toString)
                   .toArray(String[]::new));
       message =
-          "Invalid value '"
-              + ex.getValue()
-              + "' for parameter '"
-              + ex.getName()
-              + "'. Allowed values: "
-              + allowedValues;
+          "Invalid value '%s' for parameter '%s'. Allowed values: %s"
+              .formatted(ex.getValue(), ex.getName(), allowedValues);
     } else {
-      message = "Invalid value '" + ex.getValue() + "' for parameter '" + ex.getName() + "'.";
+      message = "Invalid value '%s' for parameter '%s'.".formatted(ex.getValue(), ex.getName());
     }
 
     ErrorResponse response =
