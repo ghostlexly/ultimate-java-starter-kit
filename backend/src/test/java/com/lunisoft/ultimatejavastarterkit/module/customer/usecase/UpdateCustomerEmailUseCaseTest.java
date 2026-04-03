@@ -1,15 +1,13 @@
 package com.lunisoft.ultimatejavastarterkit.module.customer.usecase;
 
+import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import com.lunisoft.ultimatejavastarterkit.core.exception.BusinessRuleException;
-import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
-import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.customer.dto.UpdateCustomerEmailRequest;
-import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.ultimatejavastarterkit.module.customer.repository.CustomerRepository;
 import java.util.Optional;
@@ -42,7 +40,7 @@ class UpdateCustomerEmailUseCaseTest {
   void execute_validRequest_updatesEmailAndPublishesEvent() {
     var accountId = UUID.randomUUID();
     var account = createAccount(accountId, "old@example.com");
-    var customer = createCustomer(account);
+    var customer = createCustomer(account, "FR");
     var request = new UpdateCustomerEmailRequest("new@example.com");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -101,21 +99,4 @@ class UpdateCustomerEmailUseCaseTest {
     verify(eventPublisher, never()).publishEvent(any());
   }
 
-  private Account createAccount(UUID accountId, String email) {
-    var account = new Account();
-    account.setId(accountId);
-    account.setEmail(email);
-    account.setRole(Role.CUSTOMER);
-
-    return account;
-  }
-
-  private Customer createCustomer(Account account) {
-    var customer = new Customer();
-    customer.setId(UUID.randomUUID());
-    customer.setAccount(account);
-    customer.setCountryCode("FR");
-
-    return customer;
-  }
 }

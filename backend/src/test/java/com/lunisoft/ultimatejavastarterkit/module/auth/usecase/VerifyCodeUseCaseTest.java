@@ -1,5 +1,6 @@
 package com.lunisoft.ultimatejavastarterkit.module.auth.usecase;
 
+import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,13 +14,11 @@ import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.auth.AuthConstants;
 import com.lunisoft.ultimatejavastarterkit.module.auth.entity.Session;
-import com.lunisoft.ultimatejavastarterkit.module.auth.entity.VerificationToken;
 import com.lunisoft.ultimatejavastarterkit.module.auth.entity.VerificationType;
 import com.lunisoft.ultimatejavastarterkit.module.auth.repository.SessionRepository;
 import com.lunisoft.ultimatejavastarterkit.module.auth.repository.VerificationTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +51,7 @@ class VerifyCodeUseCaseTest {
     var email = "test@example.com";
     var code = "1234";
     var account = createAccount(email);
-    var token = createToken(account, code, 0);
+    var token = createVerificationToken(account, code, 0);
     var session = createSession(account);
 
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
@@ -112,7 +111,7 @@ class VerifyCodeUseCaseTest {
   void execute_maxAttemptsReached_throwsBusinessRuleException() {
     var email = "test@example.com";
     var account = createAccount(email);
-    var token = createToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
+    var token = createVerificationToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
 
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
@@ -133,7 +132,7 @@ class VerifyCodeUseCaseTest {
   void execute_wrongCode_incrementsAttemptsAndThrows() {
     var email = "test@example.com";
     var account = createAccount(email);
-    var token = createToken(account, "1234", 0);
+    var token = createVerificationToken(account, "1234", 0);
 
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
@@ -155,33 +154,4 @@ class VerifyCodeUseCaseTest {
     verify(verificationTokenRepository, never()).delete(any());
   }
 
-  private Account createAccount(String email) {
-    var account = new Account();
-    account.setId(UUID.randomUUID());
-    account.setEmail(email);
-    account.setRole(Role.CUSTOMER);
-
-    return account;
-  }
-
-  private VerificationToken createToken(Account account, String code, int attempts) {
-    var token = new VerificationToken();
-    token.setId(UUID.randomUUID());
-    token.setToken(UUID.randomUUID().toString());
-    token.setType(VerificationType.LOGIN_CODE);
-    token.setValue(code);
-    token.setAccount(account);
-    token.setAttempts(attempts);
-    token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
-
-    return token;
-  }
-
-  private Session createSession(Account account) {
-    var session = new Session();
-    session.setId(UUID.randomUUID());
-    session.setAccount(account);
-
-    return session;
-  }
 }

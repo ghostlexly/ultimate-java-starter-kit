@@ -1,13 +1,12 @@
 package com.lunisoft.ultimatejavastarterkit.module.customer.usecase;
 
+import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.createAccount;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.lunisoft.ultimatejavastarterkit.core.exception.BusinessRuleException;
-import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
-import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.customer.dto.RegisterCustomerRequest;
 import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
@@ -38,7 +37,7 @@ class CreateProfileUseCaseTest {
   @Test
   void execute_validRequest_createsProfile() {
     var accountId = UUID.randomUUID();
-    var account = createAccount(accountId);
+    var account = createAccount(accountId, "test@example.com");
     var request = new RegisterCustomerRequest("US");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -82,7 +81,7 @@ class CreateProfileUseCaseTest {
   @Test
   void execute_profileAlreadyExists_throwsBusinessRuleException() {
     var accountId = UUID.randomUUID();
-    var account = createAccount(accountId);
+    var account = createAccount(accountId, "test@example.com");
     var existingCustomer = new Customer();
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -101,12 +100,4 @@ class CreateProfileUseCaseTest {
     verify(customerRepository, never()).save(any());
   }
 
-  private Account createAccount(UUID accountId) {
-    var account = new Account();
-    account.setId(accountId);
-    account.setEmail("test@example.com");
-    account.setRole(Role.CUSTOMER);
-
-    return account;
-  }
 }

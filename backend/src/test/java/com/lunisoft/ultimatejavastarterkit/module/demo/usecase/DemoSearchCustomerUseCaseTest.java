@@ -1,14 +1,12 @@
 package com.lunisoft.ultimatejavastarterkit.module.demo.usecase;
 
+import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.createCustomer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
-import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.demo.repository.DemoCustomerRepository;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,17 +52,4 @@ class DemoSearchCustomerUseCaseTest {
     assertThat(result).isEmpty();
   }
 
-  private Customer createCustomer(String email, String countryCode, Role role) {
-    var account = new Account();
-    account.setId(UUID.randomUUID());
-    account.setEmail(email);
-    account.setRole(role);
-
-    var customer = new Customer();
-    customer.setId(UUID.randomUUID());
-    customer.setAccount(account);
-    customer.setCountryCode(countryCode);
-
-    return customer;
-  }
 }

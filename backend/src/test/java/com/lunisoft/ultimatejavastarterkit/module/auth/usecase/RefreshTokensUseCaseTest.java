@@ -1,5 +1,6 @@
 package com.lunisoft.ultimatejavastarterkit.module.auth.usecase;
 
+import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,13 +9,10 @@ import static org.mockito.Mockito.*;
 
 import com.lunisoft.ultimatejavastarterkit.core.exception.BusinessRuleException;
 import com.lunisoft.ultimatejavastarterkit.core.security.JwtTokenProvider;
-import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
-import com.lunisoft.ultimatejavastarterkit.module.auth.entity.Session;
 import com.lunisoft.ultimatejavastarterkit.module.auth.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,7 +40,7 @@ class RefreshTokensUseCaseTest {
   void execute_validToken_returnsNewTokens() {
     var refreshToken = "valid-refresh-token";
     var sessionId = UUID.randomUUID();
-    var account = createAccount();
+    var account = createAccount("test@example.com");
     var session = createSession(sessionId, account);
 
     when(jwtTokenProvider.parseToken(refreshToken)).thenReturn(claims);
@@ -97,21 +95,4 @@ class RefreshTokensUseCaseTest {
             });
   }
 
-  private Account createAccount() {
-    var account = new Account();
-    account.setId(UUID.randomUUID());
-    account.setEmail("test@example.com");
-    account.setRole(Role.CUSTOMER);
-
-    return account;
-  }
-
-  private Session createSession(UUID sessionId, Account account) {
-    var session = new Session();
-    session.setId(sessionId);
-    session.setAccount(account);
-    session.setExpiresAt(Instant.now().plus(7, ChronoUnit.DAYS));
-
-    return session;
-  }
 }
