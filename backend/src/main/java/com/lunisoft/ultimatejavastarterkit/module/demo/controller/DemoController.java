@@ -2,13 +2,17 @@ package com.lunisoft.ultimatejavastarterkit.module.demo.controller;
 
 import com.lunisoft.ultimatejavastarterkit.core.ratelimit.RateLimit;
 import com.lunisoft.ultimatejavastarterkit.core.security.PublicEndpoint;
+import com.lunisoft.ultimatejavastarterkit.core.storage.StorageService;
 import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoPaginatedCustomerResponse;
+import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoPreviewUploadedMediasResponse;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoSearchCustomerResponse;
 import com.lunisoft.ultimatejavastarterkit.module.demo.usecase.DemoPaginateCustomerUseCase;
 import com.lunisoft.ultimatejavastarterkit.module.demo.usecase.DemoSearchCustomerUseCase;
+import com.lunisoft.ultimatejavastarterkit.module.media.repository.MediaRepository;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.hibernate.validator.constraints.Length;
@@ -26,12 +30,18 @@ public class DemoController {
 
   private final DemoSearchCustomerUseCase demoSearchCustomerUseCase;
   private final DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
+  private final MediaRepository mediaRepository;
+  private final StorageService storageService;
 
   public DemoController(
       DemoSearchCustomerUseCase demoSearchCustomerUseCase,
-      DemoPaginateCustomerUseCase demoPaginateCustomerUseCase) {
+      DemoPaginateCustomerUseCase demoPaginateCustomerUseCase,
+      MediaRepository mediaRepository,
+      StorageService storageService) {
     this.demoSearchCustomerUseCase = demoSearchCustomerUseCase;
     this.demoPaginateCustomerUseCase = demoPaginateCustomerUseCase;
+    this.mediaRepository = mediaRepository;
+    this.storageService = storageService;
   }
 
   /**
@@ -89,5 +99,23 @@ public class DemoController {
   public ResponseEntity<Map<String, String>> accessibleToPublic() {
     return ResponseEntity.ok(
         Map.of("message", "This endpoint is accessible to public without any authentication."));
+  }
+
+  @GetMapping("preview-uploaded-medias")
+  public ResponseEntity<List<DemoPreviewUploadedMediasResponse>> previewUploadedMedias() {
+    List<DemoPreviewUploadedMediasResponse> previewUrls =
+        mediaRepository.findAll().stream()
+            .map(
+                media ->
+                    new DemoPreviewUploadedMediasResponse(
+                        media.getId(),
+                        media.getFileName(),
+                        media.getKey(),
+                        media.getMimeType(),
+                        storageService.generatePresignedGetUrl(
+                            media.getKey(), Duration.ofHours(1))))
+            .toList();
+
+    return ResponseEntity.ok(previewUrls);
   }
 }
