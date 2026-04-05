@@ -30,5 +30,5 @@ generate-keys: ## Generate SSH keys
 install-playwright: ## Install Playwright Chromium browser binaries
 	cd backend && ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium --with-deps"
 
-db-reset:
+db-reset: ## Reset database to the initial state
 	docker compose down -v && docker compose up -d

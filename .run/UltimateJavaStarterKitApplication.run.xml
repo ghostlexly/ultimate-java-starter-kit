@@ -2,7 +2,7 @@
   <configuration default="false" name="UltimateJavaStarterKitApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <option name="ACTIVE_PROFILES" value="dev" />
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
-    <module name="ultimate-java-starter-kit" />
+    <module name="ultimate-java-starter-kit-api" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.lunisoft.ultimatejavastarterkit.UltimateJavaStarterKitApplication" />
     <method v="2">
       <option name="Make" enabled="true" />
