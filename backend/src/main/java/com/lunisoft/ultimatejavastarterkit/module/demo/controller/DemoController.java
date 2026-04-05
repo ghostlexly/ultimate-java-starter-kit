@@ -1,5 +1,6 @@
 package com.lunisoft.ultimatejavastarterkit.module.demo.controller;
 
+import com.lunisoft.ultimatejavastarterkit.core.pdf.PdfService;
 import com.lunisoft.ultimatejavastarterkit.core.ratelimit.RateLimit;
 import com.lunisoft.ultimatejavastarterkit.core.security.PublicEndpoint;
 import com.lunisoft.ultimatejavastarterkit.core.storage.StorageService;
@@ -16,6 +17,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,16 +35,19 @@ public class DemoController {
   private final DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
   private final MediaRepository mediaRepository;
   private final StorageService storageService;
+  private final PdfService pdfService;
 
   public DemoController(
       DemoSearchCustomerUseCase demoSearchCustomerUseCase,
       DemoPaginateCustomerUseCase demoPaginateCustomerUseCase,
       MediaRepository mediaRepository,
-      StorageService storageService) {
+      StorageService storageService,
+      PdfService pdfService) {
     this.demoSearchCustomerUseCase = demoSearchCustomerUseCase;
     this.demoPaginateCustomerUseCase = demoPaginateCustomerUseCase;
     this.mediaRepository = mediaRepository;
     this.storageService = storageService;
+    this.pdfService = pdfService;
   }
 
   /**
@@ -117,5 +123,49 @@ public class DemoController {
             .toList();
 
     return ResponseEntity.ok(previewUrls);
+  }
+
+  /**
+   * Demo endpoint: generates a sample PDF using Playwright + Tailwind CSS. Display the PDF in the
+   * browser.
+   */
+  @GetMapping("preview-pdf")
+  @PublicEndpoint
+  public ResponseEntity<byte[]> generatePdf() {
+    var avatarUri = pdfService.toDataUri("templates/assets/avatar.png", "image/png");
+    byte[] pdf =
+        pdfService.generate(
+            "sample-pdf",
+            Map.of(
+                "title", "Sample PDF Document",
+                "testText", "This PDF was generated using Playwright with Tailwind CSS styling.",
+                "avatarUri", avatarUri));
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"sample.pdf\"")
+        .contentType(MediaType.APPLICATION_PDF)
+        .body(pdf);
+  }
+
+  /**
+   * Demo endpoint: generates a sample PDF using Playwright + Tailwind CSS. Returns the PDF as a
+   * downloadable file.
+   */
+  @GetMapping("download-pdf")
+  @PublicEndpoint
+  public ResponseEntity<byte[]> downloadPdf() {
+    var avatarUri = pdfService.toDataUri("templates/assets/avatar.png", "image/png");
+    byte[] pdf =
+        pdfService.generate(
+            "sample-pdf",
+            Map.of(
+                "title", "Sample PDF Document",
+                "testText", "This PDF was generated using Playwright with Tailwind CSS styling.",
+                "avatarUri", avatarUri));
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"sample.pdf\"")
+        .contentType(MediaType.APPLICATION_PDF)
+        .body(pdf);
   }
 }

@@ -19,6 +19,7 @@
         <jjwt.version>0.12.6</jjwt.version>
         <bucket4j.version>8.17.0</bucket4j.version>
         <aws-sdk.version>2.31.9</aws-sdk.version>
+        <playwright.version>1.52.0</playwright.version>
     </properties>
 
     <dependencyManagement>
@@ -76,6 +77,19 @@
             <groupId>com.bucket4j</groupId>
             <artifactId>bucket4j_jdk17-core</artifactId>
             <version>${bucket4j.version}</version>
+        </dependency>
+
+        <!-- Thymeleaf (HTML template rendering for PDFs) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+        <!-- Playwright (headless browser for PDF generation) -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>${playwright.version}</version>
         </dependency>
 
         <!-- AWS S3 (sync client only — exclude Netty async client to avoid CVE-2026-33871) -->

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>Sample PDF</title>
+    <meta charset="UTF-8"/>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="p-8 font-sans bg-white">
+
+<div class="max-w-2xl mx-auto">
+    <img th:src="${avatarUri}" alt="Avatar" class="w-16 h-16 rounded-full mb-4"/>
+    <h1 class="text-3xl font-bold text-gray-900" th:text="${title}">Sample Title</h1>
+    <p class="mt-4 text-gray-600 leading-relaxed" th:text="${testText}">Sample content goes here.</p>
+
+    <div class="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <p class="text-sm text-gray-500">
+            Generated with Playwright + Tailwind CSS
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

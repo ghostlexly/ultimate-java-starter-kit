@@ -41,6 +41,10 @@ app:
     access-key: ${APP_STORAGE_ACCESS_KEY}
     secret-key: ${APP_STORAGE_SECRET_KEY}
     bucket: ${APP_STORAGE_BUCKET}
+  pdf:
+    render-timeout-ms: ${APP_PDF_RENDER_TIMEOUT_MS:10000}
+    format: ${APP_PDF_FORMAT:A4}
+    print-background: ${APP_PDF_PRINT_BACKGROUND:true}
 
 logging:
   level:

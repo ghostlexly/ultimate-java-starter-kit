@@ -1,4 +1,4 @@
-.PHONY: start stop dev test clean build generate-keys
+.PHONY: start stop dev test clean build generate-keys install-playwright
 
 help: ## Show this help page
 	@grep -E '(^[a-zA-Z0-9_-]+:.*?##.*$$)|(^##)' Makefile | awk 'BEGIN {FS = ":.*?##"}{printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}' | sed -e 's/\[32m##/[33m/'
@@ -26,6 +26,9 @@ build: ## Maven Build
 
 generate-keys: ## Generate SSH keys
 	./backend/scripts/generate-jwt-keys.sh
+
+install-playwright: ## Install Playwright Chromium browser binaries
+	cd backend && ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium --with-deps"
 
 db-reset:
 	docker compose down -v && docker compose up -d
