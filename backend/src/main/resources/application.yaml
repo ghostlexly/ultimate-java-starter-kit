@@ -3,9 +3,9 @@ spring:
     name: ultimate-java-starter-kit
 
   datasource:
-    url: ${POSTGRES_DATABASE_URL:jdbc:postgresql://postgres:5432/ultimatejavastarterkit}
-    username: ${POSTGRES_USER:lunisoft}
-    password: ${POSTGRES_PASSWORD:ChangeMe}
+    url: ${POSTGRES_DATABASE_URL}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
 
   jpa:
     hibernate:
