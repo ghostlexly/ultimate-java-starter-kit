@@ -78,10 +78,16 @@
             <version>${bucket4j.version}</version>
         </dependency>
 
-        <!-- AWS S3 -->
+        <!-- AWS S3 (sync client only — exclude Netty async client to avoid CVE-2026-33871) -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>netty-nio-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Database -->
