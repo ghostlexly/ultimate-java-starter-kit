@@ -26,7 +26,8 @@ public class DemoPaginateCustomerUseCase {
     this.demoCustomerRepository = demoCustomerRepository;
   }
 
-  public DemoPaginatedCustomerResponse execute(int page, int size, String email, String countryCode) {
+  public DemoPaginatedCustomerResponse execute(
+      int page, int size, String email, String countryCode) {
     Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
     Specification<Customer> spec = buildSpec(email, countryCode);
 
@@ -51,9 +52,9 @@ public class DemoPaginateCustomerUseCase {
         result.isLast());
   }
 
-  /** Builds the specification by chaining optional filters onto the base fetchAccount() spec. */
+  /** Builds the specification by chaining optional filters onto the base spec. */
   private Specification<Customer> buildSpec(String email, String countryCode) {
-    Specification<Customer> spec = DemoCustomerSpecification.fetchAccount();
+    Specification<Customer> spec = DemoCustomerSpecification.build();
 
     if (email != null && !email.isBlank()) {
       spec = spec.and(DemoCustomerSpecification.hasEmail(email.trim()));

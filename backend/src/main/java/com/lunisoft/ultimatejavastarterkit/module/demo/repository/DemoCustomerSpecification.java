@@ -24,7 +24,7 @@ public final class DemoCustomerSpecification {
    * Eagerly fetches the account relation to avoid LazyInitializationException. Should always be
    * used as the base spec when mapping results that access account fields.
    */
-  public static Specification<Customer> fetchAccount() {
+  public static Specification<Customer> build() {
     return (root, query, cb) -> {
       // Only fetch for the main query, not for the count query (which doesn't support fetch)
       if (query.getResultType() != Long.class && query.getResultType() != long.class) {
