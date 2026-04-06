@@ -2,6 +2,8 @@ package com.lunisoft.ultimatejavastarterkit.config;
 
 import com.lunisoft.ultimatejavastarterkit.core.security.JwtAuthenticationFilter;
 import com.lunisoft.ultimatejavastarterkit.core.security.PublicEndpointScanner;
+import com.lunisoft.ultimatejavastarterkit.core.security.RestAccessDeniedHandler;
+import com.lunisoft.ultimatejavastarterkit.core.security.RestAuthenticationEntryPoint;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,12 +26,18 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final PublicEndpointScanner publicEndpointScanner;
+  private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+  private final RestAccessDeniedHandler restAccessDeniedHandler;
 
   public SecurityConfig(
       JwtAuthenticationFilter jwtAuthenticationFilter,
-      PublicEndpointScanner publicEndpointScanner) {
+      PublicEndpointScanner publicEndpointScanner,
+      RestAuthenticationEntryPoint restAuthenticationEntryPoint,
+      RestAccessDeniedHandler restAccessDeniedHandler) {
     this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     this.publicEndpointScanner = publicEndpointScanner;
+    this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
+    this.restAccessDeniedHandler = restAccessDeniedHandler;
   }
 
   @Bean
@@ -44,6 +52,10 @@ public class SecurityConfig {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
+        .exceptionHandling(
+            ex ->
+                ex.authenticationEntryPoint(restAuthenticationEntryPoint)
+                    .accessDeniedHandler(restAccessDeniedHandler))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .build();
   }

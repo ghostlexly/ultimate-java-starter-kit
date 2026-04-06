@@ -10,6 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -21,6 +25,38 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler {
   private final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+  /**
+   * Handles authorization failures thrown by method-level security (e.g. {@code @PreAuthorize}).
+   * Returns 401 if the current request has no authenticated user, otherwise 403.
+   *
+   * <p>Method-level {@code @PreAuthorize} runs as an AOP interceptor around the controller call,
+   * so the {@code AccessDeniedException} it throws bubbles up through the {@code DispatcherServlet}
+   * and reaches {@code @RestControllerAdvice} — unlike URL-level rules in {@code SecurityConfig},
+   * which fail inside the security filter chain and are handled by {@code
+   * RestAuthenticationEntryPoint} / {@code RestAccessDeniedHandler} instead.
+   */
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    boolean isAnonymous =
+        authentication == null
+            || !authentication.isAuthenticated()
+            || authentication instanceof AnonymousAuthenticationToken;
+
+    if (isAnonymous) {
+      ErrorResponse response =
+          new ErrorResponse(
+              "UnauthorizedException", "Authentication required", "UNAUTHORIZED", null);
+
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    ErrorResponse response =
+        new ErrorResponse("ForbiddenException", "Access denied", "FORBIDDEN", null);
+
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+  }
 
   /** Handles custom business rule violations thrown from services/use cases. */
   @ExceptionHandler(BusinessRuleException.class)

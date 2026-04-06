@@ -1,6 +1,5 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-
 /**
  * Wolfios - Axios instance for Client Components
  *
@@ -26,14 +25,12 @@ const wolfios = axios.create({
   timeout: 30000,
 });
 
-wolfios.interceptors.request.use(
-  async (request: InternalAxiosRequestConfig) => {
-    // disable subsequent setting the default header by Axios
-    request.headers.set('User-Agent', false);
+wolfios.interceptors.request.use(async (request: InternalAxiosRequestConfig) => {
+  // disable subsequent setting the default header by Axios
+  request.headers.set('User-Agent', false);
 
-    return request;
-  },
-);
+  return request;
+});
 
 wolfios.interceptors.response.use(
   async (response: AxiosResponse) => {
@@ -47,7 +44,7 @@ wolfios.interceptors.response.use(
     ) {
       try {
         // Refresh the JWT tokens
-        await wolfios.post('/api/auth/refresh');
+        await wolfios.post('/api/auth/refresh', {});
 
         // Retry the original request and return the response
         // (error.config contains the original request config (url, method, data, headers, etc.))
@@ -56,7 +53,7 @@ wolfios.interceptors.response.use(
         console.error('Failed to refresh JWT tokens.', refreshError);
 
         // Clear cookies
-        await wolfios.post('/api/auth/logout');
+        await wolfios.post('/api/auth/logout', {});
 
         // Refresh the page to clear the session
         globalThis.location.reload();

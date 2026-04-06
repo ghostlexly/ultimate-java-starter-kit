@@ -49,4 +49,4 @@ COPY --from=build /root/.cache/ms-playwright /root/.cache/ms-playwright
 
 COPY --from=build /app/target/*.jar app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "app.jar"]

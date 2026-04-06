@@ -31,4 +31,4 @@ COPY --from=builder /usr/src/app/.output ./.output
 COPY ./public ./public
 
 ENV NODE_ENV=production
-ENTRYPOINT ["npm", "run", "start"]
+CMD ["npm", "run", "start"]
