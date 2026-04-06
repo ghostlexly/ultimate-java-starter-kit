@@ -29,8 +29,8 @@ server:
 
 app:
   jwt:
-    private-key: ${APP_JWT_PRIVATE_KEY:}
-    public-key: ${APP_JWT_PUBLIC_KEY:}
+    private-key: ${APP_JWT_PRIVATE_KEY}
+    public-key: ${APP_JWT_PUBLIC_KEY}
     access-token-expiration-minutes: 15
     refresh-token-expiration-minutes: 10080
   cookie:
