@@ -42,7 +42,6 @@ class GetProfileUseCaseTest {
     var customer = new Customer();
     customer.setId(customerId);
     customer.setAccount(account);
-    customer.setCountryCode("FR");
 
     when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.of(customer));
 
@@ -50,7 +49,6 @@ class GetProfileUseCaseTest {
 
     assertThat(result.id()).isEqualTo(customerId);
     assertThat(result.email()).isEqualTo("test@example.com");
-    assertThat(result.countryCode()).isEqualTo("FR");
   }
 
   @Test

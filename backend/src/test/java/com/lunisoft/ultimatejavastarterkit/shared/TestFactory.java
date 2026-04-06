@@ -43,19 +43,18 @@ public final class TestFactory {
 
   // ── Customer ─────────────────────────────────────────────
 
-  public static Customer createCustomer(Account account, String countryCode) {
+  public static Customer createCustomer(Account account) {
     var customer = new Customer();
     customer.setId(UUID.randomUUID());
     customer.setAccount(account);
-    customer.setCountryCode(countryCode);
 
     return customer;
   }
 
-  public static Customer createCustomer(String email, String countryCode, Role role) {
+  public static Customer createCustomer(String email, Role role) {
     var account = createAccount(email, role);
 
-    return createCustomer(account, countryCode);
+    return createCustomer(account);
   }
 
   // ── Session ──────────────────────────────────────────────

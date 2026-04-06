@@ -8,12 +8,11 @@ import com.lunisoft.ultimatejavastarterkit.module.customer.dto.UpdateCustomerEma
 import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.ultimatejavastarterkit.module.customer.repository.CustomerRepository;
+import java.util.UUID;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
 
 @Service
 public class UpdateCustomerEmailUseCase {
@@ -55,6 +54,6 @@ public class UpdateCustomerEmailUseCase {
         // Publish event so listeners can react (e.g. auto-detect country code)
         eventPublisher.publishEvent(new CustomerEmailUpdatedEvent(customer, request.email()));
 
-        return new CustomerResponse(customer.getId(), account.getEmail(), customer.getCountryCode());
+        return new CustomerResponse(customer.getId(), account.getEmail());
     }
 }

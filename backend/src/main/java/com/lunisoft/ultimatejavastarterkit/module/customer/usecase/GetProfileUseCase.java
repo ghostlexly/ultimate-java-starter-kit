@@ -28,6 +28,6 @@ public class GetProfileUseCase {
                         "Customer profile not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
     return new CustomerResponse(
-        customer.getId(), customer.getAccount().getEmail(), customer.getCountryCode());
+        customer.getId(), customer.getAccount().getEmail());
   }
 }

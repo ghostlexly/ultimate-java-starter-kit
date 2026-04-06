@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Demo use case: searches customers by country code and account role.
+ * Demo use case: searches customers by account role.
  * Illustrates how to query across a join (Customer -> Account).
  */
 @Service
@@ -21,15 +21,14 @@ public class DemoSearchCustomerUseCase {
   }
 
   @Transactional(readOnly = true)
-  public List<DemoSearchCustomerResponse> execute(String countryCode, Role role) {
+  public List<DemoSearchCustomerResponse> execute(Role role) {
 
     return demoCustomerRepository
-        .findByCountryCodeAndAccountRole(countryCode, role)
+        .findByAccountRole(role)
         .stream()
         .map(customer -> new DemoSearchCustomerResponse(
             customer.getId(),
             customer.getAccount().getEmail(),
-            customer.getCountryCode(),
             customer.getAccount().getRole().name()))
         .toList();
   }

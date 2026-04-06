@@ -24,7 +24,7 @@ public class CustomerEmailUpdatedListener {
     String newEmail = event.newEmail();
 
     if ("contact@lunisoft.fr".equalsIgnoreCase(newEmail)) {
-      event.customer().setCountryCode("FR");
+      //      event.customer().setCountryCode("FR");
       log.info("Auto-detected country code FR for email {}", newEmail);
     }
   }

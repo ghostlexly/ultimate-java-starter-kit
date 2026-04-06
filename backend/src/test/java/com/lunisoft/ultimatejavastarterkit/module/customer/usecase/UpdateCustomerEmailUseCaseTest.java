@@ -40,7 +40,7 @@ class UpdateCustomerEmailUseCaseTest {
   void execute_validRequest_updatesEmailAndPublishesEvent() {
     var accountId = UUID.randomUUID();
     var account = createAccount(accountId, "old@example.com");
-    var customer = createCustomer(account, "FR");
+    var customer = createCustomer(account);
     var request = new UpdateCustomerEmailRequest("new@example.com");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -98,5 +98,4 @@ class UpdateCustomerEmailUseCaseTest {
 
     verify(eventPublisher, never()).publishEvent(any());
   }
-
 }

@@ -5,6 +5,5 @@ import java.util.UUID;
 public record DemoSearchCustomerResponse(
     UUID id,
     String email,
-    String countryCode,
     String role
 ) {}

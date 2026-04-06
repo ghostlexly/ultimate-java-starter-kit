@@ -34,17 +34,16 @@ class DemoPaginateCustomerUseCaseTest {
 
   @Test
   void execute_returnsPagedResults() {
-    var customer = createCustomer("test@example.com", "FR", Role.CUSTOMER);
+    var customer = createCustomer("test@example.com", Role.CUSTOMER);
     var pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
     var page = new PageImpl<>(List.of(customer), pageable, 1);
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var result = demoPaginateCustomerUseCase.execute(0, 10, null, null);
+    var result = demoPaginateCustomerUseCase.execute(0, 10, null);
 
     assertThat(result.content()).hasSize(1);
     assertThat(result.content().getFirst().email()).isEqualTo("test@example.com");
-    assertThat(result.content().getFirst().countryCode()).isEqualTo("FR");
     assertThat(result.content().getFirst().role()).isEqualTo("CUSTOMER");
     assertThat(result.totalItems()).isEqualTo(1);
     assertThat(result.totalPages()).isEqualTo(1);
@@ -59,7 +58,7 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var result = demoPaginateCustomerUseCase.execute(0, 10, null, null);
+    var result = demoPaginateCustomerUseCase.execute(0, 10, null);
 
     assertThat(result.content()).isEmpty();
     assertThat(result.totalItems()).isZero();
@@ -75,7 +74,7 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var result = demoPaginateCustomerUseCase.execute(0, 5, "test@example.com", "US");
+    var result = demoPaginateCustomerUseCase.execute(0, 5, "test@example.com");
 
     assertThat(result.content()).isEmpty();
   }

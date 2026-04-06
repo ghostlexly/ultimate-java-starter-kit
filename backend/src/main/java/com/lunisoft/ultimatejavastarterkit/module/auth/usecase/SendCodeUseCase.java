@@ -60,7 +60,6 @@ public class SendCodeUseCase {
 
                   Customer newCustomer = new Customer();
                   newCustomer.setAccount(savedAccount);
-                  newCustomer.setCountryCode("FR");
                   customerRepository.save(newCustomer);
 
                   return savedAccount;

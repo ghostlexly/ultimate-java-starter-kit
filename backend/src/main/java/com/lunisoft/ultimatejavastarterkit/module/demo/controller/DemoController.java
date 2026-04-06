@@ -16,7 +16,6 @@ import jakarta.validation.constraints.Min;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,14 +50,12 @@ public class DemoController {
   }
 
   /**
-   * Demo endpoint: search customers by country code and account role. Example: GET
-   * /api/demo/customers?countryCode=FR&role=CUSTOMER
+   * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER
    */
   @GetMapping("/customers")
-  public ResponseEntity<List<DemoSearchCustomerResponse>> searchCustomers(
-      @Length(min = 2, max = 2) @RequestParam String countryCode, @RequestParam Role role) {
+  public ResponseEntity<List<DemoSearchCustomerResponse>> searchCustomers(@RequestParam Role role) {
 
-    List<DemoSearchCustomerResponse> results = demoSearchCustomerUseCase.execute(countryCode, role);
+    List<DemoSearchCustomerResponse> results = demoSearchCustomerUseCase.execute(role);
 
     return ResponseEntity.ok(results);
   }
@@ -66,18 +63,17 @@ public class DemoController {
   /**
    * Demo endpoint: paginated list of customers with optional filters. Examples: GET
    * /api/demo/customers/paginated GET /api/demo/customers/paginated?page=1&size=10 GET
-   * /api/demo/customers/paginated?email=john GET /api/demo/customers/paginated?countryCode=FR GET
-   * /api/demo/customers/paginated?email=john&countryCode=FR&page=1&size=5
+   * /api/demo/customers/paginated?email=john GET
+   * /api/demo/customers/paginated?email=john&page=1&size=5
    */
   @GetMapping("/customers/paginated")
   public ResponseEntity<DemoPaginatedCustomerResponse> paginateCustomers(
       @Min(1) @RequestParam(defaultValue = "1") int page,
       @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
-      @RequestParam(required = false) String email,
-      @RequestParam(required = false) String countryCode) {
+      @RequestParam(required = false) String email) {
 
     DemoPaginatedCustomerResponse response =
-        demoPaginateCustomerUseCase.execute(page - 1, size, email, countryCode);
+        demoPaginateCustomerUseCase.execute(page - 1, size, email);
 
     return ResponseEntity.ok(response);
   }

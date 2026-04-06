@@ -13,11 +13,10 @@ public interface DemoCustomerRepository
     extends JpaRepository<Customer, UUID>, JpaSpecificationExecutor<Customer> {
 
   // Needs to be in a @Transactional to loads the account relation which is set as Lazy
-  List<Customer> findByCountryCodeAndAccountRole(String countryCode, Role role);
+  List<Customer> findByAccountRole(Role role);
 
   // Doesn't need to be in a @Transactional because it's does the JOIN FETCH in one query
   @Query(
-      "SELECT c FROM Customer c JOIN FETCH c.account WHERE c.countryCode = :countryCode AND c.account.role = :role")
-  List<Customer> findByCountryCodeAndAccountRoleWithQuery(
-      @Param("countryCode") String countryCode, @Param("role") Role role);
+      "SELECT c FROM Customer c JOIN FETCH c.account WHERE c.account.role = :role")
+  List<Customer> findByAccountRoleWithQuery(@Param("role") Role role);
 }

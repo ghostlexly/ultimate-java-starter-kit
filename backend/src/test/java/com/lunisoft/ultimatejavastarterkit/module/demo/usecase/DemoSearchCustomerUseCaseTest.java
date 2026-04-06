@@ -27,27 +27,26 @@ class DemoSearchCustomerUseCaseTest {
 
   @Test
   void execute_withResults_returnsMappedResponses() {
-    var customer1 = createCustomer("alice@example.com", "FR", Role.CUSTOMER);
-    var customer2 = createCustomer("bob@example.com", "FR", Role.CUSTOMER);
+    var customer1 = createCustomer("alice@example.com", Role.CUSTOMER);
+    var customer2 = createCustomer("bob@example.com", Role.CUSTOMER);
 
-    when(demoCustomerRepository.findByCountryCodeAndAccountRole("FR", Role.CUSTOMER))
+    when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER))
         .thenReturn(List.of(customer1, customer2));
 
-    var result = demoSearchCustomerUseCase.execute("FR", Role.CUSTOMER);
+    var result = demoSearchCustomerUseCase.execute(Role.CUSTOMER);
 
     assertThat(result).hasSize(2);
     assertThat(result.get(0).email()).isEqualTo("alice@example.com");
-    assertThat(result.get(0).countryCode()).isEqualTo("FR");
     assertThat(result.get(0).role()).isEqualTo("CUSTOMER");
     assertThat(result.get(1).email()).isEqualTo("bob@example.com");
   }
 
   @Test
   void execute_noResults_returnsEmptyList() {
-    when(demoCustomerRepository.findByCountryCodeAndAccountRole("XX", Role.ADMIN))
+    when(demoCustomerRepository.findByAccountRole(Role.ADMIN))
         .thenReturn(List.of());
 
-    var result = demoSearchCustomerUseCase.execute("XX", Role.ADMIN);
+    var result = demoSearchCustomerUseCase.execute(Role.ADMIN);
 
     assertThat(result).isEmpty();
   }

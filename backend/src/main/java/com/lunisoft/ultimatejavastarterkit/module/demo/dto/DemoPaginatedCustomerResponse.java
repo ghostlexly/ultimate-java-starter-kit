@@ -14,5 +14,5 @@ public record DemoPaginatedCustomerResponse(
     boolean isFirst,
     boolean isLast) {
 
-  public record CustomerItem(UUID id, String email, String countryCode, String role) {}
+  public record CustomerItem(UUID id, String email, String role) {}
 }

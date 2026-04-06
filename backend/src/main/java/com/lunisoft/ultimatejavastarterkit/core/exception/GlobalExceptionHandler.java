@@ -81,8 +81,7 @@ public class GlobalExceptionHandler {
 
   /**
    * Handles @Validated constraint violations on @RequestParam/@PathVariable. Example: GET
-   * /api/demo/customers?countryCode=FRS (@Length(min = 2, max = 2) throws an error to limit the
-   * length to 2 characters)
+   * /api/demo/customers/paginated?page=0 (@Min(1) throws an error to enforce minimum value)
    */
   @ExceptionHandler(ConstraintViolationException.class)
   public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex) {
@@ -109,7 +108,7 @@ public class GlobalExceptionHandler {
 
   /**
    * Handles missing required @RequestParam when no default value is set. Example: GET
-   * /api/demo/customers (missing both countryCode and role query parameters)
+   * /api/demo/customers (missing role query parameter)
    */
   @ExceptionHandler(MissingServletRequestParameterException.class)
   public ResponseEntity<ErrorResponse> handleMissingParam(
@@ -126,8 +125,7 @@ public class GlobalExceptionHandler {
 
   /**
    * Handles type conversion failures on @RequestParam/@PathVariable (e.g. invalid enum values).
-   * Example: GET /api/demo/customers?countryCode=FR&role=test ("test" is not a valid Role enum
-   * value)
+   * Example: GET /api/demo/customers?role=test ("test" is not a valid Role enum value)
    */
   @ExceptionHandler(MethodArgumentTypeMismatchException.class)
   public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {

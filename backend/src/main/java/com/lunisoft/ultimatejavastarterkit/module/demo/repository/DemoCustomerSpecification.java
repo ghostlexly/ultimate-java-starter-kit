@@ -10,9 +10,8 @@ import org.springframework.data.jpa.domain.Specification;
  * <p>Usage example:
  *
  * <pre>
- *   Specification<Customer> spec = DemoCustomerSpecification.fetchAccount()
- *       .and(DemoCustomerSpecification.hasEmail("john"))
- *       .and(DemoCustomerSpecification.hasCountryCode("FR"));
+ *   Specification<Customer> spec = DemoCustomerSpecification.build()
+ *       .and(DemoCustomerSpecification.hasEmail("john"));
  *   repository.findAll(spec, pageable);
  * </pre>
  */
@@ -39,10 +38,5 @@ public final class DemoCustomerSpecification {
   public static Specification<Customer> hasEmail(String email) {
     return (root, query, cb) ->
         cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
-  }
-
-  /** Filters customers by exact country code match. */
-  public static Specification<Customer> hasCountryCode(String countryCode) {
-    return (root, query, cb) -> cb.equal(root.get("countryCode"), countryCode);
   }
 }

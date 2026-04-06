@@ -72,7 +72,6 @@ public class DevDataSeeder implements ApplicationRunner {
     // Customer
     var customer = new Customer();
     customer.setAccount(account);
-    customer.setCountryCode("FR");
     customerRepository.save(customer);
 
     customerRepository.save(customer);
