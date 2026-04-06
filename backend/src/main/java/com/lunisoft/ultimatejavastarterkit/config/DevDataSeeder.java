@@ -5,6 +5,7 @@ import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.customer.repository.CustomerRepository;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -44,7 +45,7 @@ public class DevDataSeeder implements ApplicationRunner {
 
   @Override
   @Transactional
-  public void run(ApplicationArguments args) {
+  public void run(@NonNull ApplicationArguments args) {
     seedCustomerAccount();
     log.info("Dev data seeding complete.");
   }

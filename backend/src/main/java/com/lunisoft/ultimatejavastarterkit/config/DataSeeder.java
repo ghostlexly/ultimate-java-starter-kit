@@ -5,6 +5,7 @@ import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.admin.entity.Admin;
 import com.lunisoft.ultimatejavastarterkit.module.admin.repository.AdminRepository;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -42,7 +43,7 @@ public class DataSeeder implements ApplicationRunner {
 
   @Override
   @Transactional
-  public void run(ApplicationArguments args) {
+  public void run(@NonNull ApplicationArguments args) {
     seedAdminAccount();
     log.info("Production data seeding complete.");
   }
