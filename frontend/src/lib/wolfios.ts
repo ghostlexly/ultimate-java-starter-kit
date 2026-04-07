@@ -40,7 +40,8 @@ wolfios.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       error.config &&
-      !error.config.url?.includes('/auth/refresh')
+      !error.config.url?.includes('/auth/refresh') &&
+      !error.config.url?.includes('/auth/logout')
     ) {
       try {
         // Refresh the JWT tokens
@@ -53,7 +54,7 @@ wolfios.interceptors.response.use(
         console.error('Failed to refresh JWT tokens.', refreshError);
 
         // Clear cookies
-        await wolfios.post('/api/auth/logout', {});
+        await wolfios.post('/api/auth/logout', {}).catch();
 
         // Refresh the page to clear the session
         globalThis.location.reload();
