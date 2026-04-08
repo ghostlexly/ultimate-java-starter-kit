@@ -2,20 +2,16 @@ package com.lunisoft.ultimatejavastarterkit.module.admin.usecase;
 
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.auth.repository.SessionRepository;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 @Service
+@RequiredArgsConstructor
 public class GetStatsUseCase {
 
   private final AccountRepository accountRepository;
   private final SessionRepository sessionRepository;
-
-  public GetStatsUseCase(AccountRepository accountRepository, SessionRepository sessionRepository) {
-    this.accountRepository = accountRepository;
-    this.sessionRepository = sessionRepository;
-  }
 
   public Map<String, Long> execute() {
 

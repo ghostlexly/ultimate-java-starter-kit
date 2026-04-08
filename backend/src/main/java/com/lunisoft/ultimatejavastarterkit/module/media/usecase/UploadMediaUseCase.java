@@ -12,6 +12,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 
 @Service
+@RequiredArgsConstructor
 public class UploadMediaUseCase {
 
   private final Logger log = LoggerFactory.getLogger(UploadMediaUseCase.class);
@@ -35,11 +37,6 @@ public class UploadMediaUseCase {
 
   private final StorageService storageService;
   private final MediaRepository mediaRepository;
-
-  public UploadMediaUseCase(StorageService storageService, MediaRepository mediaRepository) {
-    this.storageService = storageService;
-    this.mediaRepository = mediaRepository;
-  }
 
   /** Validates the uploaded image, stores it in S3, and persists metadata to the database. */
   @Transactional

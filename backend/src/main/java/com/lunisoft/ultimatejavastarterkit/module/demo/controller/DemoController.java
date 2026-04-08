@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Min;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
 @Validated // Validates request parameters only (countryCode and role) (note: doesn't validate body)
 @RequestMapping("/api/demo")
 public class DemoController {
@@ -35,19 +37,6 @@ public class DemoController {
   private final MediaRepository mediaRepository;
   private final StorageService storageService;
   private final PdfService pdfService;
-
-  public DemoController(
-      DemoSearchCustomerUseCase demoSearchCustomerUseCase,
-      DemoPaginateCustomerUseCase demoPaginateCustomerUseCase,
-      MediaRepository mediaRepository,
-      StorageService storageService,
-      PdfService pdfService) {
-    this.demoSearchCustomerUseCase = demoSearchCustomerUseCase;
-    this.demoPaginateCustomerUseCase = demoPaginateCustomerUseCase;
-    this.mediaRepository = mediaRepository;
-    this.storageService = storageService;
-    this.pdfService = pdfService;
-  }
 
   /**
    * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER

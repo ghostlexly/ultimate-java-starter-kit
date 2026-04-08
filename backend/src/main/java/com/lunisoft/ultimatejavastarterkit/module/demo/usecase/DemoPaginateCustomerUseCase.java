@@ -2,8 +2,9 @@ package com.lunisoft.ultimatejavastarterkit.module.demo.usecase;
 
 import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.demo.dto.DemoPaginatedCustomerResponse;
-import com.lunisoft.ultimatejavastarterkit.module.demo.repository.DemoCustomerSpecification;
 import com.lunisoft.ultimatejavastarterkit.module.demo.repository.DemoCustomerRepository;
+import com.lunisoft.ultimatejavastarterkit.module.demo.repository.DemoCustomerSpecification;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,13 +19,10 @@ import org.springframework.stereotype.Service;
  * new one is just another .and() call.
  */
 @Service
+@RequiredArgsConstructor
 public class DemoPaginateCustomerUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
-
-  public DemoPaginateCustomerUseCase(DemoCustomerRepository demoCustomerRepository) {
-    this.demoCustomerRepository = demoCustomerRepository;
-  }
 
   public DemoPaginatedCustomerResponse execute(int page, int size, String email) {
     Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());

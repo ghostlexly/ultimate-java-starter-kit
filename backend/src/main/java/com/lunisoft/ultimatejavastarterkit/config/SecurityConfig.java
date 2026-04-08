@@ -5,6 +5,7 @@ import com.lunisoft.ultimatejavastarterkit.core.security.PublicEndpointScanner;
 import com.lunisoft.ultimatejavastarterkit.core.security.RestAccessDeniedHandler;
 import com.lunisoft.ultimatejavastarterkit.core.security.RestAuthenticationEntryPoint;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@RequiredArgsConstructor
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -28,17 +30,6 @@ public class SecurityConfig {
   private final PublicEndpointScanner publicEndpointScanner;
   private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
   private final RestAccessDeniedHandler restAccessDeniedHandler;
-
-  public SecurityConfig(
-      JwtAuthenticationFilter jwtAuthenticationFilter,
-      PublicEndpointScanner publicEndpointScanner,
-      RestAuthenticationEntryPoint restAuthenticationEntryPoint,
-      RestAccessDeniedHandler restAccessDeniedHandler) {
-    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    this.publicEndpointScanner = publicEndpointScanner;
-    this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
-    this.restAccessDeniedHandler = restAccessDeniedHandler;
-  }
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) {

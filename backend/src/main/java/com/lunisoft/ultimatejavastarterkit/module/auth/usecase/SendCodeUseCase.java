@@ -16,12 +16,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class SendCodeUseCase {
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
@@ -30,17 +32,6 @@ public class SendCodeUseCase {
   private final CustomerRepository customerRepository;
   private final VerificationTokenRepository verificationTokenRepository;
   private final ApplicationEventPublisher eventPublisher;
-
-  public SendCodeUseCase(
-      AccountRepository accountRepository,
-      CustomerRepository customerRepository,
-      VerificationTokenRepository verificationTokenRepository,
-      ApplicationEventPublisher eventPublisher) {
-    this.accountRepository = accountRepository;
-    this.customerRepository = customerRepository;
-    this.verificationTokenRepository = verificationTokenRepository;
-    this.eventPublisher = eventPublisher;
-  }
 
   /**
    * Generates a 4-digit login code and stores it as a VerificationToken. Creates the account if it

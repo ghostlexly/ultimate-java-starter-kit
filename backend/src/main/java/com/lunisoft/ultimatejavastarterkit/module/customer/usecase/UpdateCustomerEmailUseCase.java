@@ -9,26 +9,19 @@ import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.ultimatejavastarterkit.module.customer.repository.CustomerRepository;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class UpdateCustomerEmailUseCase {
 
     private final CustomerRepository customerRepository;
     private final AccountRepository accountRepository;
     private final ApplicationEventPublisher eventPublisher;
-
-    public UpdateCustomerEmailUseCase(
-            CustomerRepository customerRepository,
-            AccountRepository accountRepository,
-            ApplicationEventPublisher eventPublisher) {
-        this.customerRepository = customerRepository;
-        this.accountRepository = accountRepository;
-        this.eventPublisher = eventPublisher;
-    }
 
     @Transactional
     public CustomerResponse execute(UUID accountId, UpdateCustomerEmailRequest request) {

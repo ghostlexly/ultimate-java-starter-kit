@@ -4,7 +4,12 @@ import com.lunisoft.ultimatejavastarterkit.module.account.entity.Account;
 import com.lunisoft.ultimatejavastarterkit.shared.entity.BaseEntity;
 import jakarta.persistence.*;
 import java.time.Instant;
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
+@Getter
+@Setter
 @Table(name = "session")
 public class Session extends BaseEntity {
 
@@ -21,35 +26,4 @@ public class Session extends BaseEntity {
   @Column(name = "expires_at", nullable = false)
   private Instant expiresAt;
 
-  public Account getAccount() {
-    return account;
-  }
-
-  public void setAccount(Account account) {
-    this.account = account;
-  }
-
-  public String getIpAddress() {
-    return ipAddress;
-  }
-
-  public void setIpAddress(String ipAddress) {
-    this.ipAddress = ipAddress;
-  }
-
-  public String getUserAgent() {
-    return userAgent;
-  }
-
-  public void setUserAgent(String userAgent) {
-    this.userAgent = userAgent;
-  }
-
-  public Instant getExpiresAt() {
-    return expiresAt;
-  }
-
-  public void setExpiresAt(Instant expiresAt) {
-    this.expiresAt = expiresAt;
-  }
 }

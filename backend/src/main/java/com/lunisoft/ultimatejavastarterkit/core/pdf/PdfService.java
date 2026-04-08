@@ -6,19 +6,20 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitForSelectorState;
 import com.microsoft.playwright.options.WaitUntilState;
+import java.io.IOException;
+import java.util.Base64;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.io.IOException;
-import java.util.Base64;
-import java.util.Map;
-import org.springframework.core.io.ClassPathResource;
-
 @Service
+@RequiredArgsConstructor
 public class PdfService {
 
     private final Logger log = LoggerFactory.getLogger(PdfService.class);
@@ -26,15 +27,6 @@ public class PdfService {
     private final SpringTemplateEngine templateEngine;
     private final Browser browser;
     private final PdfProperties pdfProperties;
-
-    public PdfService(
-            SpringTemplateEngine templateEngine,
-            Browser browser,
-            PdfProperties pdfProperties) {
-        this.templateEngine = templateEngine;
-        this.browser = browser;
-        this.pdfProperties = pdfProperties;
-    }
 
     /**
      * Renders an HTML template with the given data and converts it to a PDF.

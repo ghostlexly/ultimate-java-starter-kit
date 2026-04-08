@@ -5,6 +5,7 @@ import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.customer.entity.Customer;
 import com.lunisoft.ultimatejavastarterkit.module.customer.repository.CustomerRepository;
+import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * idempotent.
  */
 @Component
+@RequiredArgsConstructor
 @Profile("dev")
 @Order(2) // Run this DevDataSeeder after ProductionDataSeeder
 public class DevDataSeeder implements ApplicationRunner {
@@ -33,15 +35,6 @@ public class DevDataSeeder implements ApplicationRunner {
   private final AccountRepository accountRepository;
   private final CustomerRepository customerRepository;
   private final PasswordEncoder passwordEncoder;
-
-  public DevDataSeeder(
-      AccountRepository accountRepository,
-      CustomerRepository customerRepository,
-      PasswordEncoder passwordEncoder) {
-    this.accountRepository = accountRepository;
-    this.customerRepository = customerRepository;
-    this.passwordEncoder = passwordEncoder;
-  }
 
   @Override
   @Transactional

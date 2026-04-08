@@ -5,6 +5,7 @@ import com.lunisoft.ultimatejavastarterkit.module.account.entity.Role;
 import com.lunisoft.ultimatejavastarterkit.module.account.repository.AccountRepository;
 import com.lunisoft.ultimatejavastarterkit.module.admin.entity.Admin;
 import com.lunisoft.ultimatejavastarterkit.module.admin.repository.AdminRepository;
+import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
  * already exists before inserting. Runs before DevDataSeeder via @Order(1).
  */
 @Component
+@RequiredArgsConstructor
 @Order(1) // Run this DataSeeder before DevDataSeeder
 public class DataSeeder implements ApplicationRunner {
 
@@ -31,15 +33,6 @@ public class DataSeeder implements ApplicationRunner {
   private final AccountRepository accountRepository;
   private final AdminRepository adminRepository;
   private final PasswordEncoder passwordEncoder;
-
-  public DataSeeder(
-      AccountRepository accountRepository,
-      AdminRepository adminRepository,
-      PasswordEncoder passwordEncoder) {
-    this.accountRepository = accountRepository;
-    this.adminRepository = adminRepository;
-    this.passwordEncoder = passwordEncoder;
-  }
 
   @Override
   @Transactional

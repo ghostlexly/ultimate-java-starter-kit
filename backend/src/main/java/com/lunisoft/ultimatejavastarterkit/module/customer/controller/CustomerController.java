@@ -6,25 +6,20 @@ import com.lunisoft.ultimatejavastarterkit.module.customer.dto.UpdateCustomerEma
 import com.lunisoft.ultimatejavastarterkit.module.customer.usecase.GetProfileUseCase;
 import com.lunisoft.ultimatejavastarterkit.module.customer.usecase.UpdateCustomerEmailUseCase;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/customer")
 @PreAuthorize("hasRole('CUSTOMER')")
 public class CustomerController {
 
   private final GetProfileUseCase getProfileUseCase;
   private final UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
-
-  public CustomerController(
-      GetProfileUseCase getProfileUseCase,
-      UpdateCustomerEmailUseCase updateCustomerEmailUseCase) {
-    this.getProfileUseCase = getProfileUseCase;
-    this.updateCustomerEmailUseCase = updateCustomerEmailUseCase;
-  }
 
   @GetMapping("/profile")
   public ResponseEntity<CustomerResponse> getProfile(

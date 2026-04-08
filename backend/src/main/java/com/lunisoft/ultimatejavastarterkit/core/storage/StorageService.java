@@ -3,6 +3,7 @@ package com.lunisoft.ultimatejavastarterkit.core.storage;
 import com.lunisoft.ultimatejavastarterkit.config.StorageProperties;
 import java.io.IOException;
 import java.time.Duration;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -15,18 +16,12 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 @Service
+@RequiredArgsConstructor
 public class StorageService {
 
   private final S3Client s3Client;
   private final S3Presigner s3Presigner;
   private final StorageProperties storageProperties;
-
-  public StorageService(
-      S3Client s3Client, S3Presigner s3Presigner, StorageProperties storageProperties) {
-    this.s3Client = s3Client;
-    this.s3Presigner = s3Presigner;
-    this.storageProperties = storageProperties;
-  }
 
   /** Uploads a file to S3. */
   public void upload(String key, byte[] data, String contentType, StorageClass storageClass) {

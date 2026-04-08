@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,15 +23,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * authentication if the token is valid and the session exists.
  */
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtTokenProvider jwtTokenProvider;
   private final SessionRepository sessionRepository;
-
-  public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, SessionRepository sessionRepository) {
-    this.jwtTokenProvider = jwtTokenProvider;
-    this.sessionRepository = sessionRepository;
-  }
 
   @Override
   protected void doFilterInternal(
