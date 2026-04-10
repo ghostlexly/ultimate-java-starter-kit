@@ -1,11 +1,17 @@
 {
 # Disable admin API for security
     admin off
+
+    debug
+    log {
+            output stdout
+            format console
+        }
 }
 
-# Shared configuration snippet
+# Hosts
 
-(common) {
+localhost {
 # File upload size limit - 100MB for large file uploads
     request_body {
                      max_size 100MB
@@ -35,12 +41,12 @@
 # - Dev: host.docker.internal:3000 (IDE on host machine)
 # - Prod: backend:3000 (Docker container)
     handle /api/* {
-                      reverse_proxy {$BACKEND_UPSTREAM:backend:3000}
+                      reverse_proxy {$BACKEND_UPSTREAM:java-starter-backend:3000}
                   }
 
 # All other routes -> Frontend
     handle {
-               reverse_proxy frontend:3000
+               reverse_proxy java-starter-frontend:3000
            }
 
 # Error handling
@@ -50,23 +56,4 @@
                                       respond "Service temporarily unavailable" 503
                                   }
                   }
-}
-
-# Local development (HTTP only)
-
-:80 {
-    import common
-}
-
-# Local development (self-signed certificates)
-
-localhost:443 {
-    tls internal
-    import common
-}
-
-# Production
-
-dispomenage.fr, www.dispomenage.fr {
-    import common
 }

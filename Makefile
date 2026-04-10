@@ -10,7 +10,7 @@ start-prod: ## Start the production environment (ignores compose.override.yml)
 	docker compose -f compose.yml up -d --renew-anon-volumes
 
 stop: ## Stop the containers (ignores compose.override.yml)
-	docker compose -f compose.yml down
+	docker compose down
 
 dev: ## Start the development backend
 	cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev

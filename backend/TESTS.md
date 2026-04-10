@@ -15,7 +15,7 @@ All dependencies come from `spring-boot-starter-webmvc-test`.
 Tests mirror the main source tree:
 
 ```
-src/test/java/com/lunisoft/ultimatejavastarterkit/
+src/test/java/com/lunisoft/javastarter/
   module/
     auth/usecase/        → SendCodeUseCaseTest.java
     customer/usecase/    → CreateProfileUseCaseTest.java
@@ -31,7 +31,9 @@ Method names follow the pattern: `method_scenario_expectedResult`
 
 ```java
 execute_validCode_returnsAuthResponse()
+
 execute_accountNotFound_throwsBusinessRuleException()
+
 execute_cooldownNotExpired_throwsBusinessRuleException()
 ```
 
@@ -44,41 +46,45 @@ execute_cooldownNotExpired_throwsBusinessRuleException()
 Every test class uses `@ExtendWith(MockitoExtension.class)` — no Spring context needed.
 
 ```java
+
 @ExtendWith(MockitoExtension.class)
 class MyUseCaseTest {
 
-  // Mock all dependencies
-  @Mock private SomeRepository someRepository;
-  @Mock private ApplicationEventPublisher eventPublisher;
+    // Mock all dependencies
+    @Mock
+    private SomeRepository someRepository;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
-  // The class under test — NOT mocked
-  private MyUseCase myUseCase;
+    // The class under test — NOT mocked
+    private MyUseCase myUseCase;
 
-  @BeforeEach
-  void setUp() {
-    // Instantiate with mocked dependencies
-    myUseCase = new MyUseCase(someRepository, eventPublisher);
-  }
+    @BeforeEach
+    void setUp() {
+        // Instantiate with mocked dependencies
+        myUseCase = new MyUseCase(someRepository, eventPublisher);
+    }
 }
 ```
 
 ### 2. Happy Path Test
 
 ```java
+
 @Test
 void execute_validInput_returnsExpectedResponse() {
-  // Arrange — create test data via TestFactory and mock behavior
-  var accountId = UUID.randomUUID();
-  var account = createAccount(accountId, "test@example.com");
+    // Arrange — create test data via TestFactory and mock behavior
+    var accountId = UUID.randomUUID();
+    var account = createAccount(accountId, "test@example.com");
 
-  when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+    when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
 
-  // Act — call the method under test
-  var result = myUseCase.execute(accountId);
+    // Act — call the method under test
+    var result = myUseCase.execute(accountId);
 
-  // Assert — verify the result
-  assertThat(result.email()).isEqualTo("test@example.com");
-  assertThat(result.role()).isEqualTo("CUSTOMER");
+    // Assert — verify the result
+    assertThat(result.email()).isEqualTo("test@example.com");
+    assertThat(result.role()).isEqualTo("CUSTOMER");
 }
 ```
 
@@ -87,19 +93,20 @@ void execute_validInput_returnsExpectedResponse() {
 Use cases throw `BusinessRuleException` for domain violations:
 
 ```java
+
 @Test
 void execute_entityNotFound_throwsBusinessRuleException() {
-  var accountId = UUID.randomUUID();
-  when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
+    var accountId = UUID.randomUUID();
+    when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
-  assertThatThrownBy(() -> myUseCase.execute(accountId))
-      .isInstanceOf(BusinessRuleException.class)
-      .satisfies(
-          ex -> {
-            var bre = (BusinessRuleException) ex;
-            assertThat(bre.getCode()).isEqualTo("NOT_FOUND");
-            assertThat(bre.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-          });
+    assertThatThrownBy(() -> myUseCase.execute(accountId))
+            .isInstanceOf(BusinessRuleException.class)
+            .satisfies(
+                    ex -> {
+                        var bre = (BusinessRuleException) ex;
+                        assertThat(bre.getCode()).isEqualTo("NOT_FOUND");
+                        assertThat(bre.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    });
 }
 ```
 
@@ -108,23 +115,29 @@ void execute_entityNotFound_throwsBusinessRuleException() {
 Use `verify()` to check that repositories or event publishers were called:
 
 ```java
+
 @Test
 void execute_validInput_savesEntityAndPublishesEvent() {
-  // ... arrange and act ...
+    // ... arrange and act ...
 
-  // Verify save was called
-  verify(customerRepository).save(any(Customer.class));
+    // Verify save was called
+    verify(customerRepository).save(any(Customer.class));
 
-  // Verify event was published
-  verify(eventPublisher).publishEvent(any(CustomerEmailUpdatedEvent.class));
+    // Verify event was published
+    verify(eventPublisher).publishEvent(any(CustomerEmailUpdatedEvent.class));
 }
 ```
 
 Use `never()` to verify something was NOT called:
 
 ```java
-verify(customerRepository, never()).save(any());
-verify(eventPublisher, never()).publishEvent(any());
+verify(customerRepository, never()).
+
+save(any());
+
+verify(eventPublisher, never()).
+
+publishEvent(any());
 ```
 
 ### 5. Capturing Arguments
@@ -132,16 +145,17 @@ verify(eventPublisher, never()).publishEvent(any());
 Use `ArgumentCaptor` to inspect what was passed to a mock:
 
 ```java
+
 @Test
 void execute_validInput_savesEntityWithCorrectFields() {
-  // ... arrange and act ...
+    // ... arrange and act ...
 
-  var captor = ArgumentCaptor.forClass(Customer.class);
-  verify(customerRepository).save(captor.capture());
+    var captor = ArgumentCaptor.forClass(Customer.class);
+    verify(customerRepository).save(captor.capture());
 
-  var savedCustomer = captor.getValue();
-  assertThat(savedCustomer.getCountryCode()).isEqualTo("US");
-  assertThat(savedCustomer.getAccount()).isEqualTo(account);
+    var savedCustomer = captor.getValue();
+    assertThat(savedCustomer.getCountryCode()).isEqualTo("US");
+    assertThat(savedCustomer.getAccount()).isEqualTo(account);
 }
 ```
 
@@ -151,12 +165,16 @@ When the use case reads the ID from the saved entity:
 
 ```java
 when(customerRepository.save(any(Customer.class)))
-    .thenAnswer(
-        invocation -> {
-          var customer = invocation.getArgument(0, Customer.class);
-          customer.setId(UUID.randomUUID());
+        .
 
-          return customer;
+thenAnswer(
+        invocation ->{
+var customer = invocation.getArgument(0, Customer.class);
+          customer.
+
+setId(UUID.randomUUID());
+
+        return customer;
         });
 ```
 
@@ -171,14 +189,26 @@ Create tokens or entities with specific timestamps:
 ```java
 // Recent — within cooldown
 var recentToken = new VerificationToken();
-recentToken.setCreatedAt(Instant.now().minusSeconds(10));
+recentToken.
+
+setCreatedAt(Instant.now().
+
+minusSeconds(10));
 
 // Old — past cooldown
 var oldToken = new VerificationToken();
-oldToken.setCreatedAt(Instant.now().minusSeconds(61));
+oldToken.
+
+setCreatedAt(Instant.now().
+
+minusSeconds(61));
 
 // Future expiration
-token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
+        token.
+
+setExpiresAt(Instant.now().
+
+plus(15,ChronoUnit.MINUTES));
 ```
 
 ### Testing Paginated Results
@@ -189,7 +219,9 @@ Use `PageImpl` to mock Spring Data `Page` results:
 var pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
 var page = new PageImpl<>(List.of(customer1, customer2), pageable, 2);
 
-when(repository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+when(repository.findAll(any(Specification.class),eq(pageable))).
+
+thenReturn(page);
 ```
 
 ### Testing with HttpServletRequest
@@ -197,11 +229,18 @@ when(repository.findAll(any(Specification.class), eq(pageable))).thenReturn(page
 Mock the servlet request for use cases that need it:
 
 ```java
-@Mock private HttpServletRequest request;
+
+@Mock
+private HttpServletRequest request;
 
 // In test method:
-when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-when(request.getHeader("User-Agent")).thenReturn("TestAgent/1.0");
+when(request.getRemoteAddr()).
+
+thenReturn("127.0.0.1");
+
+when(request.getHeader("User-Agent")).
+
+thenReturn("TestAgent/1.0");
 ```
 
 ### TestFactory — Shared Entity Builders
@@ -214,7 +253,7 @@ duplicating helper methods across test files.
 **Import with static imports**:
 
 ```java
-import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.*;
+import static com.lunisoft.javastarter.shared.TestFactory.*;
 ```
 
 **Available methods**:
@@ -222,19 +261,23 @@ import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.*;
 ```java
 // Account
 createAccount("test@example.com")                  // default CUSTOMER role
-createAccount("test@example.com", Role.ADMIN)       // specific role
+
+createAccount("test@example.com",Role.ADMIN)       // specific role
+
 createAccount(accountId, "test@example.com")        // specific UUID
 
 // Customer
 createCustomer(account, "FR")                       // from existing account
-createCustomer("test@example.com", "FR", Role.CUSTOMER) // creates account too
+
+createCustomer("test@example.com","FR",Role.CUSTOMER) // creates account too
 
 // Session
 createSession(account)                              // random ID, 7-day expiry
+
 createSession(sessionId, account)                   // specific UUID
 
 // VerificationToken
-createVerificationToken(account, "1234", 0)         // code + attempt count
+createVerificationToken(account, "1234",0)         // code + attempt count
 ```
 
 **Adding a new factory method**: if your test needs a new entity, add it to `TestFactory`
@@ -246,7 +289,8 @@ so other tests can reuse it.
 
 ```java
 // Test entity builders
-import static com.lunisoft.ultimatejavastarterkit.shared.TestFactory.*;
+
+import static com.lunisoft.javastarter.shared.TestFactory.*;
 
 // Assertions
 import static org.assertj.core.api.Assertions.assertThat;
@@ -276,7 +320,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 4. Write a happy path test (valid input → expected output)
 5. Write error path tests (not found, already exists, expired, etc.)
 6. Verify side effects (saves, deletes, events published)
-7. Run: `./mvnw test -Dtest="com.lunisoft.ultimatejavastarterkit.module.**.*UseCaseTest"`
+7. Run: `./mvnw test -Dtest="com.lunisoft.javastarter.module.**.*UseCaseTest"`
 
 ---
 
@@ -284,7 +328,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 ```bash
 # All use case tests
-./mvnw test -Dtest="com.lunisoft.ultimatejavastarterkit.module.**.*UseCaseTest"
+./mvnw test -Dtest="com.lunisoft.javastarter.module.**.*UseCaseTest"
 
 # Single test class
 ./mvnw test -Dtest="SendCodeUseCaseTest"

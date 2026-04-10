@@ -9,9 +9,9 @@
         <relativePath/>
     </parent>
     <groupId>com.lunisoft</groupId>
-    <artifactId>ultimate-java-starter-kit-api</artifactId>
+    <artifactId>java-starter</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ultimate-java-starter-kit</name>
+    <name>java-starter</name>
     <description>Ultimate Java Spring Boot Starter Kit</description>
 
     <properties>

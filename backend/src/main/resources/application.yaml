@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ultimate-java-starter-kit
+    name: java-starter
 
   datasource:
     url: ${POSTGRES_DATABASE_URL}

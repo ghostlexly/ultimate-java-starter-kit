@@ -1,49 +1,37 @@
 services:
-  postgres:
+  java-starter-postgres:
     image: postgres:17.9
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lunisoft}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe}
-      POSTGRES_DB: ultimatejavastarterkit
+      POSTGRES_DB: java-starter
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U lunisoft -d ultimatejavastarterkit" ]
+      test: [ "CMD-SHELL", "pg_isready -U lunisoft -d java-starter" ]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - lunisoft
 
-  redis:
+  java-starter-redis:
     image: redis:8.6.2-alpine
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
+    networks:
+      - lunisoft
 
-  caddy:
-    image: lunisoft/ultimate-java-starter-kit:caddy
-    build:
-      context: ./caddy
-    ports:
-      - mode: host
-        protocol: tcp
-        published: 80
-        target: 80
-      - mode: host
-        protocol: tcp
-        published: 443
-        target: 443
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      frontend:
-        condition: service_healthy
-      redis:
-        condition: service_started
-
-  frontend:
-    image: lunisoft/ultimate-java-starter-kit:frontend
+  java-starter-frontend:
+    image: lunisoft/java-starter:frontend
     build:
       context: ./frontend
+    expose:
+      - "3000"
     environment:
       - NODE_ENV=production
     healthcheck:
@@ -51,12 +39,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - lunisoft
 
-  backend:
-    image: lunisoft/ultimate-java-starter-kit:backend
+  java-starter-backend:
+    image: lunisoft/java-starter:backend
     build: ./backend
-    ports:
-      - "${APP_PORT:-3000}:3000"
+    expose:
+      - "3000"
     environment:
       POSTGRES_DATABASE_URL: ${POSTGRES_DATABASE_URL}
       POSTGRES_USER: ${POSTGRES_USER:-lunisoft}
@@ -68,13 +58,17 @@ services:
       APP_STORAGE_SECRET_KEY: ${APP_STORAGE_SECRET_KEY}
       APP_STORAGE_BUCKET: ${APP_STORAGE_BUCKET}
     depends_on:
-      postgres:
+      java-starter-postgres:
         condition: service_healthy
-      redis:
+      java-starter-redis:
         condition: service_started
+    networks:
+      - lunisoft
 
 volumes:
   postgres_data:
   redis_data:
-  caddy_data:
-  caddy_config:
+
+networks:
+  lunisoft:
+    external: true
