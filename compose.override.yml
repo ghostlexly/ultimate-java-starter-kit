@@ -12,8 +12,8 @@ services:
       # "host.docker.internal" points to the host machine (where your IDE runs the backend)
       - "host.docker.internal:host-gateway"
     volumes:
-      - caddy_data:/data
-      - caddy_config:/config
+      - caddy-data:/data
+      - caddy-config:/config
     networks:
       - lunisoft
 
@@ -40,5 +40,5 @@ services:
       - /usr/src/app/node_modules
 
 volumes:
-  caddy_data:
-  caddy_config:
+  caddy-data:
+  caddy-config:
