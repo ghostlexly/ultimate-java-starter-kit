@@ -17,35 +17,22 @@ RUN ./mvnw dependency:resolve -B
 # Build project
 RUN ./mvnw package -DskipTests -B
 
-# Install Playwright Chromium binaries (cached in this stage)
-RUN ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium" -B
-
 # -- RUNNER
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:25-jre AS runner
 WORKDIR /app
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
-# Install Chromium system dependencies required by Playwright
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libnss3 \
-    libatk1.0-0t64 \
-    libatk-bridge2.0-0t64 \
-    libcups2t64 \
-    libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libasound2t64 \
-    libxshmfence1 \
-    fonts-liberation \
-    fonts-noto-color-emoji \
-    && rm -rf /var/lib/apt/lists/*
+# Copy Maven tooling to run Playwright install-deps
+COPY --from=build /app/.mvn ./.mvn
+COPY --from=build /app/mvnw ./mvnw
+COPY --from=build /app/pom.xml ./pom.xml
+COPY --from=build /root/.m2 /root/.m2
 
-# Copy Playwright browser binaries from builder
-COPY --from=build /root/.cache/ms-playwright /root/.cache/ms-playwright
+# Install all system dependencies required by Playwright & browsers
+RUN ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium" -B
+
+# Remove Maven tooling
+RUN rm -rf /root/.m2 .mvn mvnw pom.xml
 
 COPY --from=build /app/target/*.jar app.jar
 
