@@ -6,7 +6,7 @@
 - PostgreSQL + Flyway migrations
 - Bucket4j, JJWT (RSA256)
 - Stateless REST API with JWT authentication
-- No Lombok — use manual getters/setters and constructors
+- You can only use these Lombok annotations: `@Getter`, `@Setter`, `@RequiredArgsConstructor`
 - Use Java 25 features: unnamed variables (`_`), pattern matching, records, etc.
 
 ## Package Structure
@@ -114,14 +114,15 @@ public class CreateProfileUseCase {
 - Blank line before every `return`
 
 ```java
+
 @PostMapping("/profile")
 public ResponseEntity<CustomerResponse> createProfile(
-    @AuthenticationPrincipal UserPrincipal principal,
-    @Valid @RequestBody RegisterCustomerRequest request) {
+        @AuthenticationPrincipal UserPrincipal principal,
+        @Valid @RequestBody RegisterCustomerRequest request) {
 
-  CustomerResponse response = createProfileUseCase.execute(principal.accountId(), request);
+    CustomerResponse response = createProfileUseCase.execute(principal.accountId(), request);
 
-  return ResponseEntity.ok(response);
+    return ResponseEntity.ok(response);
 }
 ```
 
@@ -145,22 +146,23 @@ public ResponseEntity<CustomerResponse> createProfile(
 ```java
 public final class CustomerSpecification {
 
-  private CustomerSpecification() {}
+    private CustomerSpecification() {
+    }
 
-  public static Specification<Customer> fetchAccount() {
-    return (root, query, cb) -> {
-      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-        root.fetch("account");
-      }
+    public static Specification<Customer> fetchAccount() {
+        return (root, query, cb) -> {
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                root.fetch("account");
+            }
 
-      return cb.conjunction();
-    };
-  }
+            return cb.conjunction();
+        };
+    }
 
-  public static Specification<Customer> hasEmail(String email) {
-    return (root, query, cb) ->
-        cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
-  }
+    public static Specification<Customer> hasEmail(String email) {
+        return (root, query, cb) ->
+                cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
+    }
 }
 ```
 
@@ -172,8 +174,9 @@ public final class CustomerSpecification {
 
 ```java
 public record SendCodeRequest(
-    @NotBlank @Email String email
-) {}
+        @NotBlank @Email String email
+) {
+}
 ```
 
 ## Error Handling
@@ -188,7 +191,9 @@ public record SendCodeRequest(
 ```java
 @RateLimit(requests = 5, periodSeconds = 60)
 @GetMapping("/endpoint")
-public ResponseEntity<...> method() { ... }
+public ResponseEntity<...>
+
+method() { ...}
 ```
 
 ## Code Style
@@ -209,24 +214,34 @@ public ResponseEntity<...> method() { ... }
 ## Spring Boot 4 / Spring Security 7 / Java 25
 
 ### Removed APIs (do NOT use)
+
 - ❌ `AntPathRequestMatcher` — removed in Spring Security 7
-- ✅ Use `PathPatternRequestMatcher.pathPattern(HttpMethod, String)` or `PathPatternRequestMatcher.pathPattern(String)` instead
+- ✅ Use `PathPatternRequestMatcher.pathPattern(HttpMethod, String)` or `PathPatternRequestMatcher.pathPattern(String)`
+  instead
 
 ### Prefer Spring built-in infrastructure over manual reflection
+
 - ❌ Manual reflection to scan `@GetMapping`, `@PostMapping`, etc. on controller methods
-- ✅ Use `RequestMappingHandlerMapping.getHandlerMethods()` — Spring already knows all registered routes, HTTP methods, and path patterns
-- ✅ Use `AnnotatedElementUtils.hasAnnotation()` for annotation detection — handles meta-annotations and works on both classes and methods
+- ✅ Use `RequestMappingHandlerMapping.getHandlerMethods()` — Spring already knows all registered routes, HTTP methods,
+  and path patterns
+- ✅ Use `AnnotatedElementUtils.hasAnnotation()` for annotation detection — handles meta-annotations and works on both
+  classes and methods
 
 ### Java 25 features to use
-- Always prefer the modern, idiomatic Java 25 way of doing things — use the standard recommendations and best practices for Java 25 APIs and language features
+
+- Always prefer the modern, idiomatic Java 25 way of doing things — use the standard recommendations and best practices
+  for Java 25 APIs and language features
 - Unnamed variables: `_ -> false` instead of `request -> false`
 - Pattern matching for `instanceof` and `switch`
 - Records for DTOs and events
 - `var` for local variables when the type is obvious from the right-hand side
 
 ### Custom annotations
-- When creating annotations that work like `@PreAuthorize`, always support both `ElementType.TYPE` (class-level) and `ElementType.METHOD` (method-level)
-- Check both the method and its declaring class when scanning: `AnnotatedElementUtils.hasAnnotation(method, ...) || AnnotatedElementUtils.hasAnnotation(beanType, ...)`
+
+- When creating annotations that work like `@PreAuthorize`, always support both `ElementType.TYPE` (class-level) and
+  `ElementType.METHOD` (method-level)
+- Check both the method and its declaring class when scanning:
+  `AnnotatedElementUtils.hasAnnotation(method, ...) || AnnotatedElementUtils.hasAnnotation(beanType, ...)`
 
 ## Pagination
 
@@ -256,7 +271,8 @@ public ResponseEntity<...> method() { ... }
 
 - Event as record: `public record LoginCodeRequestedEvent(String email, String code) {}`
 - Listener with `@Async @EventListener` for non-blocking execution
-- Listener with `@EventListener` (no `@Async`) for synchronous execution within the same transaction (rollback on failure)
+- Listener with `@EventListener` (no `@Async`) for synchronous execution within the same transaction (rollback on
+  failure)
 - Publish via `ApplicationEventPublisher.publishEvent(...)`
 
 ## Database
