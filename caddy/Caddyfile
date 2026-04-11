@@ -11,7 +11,7 @@
 
 # Hosts
 
-localhost {
+localhost, http://tunnel.lunisoft.fr {
 # File upload size limit - 100MB for large file uploads
     request_body {
                      max_size 100MB
