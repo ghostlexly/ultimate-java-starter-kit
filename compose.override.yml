@@ -35,6 +35,10 @@ services:
     command: npm run dev
     environment:
       - NODE_ENV=development
+      # In dev the backend runs on the host machine (IDE), not in Docker.
+      - BACKEND_INTERNAL_URL=http://host.docker.internal:3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./frontend:/usr/src/app
       - /usr/src/app/node_modules
