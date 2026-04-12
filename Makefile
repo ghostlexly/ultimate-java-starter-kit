@@ -19,7 +19,7 @@ test: ## Run unit tests
 	cd backend && ./mvnw test
 
 clean: ## Maven Clean
-	cd backend && ./mvnw clean
+	cd backend && ./mvnw clean compile
 
 build: ## Maven Build
 	cd backend && ./mvnw package -DskipTests
