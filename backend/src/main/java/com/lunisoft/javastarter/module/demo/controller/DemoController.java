@@ -5,12 +5,14 @@ import com.lunisoft.javastarter.core.ratelimit.RateLimit;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
 import com.lunisoft.javastarter.core.storage.StorageService;
 import com.lunisoft.javastarter.module.account.entity.Role;
+import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
 import com.lunisoft.javastarter.module.demo.dto.DemoPaginatedCustomerResponse;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
 import com.lunisoft.javastarter.module.demo.dto.DemoSearchCustomerResponse;
 import com.lunisoft.javastarter.module.demo.usecase.DemoPaginateCustomerUseCase;
 import com.lunisoft.javastarter.module.demo.usecase.DemoSearchCustomerUseCase;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.Duration;
@@ -21,10 +23,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -47,6 +46,14 @@ public class DemoController {
     List<DemoSearchCustomerResponse> results = demoSearchCustomerUseCase.execute(role);
 
     return ResponseEntity.ok(results);
+  }
+
+  /** Verify if the */
+  @PostMapping("/body-validation")
+  @RateLimit(requests = 1, periodSeconds = 60)
+  public ResponseEntity<Map<String, String>> bodyValidationExample(
+      @Valid @RequestBody BodyValidationExampleRequest request) {
+    return ResponseEntity.ok(Map.of("message", "Success", "validation", request.toString()));
   }
 
   /**

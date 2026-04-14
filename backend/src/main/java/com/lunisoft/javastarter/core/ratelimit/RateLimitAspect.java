@@ -8,12 +8,15 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.jspecify.annotations.NonNull;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -23,16 +26,18 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.method.HandlerMethod;
-import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * Intercepts requests to @RateLimit-annotated controller methods. Creates a token bucket per client
- * (IP or user ID) per endpoint.
+ * Enforces @RateLimit via AOP. Because Spring resolves and validates controller arguments
+ * (including @Valid @RequestBody) BEFORE invoking the method, this advice only runs for requests
+ * that pass validation — invalid payloads do not consume a token.
  */
+@Aspect
 @Component
-public class RateLimitInterceptor implements HandlerInterceptor {
-  private final Logger log = LoggerFactory.getLogger(RateLimitInterceptor.class);
+public class RateLimitAspect {
+  private final Logger log = LoggerFactory.getLogger(RateLimitAspect.class);
 
   /** Wraps a bucket with its last access time for eviction. */
   private record BucketEntry(Bucket bucket, Instant lastAccess) {}
@@ -42,30 +47,16 @@ public class RateLimitInterceptor implements HandlerInterceptor {
   private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @Override
-  public boolean preHandle(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull Object handler)
-      throws IOException {
-    // Only intercept controller methods
-    if (!(handler instanceof HandlerMethod handlerMethod)) {
-      return true;
-    }
+  @Around("@annotation(rateLimit)")
+  public Object around(ProceedingJoinPoint pjp, RateLimit rateLimit) throws Throwable {
+    HttpServletRequest request = currentRequest();
+    HttpServletResponse response = currentResponse();
+    String key = buildKey(pjp, request);
 
-    // Check if the method has @RateLimit
-    RateLimit rateLimit = handlerMethod.getMethodAnnotation(RateLimit.class);
-    if (rateLimit == null) {
-      return true;
-    }
-
-    String key = buildKey(handlerMethod, request);
-
-    // Get or create the bucket, and update last access time
     BucketEntry entry =
         buckets.compute(
             key,
-            (k, existing) -> {
+            (_, existing) -> {
               Bucket bucket = (existing != null) ? existing.bucket() : createBucket(rateLimit);
 
               return new BucketEntry(bucket, Instant.now());
@@ -73,22 +64,26 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     ConsumptionProbe probe = entry.bucket().tryConsumeAndReturnRemaining(1);
 
-    if (probe.isConsumed()) {
-      response.setHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
+    if (!probe.isConsumed()) {
+      long waitSeconds = probe.getNanosToWaitForRefill() / 1_000_000_000 + 1;
+      writeRateLimitResponse(response, waitSeconds);
 
-      return true;
+      // Short-circuit the controller — Spring will not write another body
+      // because the response is already committed.
+      return null;
     }
 
-    // Rate limit exceeded — write 429 response directly
-    long waitSeconds = probe.getNanosToWaitForRefill() / 1_000_000_000 + 1;
-    writeRateLimitResponse(response, waitSeconds);
+    response.setHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
 
-    return false;
+    // Proceed with the controller method; if it throws, the token stays consumed
+    // (business failures still count against the limit — only arg-resolution
+    // failures like @Valid never reach this advice).
+    return pjp.proceed();
   }
 
   /** Writes a 429 Too Many Requests response with Retry-After header. */
   private void writeRateLimitResponse(HttpServletResponse response, long waitSeconds)
-      throws IOException {
+      throws java.io.IOException {
     ErrorResponse errorResponse =
         new ErrorResponse(
             "RateLimitException",
@@ -102,13 +97,12 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     objectMapper.writeValue(response.getWriter(), errorResponse);
   }
 
-  /**
-   * Builds a unique key per endpoint per client. Format: "ControllerName#method:user:accountId" or
-   * "ControllerName#method:ip:address"
-   */
-  private String buildKey(HandlerMethod handlerMethod, HttpServletRequest request) {
-    String endpoint =
-        handlerMethod.getBeanType().getSimpleName() + "#" + handlerMethod.getMethod().getName();
+  /** Builds a unique key per endpoint per client. */
+  private String buildKey(ProceedingJoinPoint pjp, HttpServletRequest request) {
+    MethodSignature signature = (MethodSignature) pjp.getSignature();
+    Method method = signature.getMethod();
+
+    String endpoint = method.getDeclaringClass().getSimpleName() + "#" + method.getName();
     String clientId = resolveClientId(request);
 
     return endpoint + ":" + clientId;
@@ -135,6 +129,34 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     return request.getRemoteAddr();
+  }
+
+  private HttpServletRequest currentRequest() {
+
+    return currentAttrs().getRequest();
+  }
+
+  private HttpServletResponse currentResponse() {
+    HttpServletResponse response = currentAttrs().getResponse();
+
+    if (response == null) {
+      throw new IllegalStateException(
+          "No current HTTP response — @RateLimit requires a servlet context");
+    }
+
+    return response;
+  }
+
+  private ServletRequestAttributes currentAttrs() {
+    ServletRequestAttributes attrs =
+        (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+    if (attrs == null) {
+      throw new IllegalStateException(
+          "No current HTTP request — @RateLimit requires a servlet context");
+    }
+
+    return attrs;
   }
 
   private Bucket createBucket(RateLimit rateLimit) {
