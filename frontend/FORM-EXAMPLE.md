@@ -30,8 +30,9 @@ const form = useForm<SupportFormValues>({
 });
 const sendSupportMessage = useSendSupportMessage();
 
-function handleSubmit(values: SupportFormValues) {
-    sendSupportMessage.mutate(values, {
+async function handleSubmit(values: SupportFormValues) {
+    // The mutation will still throw an error if it fails, even with the onError
+    await sendSupportMessage.mutateAsync(values, {
         onSuccess: async () => {
             toast.success(
                 'Nous avons bien reçu votre message. Nous vous répondrons dans les plus brefs délais.',
