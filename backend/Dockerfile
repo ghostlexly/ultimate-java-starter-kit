@@ -31,9 +31,6 @@ COPY --from=build /root/.m2 /root/.m2
 # Install all system dependencies required by Playwright & browsers
 RUN ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium" -B
 
-# Remove Maven tooling
-RUN rm -rf /root/.m2 .mvn mvnw pom.xml
-
 COPY --from=build /app/target/*.jar app.jar
 
 CMD ["java", "-jar", "app.jar"]
