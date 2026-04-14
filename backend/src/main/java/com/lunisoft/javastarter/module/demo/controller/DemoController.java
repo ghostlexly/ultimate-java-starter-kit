@@ -48,7 +48,7 @@ public class DemoController {
     return ResponseEntity.ok(results);
   }
 
-  /** Verify if the */
+  /** Validate the body of the request. The rate limiter run only when the request is valid. */
   @PostMapping("/body-validation")
   @RateLimit(requests = 1, periodSeconds = 60)
   public ResponseEntity<Map<String, String>> bodyValidationExample(
