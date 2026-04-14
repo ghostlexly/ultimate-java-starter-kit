@@ -49,3 +49,16 @@ More examples are available here : https://ui.shadcn.com/docs/components/radix/f
   `data-invalid={fieldState.invalid}` and `aria-invalid={fieldState.invalid}`. Don't add rules.
 - Let the `Input` / `Textarea` default styles handle the invalid state. Do not re-declare
   `aria-invalid:border-destructive …` classes on every input.
+- To attach an icon (or any leading/trailing element) to an input, always use `InputGroup` +
+  `InputGroupInput` / `InputGroupTextarea` + `InputGroupAddon` from `@/components/ui/input-group`.
+  Never build it manually with a `relative` wrapper and an `absolute`-positioned icon.
+  ```tsx
+  <InputGroup className="h-14">
+    <InputGroupInput {...field} />
+    <InputGroupAddon>
+      <Mail className="text-muted-foreground h-4 w-4" />
+    </InputGroupAddon>
+  </InputGroup>
+  ```
+  For a textarea, use `align="inline-start"` on the addon (and `self-start pt-*` if the icon
+  should stick to the top) so it doesn't vertically center on a multi-line field.
