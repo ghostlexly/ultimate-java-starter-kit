@@ -17,10 +17,6 @@ services:
     networks:
       - lunisoft
 
-  java-starter-postgres:
-    ports:
-      - "5432:5432"
-
   java-starter-redis:
     ports:
       - "6379:6379"
