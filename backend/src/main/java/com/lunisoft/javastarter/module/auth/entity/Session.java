@@ -3,9 +3,10 @@ package com.lunisoft.javastarter.module.auth.entity;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.shared.entity.BaseEntity;
 import jakarta.persistence.*;
-import java.time.Instant;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.Instant;
 
 @Entity
 @Getter
@@ -13,16 +14,14 @@ import lombok.Setter;
 @Table(name = "session")
 public class Session extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "account_id", nullable = false)
-  private Account account;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
-  @Column(name = "ip_address")
-  private String ipAddress;
+    private String ipAddress;
 
-  @Column(name = "user_agent")
-  private String userAgent;
+    private String userAgent;
 
-  @Column(name = "expires_at", nullable = false)
-  private Instant expiresAt;
+    @Column(nullable = false)
+    private Instant expiresAt;
 }

@@ -8,7 +8,7 @@ CREATE TABLE account
     role                VARCHAR(255) NOT NULL,
     provider_id         VARCHAR(255),
     provider_account_id VARCHAR(255),
-    is_email_verified   BOOLEAN      NOT NULL,
+    email_verified   BOOLEAN      NOT NULL,
     CONSTRAINT pk_account PRIMARY KEY (id)
 );
 
@@ -37,7 +37,6 @@ CREATE TABLE customer
     created_at   TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     updated_at   TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     account_id   UUID NOT NULL,
-    country_code VARCHAR(255),
     CONSTRAINT pk_customer PRIMARY KEY (id)
 );
 
