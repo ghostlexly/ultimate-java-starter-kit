@@ -7,7 +7,7 @@ services:
       - "443:443"
     environment:
       # Point API routes to host machine (where your IDE runs the backend)
-      - BACKEND_UPSTREAM=host.docker.internal:3000
+      BACKEND_UPSTREAM: host.docker.internal:3000
     extra_hosts:
       # "host.docker.internal" points to the host machine (where your IDE runs the backend)
       - "host.docker.internal:host-gateway"
@@ -30,9 +30,9 @@ services:
   java-starter-frontend:
     command: npm run dev
     environment:
-      - NODE_ENV=development
+      NODE_ENV: development
       # In dev the backend runs on the host machine (IDE), not in Docker.
-      - BACKEND_INTERNAL_URL=http://host.docker.internal:3000
+      BACKEND_INTERNAL_URL: http://host.docker.internal:3000
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
