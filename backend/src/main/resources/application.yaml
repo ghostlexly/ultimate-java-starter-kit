@@ -1,6 +1,10 @@
 spring:
   application:
     name: java-starter
+  data:
+    redis:
+      host: ${APP_REDIS_HOST}
+      port: ${APP_REDIS_PORT}
 
   datasource:
     url: ${POSTGRES_DATABASE_URL}

@@ -32,3 +32,6 @@ install-playwright: ## Install Playwright Chromium browser binaries
 
 db-reset: ## Reset database to the initial state
 	docker compose down -v && docker compose up -d
+
+redis-flush: ## Flush Redis database
+	docker compose exec java-starter-redis redis-cli FLUSHDB
