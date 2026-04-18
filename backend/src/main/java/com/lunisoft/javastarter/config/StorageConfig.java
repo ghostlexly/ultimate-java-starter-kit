@@ -1,5 +1,6 @@
 package com.lunisoft.javastarter.config;
 
+import com.lunisoft.javastarter.properties.StorageProperties;
 import java.net.URI;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,26 +13,26 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @Configuration
 public class StorageConfig {
 
-    @Bean
-    public S3Client s3Client(StorageProperties properties) {
-        var credentials = AwsBasicCredentials.create(properties.accessKey(), properties.secretKey());
+  @Bean
+  public S3Client s3Client(StorageProperties properties) {
+    var credentials = AwsBasicCredentials.create(properties.accessKey(), properties.secretKey());
 
-        return S3Client.builder()
-            .endpointOverride(URI.create(properties.endpoint()))
-            .region(Region.of(properties.region()))
-            .credentialsProvider(StaticCredentialsProvider.create(credentials))
-            .forcePathStyle(true)
-            .build();
-    }
+    return S3Client.builder()
+        .endpointOverride(URI.create(properties.endpoint()))
+        .region(Region.of(properties.region()))
+        .credentialsProvider(StaticCredentialsProvider.create(credentials))
+        .forcePathStyle(true)
+        .build();
+  }
 
-    @Bean
-    public S3Presigner s3Presigner(StorageProperties properties) {
-        var credentials = AwsBasicCredentials.create(properties.accessKey(), properties.secretKey());
+  @Bean
+  public S3Presigner s3Presigner(StorageProperties properties) {
+    var credentials = AwsBasicCredentials.create(properties.accessKey(), properties.secretKey());
 
-        return S3Presigner.builder()
-            .endpointOverride(URI.create(properties.endpoint()))
-            .region(Region.of(properties.region()))
-            .credentialsProvider(StaticCredentialsProvider.create(credentials))
-            .build();
-    }
+    return S3Presigner.builder()
+        .endpointOverride(URI.create(properties.endpoint()))
+        .region(Region.of(properties.region()))
+        .credentialsProvider(StaticCredentialsProvider.create(credentials))
+        .build();
+  }
 }

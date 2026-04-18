@@ -1,6 +1,5 @@
 package com.lunisoft.javastarter.module.customer.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -10,6 +9,8 @@ import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.module.customer.dto.UpdateCustomerEmailRequest;
 import com.lunisoft.javastarter.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
+import com.lunisoft.javastarter.shared.builder.AccountBuilder;
+import com.lunisoft.javastarter.shared.builder.CustomerBuilder;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +40,8 @@ class UpdateCustomerEmailUseCaseTest {
   @Test
   void execute_validRequest_updatesEmailAndPublishesEvent() {
     var accountId = UUID.randomUUID();
-    var account = createAccount(accountId, "old@example.com");
-    var customer = createCustomer(account);
+    var account = new AccountBuilder().id(accountId).email("old@example.com").build();
+    var customer = new CustomerBuilder().account(account).build();
     var request = new UpdateCustomerEmailRequest("new@example.com");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
@@ -61,11 +62,9 @@ class UpdateCustomerEmailUseCaseTest {
   void execute_accountNotFound_throwsBusinessRuleException() {
     var accountId = UUID.randomUUID();
     when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
+    var request = new UpdateCustomerEmailRequest("new@example.com");
 
-    assertThatThrownBy(
-            () ->
-                updateCustomerEmailUseCase.execute(
-                    accountId, new UpdateCustomerEmailRequest("new@example.com")))
+    assertThatThrownBy(() -> updateCustomerEmailUseCase.execute(accountId, request))
         .isInstanceOf(BusinessRuleException.class)
         .satisfies(
             ex -> {
@@ -80,15 +79,13 @@ class UpdateCustomerEmailUseCaseTest {
   @Test
   void execute_customerNotFound_throwsBusinessRuleException() {
     var accountId = UUID.randomUUID();
-    var account = createAccount(accountId, "test@example.com");
+    var account = new AccountBuilder().id(accountId).build();
+    var request = new UpdateCustomerEmailRequest("new@example.com");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(
-            () ->
-                updateCustomerEmailUseCase.execute(
-                    accountId, new UpdateCustomerEmailRequest("new@example.com")))
+    assertThatThrownBy(() -> updateCustomerEmailUseCase.execute(accountId, request))
         .isInstanceOf(BusinessRuleException.class)
         .satisfies(
             ex -> {

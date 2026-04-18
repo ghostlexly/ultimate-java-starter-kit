@@ -1,6 +1,6 @@
 package com.lunisoft.javastarter.core.storage;
 
-import com.lunisoft.javastarter.config.StorageProperties;
+import com.lunisoft.javastarter.properties.StorageProperties;
 import java.io.InputStream;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;

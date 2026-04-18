@@ -1,11 +1,12 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.createCustomer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
+import com.lunisoft.javastarter.shared.builder.AccountBuilder;
+import com.lunisoft.javastarter.shared.builder.CustomerBuilder;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,8 +28,10 @@ class DemoSearchCustomerUseCaseTest {
 
   @Test
   void execute_withResults_returnsMappedResponses() {
-    var customer1 = createCustomer("alice@example.com", Role.CUSTOMER);
-    var customer2 = createCustomer("bob@example.com", Role.CUSTOMER);
+    var customer1 =
+        new CustomerBuilder().account(new AccountBuilder().email("alice@example.com").build()).build();
+    var customer2 =
+        new CustomerBuilder().account(new AccountBuilder().email("bob@example.com").build()).build();
 
     when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER))
         .thenReturn(List.of(customer1, customer2));

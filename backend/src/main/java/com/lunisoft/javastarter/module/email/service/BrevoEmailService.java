@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.module.email.service;
 
-import com.lunisoft.javastarter.config.BrevoProperties;
 import com.lunisoft.javastarter.module.email.dto.EmailRequest;
+import com.lunisoft.javastarter.properties.BrevoProperties;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

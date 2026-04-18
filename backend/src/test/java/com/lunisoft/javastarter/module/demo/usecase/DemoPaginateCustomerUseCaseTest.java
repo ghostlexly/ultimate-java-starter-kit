@@ -1,14 +1,14 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.createCustomer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
+import com.lunisoft.javastarter.shared.builder.AccountBuilder;
+import com.lunisoft.javastarter.shared.builder.CustomerBuilder;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,8 @@ class DemoPaginateCustomerUseCaseTest {
 
   @Test
   void execute_returnsPagedResults() {
-    var customer = createCustomer("test@example.com", Role.CUSTOMER);
+    var customer =
+        new CustomerBuilder().account(new AccountBuilder().email("test@example.com").build()).build();
     var pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
     var page = new PageImpl<>(List.of(customer), pageable, 1);
 

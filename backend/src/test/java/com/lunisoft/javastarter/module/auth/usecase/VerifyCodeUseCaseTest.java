@@ -1,6 +1,5 @@
 package com.lunisoft.javastarter.module.auth.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,6 +15,9 @@ import com.lunisoft.javastarter.module.auth.entity.Session;
 import com.lunisoft.javastarter.module.auth.entity.VerificationType;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
+import com.lunisoft.javastarter.shared.builder.AccountBuilder;
+import com.lunisoft.javastarter.shared.builder.SessionBuilder;
+import com.lunisoft.javastarter.shared.builder.VerificationTokenBuilder;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Optional;
@@ -48,9 +50,9 @@ class VerifyCodeUseCaseTest {
   void execute_validCode_returnsAuthResponse() {
     var email = "test@example.com";
     var code = "1234";
-    var account = createAccount(email);
-    var token = createVerificationToken(account, code, 0);
-    var session = createSession(account);
+    var account = new AccountBuilder().email(email).build();
+    var token = new VerificationTokenBuilder().account(account).value(code).build();
+    var session = new SessionBuilder().account(account).build();
 
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
@@ -90,7 +92,7 @@ class VerifyCodeUseCaseTest {
   @Test
   void execute_noValidToken_throwsBusinessRuleException() {
     var email = "test@example.com";
-    var account = createAccount(email);
+    var account = new AccountBuilder().email(email).build();
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
             eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
@@ -108,8 +110,13 @@ class VerifyCodeUseCaseTest {
   @Test
   void execute_maxAttemptsReached_throwsBusinessRuleException() {
     var email = "test@example.com";
-    var account = createAccount(email);
-    var token = createVerificationToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
+    var account = new AccountBuilder().email(email).build();
+    var token =
+        new VerificationTokenBuilder()
+            .account(account)
+            .value("1234")
+            .attempts(AuthConstants.LOGIN_CODE_MAX_ATTEMPTS)
+            .build();
 
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
@@ -129,8 +136,8 @@ class VerifyCodeUseCaseTest {
   @Test
   void execute_wrongCode_incrementsAttemptsAndThrows() {
     var email = "test@example.com";
-    var account = createAccount(email);
-    var token = createVerificationToken(account, "1234", 0);
+    var account = new AccountBuilder().email(email).build();
+    var token = new VerificationTokenBuilder().account(account).value("1234").build();
 
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
@@ -151,5 +158,4 @@ class VerifyCodeUseCaseTest {
     // Token should NOT be deleted
     verify(verificationTokenRepository, never()).delete(any());
   }
-
 }

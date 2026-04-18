@@ -1,6 +1,5 @@
 package com.lunisoft.javastarter.module.auth.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.createAccount;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -15,6 +14,7 @@ import com.lunisoft.javastarter.module.auth.entity.VerificationType;
 import com.lunisoft.javastarter.module.auth.event.LoginCodeRequestedEvent;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
+import com.lunisoft.javastarter.shared.builder.AccountBuilder;
 import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +46,7 @@ class SendCodeUseCaseTest {
   @Test
   void execute_existingAccount_sendsCode() {
     var email = "test@example.com";
-    var account = createAccount(email, Role.CUSTOMER);
+    var account = new AccountBuilder().email(email).build();
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
             account.getId(), VerificationType.LOGIN_CODE))
@@ -63,7 +63,7 @@ class SendCodeUseCaseTest {
   @Test
   void execute_newAccount_createsAccountAndCustomerThenSendsCode() {
     var email = "new@example.com";
-    var savedAccount = createAccount(email, Role.CUSTOMER);
+    var savedAccount = new AccountBuilder().email(email).build();
     when(accountRepository.findByEmail(email)).thenReturn(Optional.empty());
     when(accountRepository.save(any(Account.class))).thenReturn(savedAccount);
     when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
@@ -90,7 +90,7 @@ class SendCodeUseCaseTest {
   @Test
   void execute_cooldownNotExpired_throwsBusinessRuleException() {
     var email = "test@example.com";
-    var account = createAccount(email, Role.CUSTOMER);
+    var account = new AccountBuilder().email(email).build();
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
 
     // Last token was created 10 seconds ago (within 60s cooldown)
@@ -116,7 +116,7 @@ class SendCodeUseCaseTest {
   @Test
   void execute_cooldownExpired_sendsCodeSuccessfully() {
     var email = "test@example.com";
-    var account = createAccount(email, Role.CUSTOMER);
+    var account = new AccountBuilder().email(email).build();
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
 
     // Last token was created 61 seconds ago (past 60s cooldown)
@@ -136,7 +136,7 @@ class SendCodeUseCaseTest {
   @Test
   void execute_savesTokenWithCorrectFields() {
     var email = "test@example.com";
-    var account = createAccount(email, Role.CUSTOMER);
+    var account = new AccountBuilder().email(email).build();
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
             account.getId(), VerificationType.LOGIN_CODE))
