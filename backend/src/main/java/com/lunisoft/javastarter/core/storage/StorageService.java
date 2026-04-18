@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.core.storage;
 
 import com.lunisoft.javastarter.config.StorageProperties;
-import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,14 +36,15 @@ public class StorageService {
     s3Client.putObject(request, RequestBody.fromBytes(data));
   }
 
-  /** Downloads a file from S3 as a byte array. */
-  public byte[] download(String key) throws IOException {
+  /**
+   * Downloads a file from S3 as a stream. The caller is responsible for closing the stream (prefer
+   * try-with-resources). Streaming avoids loading the whole object in memory, which is important
+   * for large files.
+   */
+  public InputStream download(String key) {
     var request = GetObjectRequest.builder().bucket(storageProperties.bucket()).key(key).build();
 
-    try (var response = s3Client.getObject(request)) {
-
-      return response.readAllBytes();
-    }
+    return s3Client.getObject(request);
   }
 
   /** Deletes a file from S3. */
