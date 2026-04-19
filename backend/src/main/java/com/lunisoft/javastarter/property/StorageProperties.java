@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.properties;
+package com.lunisoft.javastarter.property;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

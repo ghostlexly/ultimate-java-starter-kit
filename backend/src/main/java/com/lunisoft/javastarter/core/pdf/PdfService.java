@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.core.pdf;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
-import com.lunisoft.javastarter.properties.PdfProperties;
+import com.lunisoft.javastarter.property.PdfProperties;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.WaitForSelectorState;

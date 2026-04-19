@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.core.security;
 
 import com.lunisoft.javastarter.module.account.entity.Role;
-import com.lunisoft.javastarter.properties.JwtProperties;
+import com.lunisoft.javastarter.property.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import java.security.KeyFactory;

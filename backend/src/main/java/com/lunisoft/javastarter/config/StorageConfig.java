@@ -1,6 +1,6 @@
 package com.lunisoft.javastarter.config;
 
-import com.lunisoft.javastarter.properties.StorageProperties;
+import com.lunisoft.javastarter.property.StorageProperties;
 import java.net.URI;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
