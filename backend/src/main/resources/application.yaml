@@ -18,6 +18,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        jdbc:
+          batch_size: 50
+          batch_versioned_data: true
 
   flyway:
     enabled: true
