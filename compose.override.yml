@@ -17,10 +17,6 @@ services:
     networks:
       - lunisoft
 
-  java-starter-redis:
-    ports:
-      - "6379:6379"
-
   java-starter-backend:
     # Don't start backend in dev — run it from your IDE instead.
     # Profiles require to be run with the argument "docker compose --profile prod up -d"

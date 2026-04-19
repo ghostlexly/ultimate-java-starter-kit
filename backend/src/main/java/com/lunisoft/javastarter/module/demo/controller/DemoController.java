@@ -18,10 +18,14 @@ import jakarta.validation.constraints.Min;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,11 +35,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/demo")
 public class DemoController {
 
+  private static final Logger log = LoggerFactory.getLogger(DemoController.class);
   private final DemoSearchCustomerUseCase demoSearchCustomerUseCase;
   private final DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
   private final MediaRepository mediaRepository;
   private final StorageService storageService;
   private final PdfService pdfService;
+  private final RedisLockRegistry lockRegistry;
 
   /**
    * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER
@@ -82,6 +88,23 @@ public class DemoController {
   @GetMapping("simple-message-response")
   public ResponseEntity<String> simpleMessageResponse() {
     return ResponseEntity.ok("Success");
+  }
+
+  @GetMapping("lock")
+  public ResponseEntity<Map<String, String>> lockTest() throws InterruptedException {
+    Lock lock = lockRegistry.obtain("test-lock");
+    lock.lock();
+
+    log.info("Lock acquired !");
+
+    try {
+      // wait for 3 seconds to simulate doing something
+      Thread.sleep(5000);
+    } finally {
+      lock.unlock();
+    }
+
+    return ResponseEntity.ok(Map.of("message", "Lock acquired"));
   }
 
   @GetMapping("rate-limited")
