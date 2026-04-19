@@ -2,7 +2,7 @@
 
 ## Project Setup
 
-- Java 25, Spring Boot 4.x, Spring Security 7.x, Maven
+- Java 25, Spring Boot 4.x, Spring Framework 7.x, Spring Security 7.x, Maven
 - PostgreSQL + Flyway migrations
 - Bucket4j, JJWT (RSA256)
 - Stateless REST API with JWT authentication
