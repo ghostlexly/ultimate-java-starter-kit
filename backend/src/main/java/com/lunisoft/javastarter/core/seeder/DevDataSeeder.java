@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.config;
+package com.lunisoft.javastarter.core.seeder;
 
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.entity.Role;
