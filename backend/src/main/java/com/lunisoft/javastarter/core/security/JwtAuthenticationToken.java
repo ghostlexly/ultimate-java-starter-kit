@@ -10,8 +10,11 @@ import org.springframework.security.core.GrantedAuthority;
  * <p>Use {@link #unauthenticated(String)} when handing a raw token to the {@code
  * AuthenticationManager}, and {@link #authenticated(UserPrincipal, String, Collection)} to wrap a
  * verified principal returned from {@link JwtAuthenticationProvider}.
+ *
+ * <p>For the suppress warning: Auth tokens are never compared; matches Spring's own
+ * UsernamePasswordAuthenticationToken.
  */
-@SuppressWarnings("java:S2160") // Auth tokens are never compared; matches Spring's own UsernamePasswordAuthenticationToken.
+@SuppressWarnings("java:S2160")
 public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
   private final String token;
