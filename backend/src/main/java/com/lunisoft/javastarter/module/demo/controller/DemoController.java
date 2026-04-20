@@ -6,11 +6,12 @@ import com.lunisoft.javastarter.core.security.PublicEndpoint;
 import com.lunisoft.javastarter.core.storage.StorageService;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
-import com.lunisoft.javastarter.module.demo.dto.DemoPaginatedCustomerResponse;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
-import com.lunisoft.javastarter.module.demo.dto.DemoSearchCustomerResponse;
-import com.lunisoft.javastarter.module.demo.usecase.DemoPaginateCustomerUseCase;
-import com.lunisoft.javastarter.module.demo.usecase.DemoSearchCustomerUseCase;
+import com.lunisoft.javastarter.module.demo.usecase.enqueuejob.DemoJobRunrEnqueueJob;
+import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerResult;
+import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
+import com.lunisoft.javastarter.module.demo.usecase.searchcustomer.DemoSearchCustomerResult;
+import com.lunisoft.javastarter.module.demo.usecase.searchcustomer.DemoSearchCustomerUseCase;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import lombok.RequiredArgsConstructor;
+import org.jobrunr.scheduling.BackgroundJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -42,14 +44,15 @@ public class DemoController {
   private final StorageService storageService;
   private final PdfService pdfService;
   private final RedisLockRegistry lockRegistry;
+  private final DemoJobRunrEnqueueJob demoJobRunrEnqueueJob;
 
   /**
    * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER
    */
   @GetMapping("/customers")
-  public ResponseEntity<List<DemoSearchCustomerResponse>> searchCustomers(@RequestParam Role role) {
+  public ResponseEntity<List<DemoSearchCustomerResult>> searchCustomers(@RequestParam Role role) {
 
-    List<DemoSearchCustomerResponse> results = demoSearchCustomerUseCase.execute(role);
+    List<DemoSearchCustomerResult> results = demoSearchCustomerUseCase.execute(role);
 
     return ResponseEntity.ok(results);
   }
@@ -69,12 +72,12 @@ public class DemoController {
    * /api/demo/customers/paginated?email=john&page=1&size=5
    */
   @GetMapping("/customers/paginated")
-  public ResponseEntity<DemoPaginatedCustomerResponse> paginateCustomers(
+  public ResponseEntity<DemoPaginateCustomerResult> paginateCustomers(
       @Min(1) @RequestParam(defaultValue = "1") int page,
       @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String email) {
 
-    DemoPaginatedCustomerResponse response =
+    DemoPaginateCustomerResult response =
         demoPaginateCustomerUseCase.execute(page - 1, size, email);
 
     return ResponseEntity.ok(response);
@@ -120,6 +123,14 @@ public class DemoController {
   public ResponseEntity<Map<String, String>> accessibleToPublic() {
     return ResponseEntity.ok(
         Map.of("message", "This endpoint is accessible to public without any authentication."));
+  }
+
+  @GetMapping("jobrunr-demo")
+  @PublicEndpoint
+  public ResponseEntity<Map<String, String>> jobrunrDemo() {
+    BackgroundJob.enqueue(() -> demoJobRunrEnqueueJob.execute("abcdef"));
+
+    return ResponseEntity.ok(Map.of("message", "The new job has been scheduled."));
   }
 
   @GetMapping("preview-uploaded-medias")

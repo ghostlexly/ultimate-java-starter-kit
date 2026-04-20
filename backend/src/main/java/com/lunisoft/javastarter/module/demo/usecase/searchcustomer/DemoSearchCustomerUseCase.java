@@ -1,7 +1,6 @@
-package com.lunisoft.javastarter.module.demo.usecase;
+package com.lunisoft.javastarter.module.demo.usecase.searchcustomer;
 
 import com.lunisoft.javastarter.module.account.entity.Role;
-import com.lunisoft.javastarter.module.demo.dto.DemoSearchCustomerResponse;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +18,12 @@ public class DemoSearchCustomerUseCase {
   private final DemoCustomerRepository demoCustomerRepository;
 
   @Transactional(readOnly = true)
-  public List<DemoSearchCustomerResponse> execute(Role role) {
+  public List<DemoSearchCustomerResult> execute(Role role) {
 
     return demoCustomerRepository.findByAccountRole(role).stream()
         .map(
             customer ->
-                new DemoSearchCustomerResponse(
+                new DemoSearchCustomerResult(
                     customer.getId(),
                     customer.getAccount().getEmail(),
                     customer.getAccount().getRole().name()))

@@ -1,7 +1,6 @@
-package com.lunisoft.javastarter.module.demo.usecase;
+package com.lunisoft.javastarter.module.demo.usecase.paginatecustomer;
 
 import com.lunisoft.javastarter.module.customer.entity.Customer;
-import com.lunisoft.javastarter.module.demo.dto.DemoPaginatedCustomerResponse;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerSpecification;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ public class DemoPaginateCustomerUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
 
-  public DemoPaginatedCustomerResponse execute(int page, int size, String email) {
+  public DemoPaginateCustomerResult execute(int page, int size, String email) {
     Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
     Specification<Customer> spec = buildSpec(email);
 
@@ -34,13 +33,13 @@ public class DemoPaginateCustomerUseCase {
         result.getContent().stream()
             .map(
                 customer ->
-                    new DemoPaginatedCustomerResponse.CustomerItem(
+                    new DemoPaginateCustomerResult.CustomerItem(
                         customer.getId(),
                         customer.getAccount().getEmail(),
                         customer.getAccount().getRole().name()))
             .toList();
 
-    return new DemoPaginatedCustomerResponse(
+    return new DemoPaginateCustomerResult(
         items,
         result.getTotalElements(),
         result.getTotalPages(),

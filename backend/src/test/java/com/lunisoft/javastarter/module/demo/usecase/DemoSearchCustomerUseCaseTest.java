@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
+import com.lunisoft.javastarter.module.demo.usecase.searchcustomer.DemoSearchCustomerUseCase;
 import com.lunisoft.javastarter.shared.builder.AccountBuilder;
 import com.lunisoft.javastarter.shared.builder.CustomerBuilder;
 import java.util.List;
@@ -29,9 +30,13 @@ class DemoSearchCustomerUseCaseTest {
   @Test
   void execute_withResults_returnsMappedResponses() {
     var customer1 =
-        new CustomerBuilder().account(new AccountBuilder().email("alice@example.com").build()).build();
+        new CustomerBuilder()
+            .account(new AccountBuilder().email("alice@example.com").build())
+            .build();
     var customer2 =
-        new CustomerBuilder().account(new AccountBuilder().email("bob@example.com").build()).build();
+        new CustomerBuilder()
+            .account(new AccountBuilder().email("bob@example.com").build())
+            .build();
 
     when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER))
         .thenReturn(List.of(customer1, customer2));

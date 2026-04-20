@@ -57,3 +57,11 @@ localhost, http://tunnel.lunisoft.fr {
                                   }
                   }
 }
+
+# JobRunr Dashboard
+
+localhost:8000 {
+    handle {
+               reverse_proxy java-starter-backend:8000
+           }
+}

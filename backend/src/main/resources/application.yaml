@@ -31,6 +31,14 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+jobrunr:
+  background-job-server:
+    enabled: true
+  dashboard:
+    enabled: true
+    username: lunisoft
+    password: ${APP_JOBRUNR_DASHBOARD_PASSWORD}
+
 server:
   port: ${APP_PORT:3000}
 

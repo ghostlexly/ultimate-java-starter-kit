@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
+import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
 import com.lunisoft.javastarter.shared.builder.AccountBuilder;
 import com.lunisoft.javastarter.shared.builder.CustomerBuilder;
 import java.util.List;
@@ -35,7 +36,9 @@ class DemoPaginateCustomerUseCaseTest {
   @Test
   void execute_returnsPagedResults() {
     var customer =
-        new CustomerBuilder().account(new AccountBuilder().email("test@example.com").build()).build();
+        new CustomerBuilder()
+            .account(new AccountBuilder().email("test@example.com").build())
+            .build();
     var pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
     var page = new PageImpl<>(List.of(customer), pageable, 1);
 
