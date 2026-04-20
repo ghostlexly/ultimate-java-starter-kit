@@ -1,6 +1,4 @@
 package com.lunisoft.javastarter.core.ratelimit;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunisoft.javastarter.core.dto.ErrorResponse;
 import com.lunisoft.javastarter.core.security.UserPrincipal;
 import io.github.bucket4j.Bandwidth;
@@ -28,6 +26,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Enforces @RateLimit via AOP. Because Spring resolves and validates controller arguments

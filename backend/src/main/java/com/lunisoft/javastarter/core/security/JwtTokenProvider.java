@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class JwtTokenProvider {
 
+  private static final long CLOCK_SKEW_SECONDS = 60;
+
   private final PrivateKey privateKey;
   private final PublicKey publicKey;
   private final JwtProperties jwtProperties;
@@ -35,6 +37,10 @@ public class JwtTokenProvider {
     Instant now = Instant.now();
 
     return Jwts.builder()
+        .issuer(jwtProperties.issuer())
+        .audience()
+        .add(jwtProperties.audience())
+        .and()
         .subject(accountId.toString())
         .claim("sessionId", sessionId.toString())
         .claim("email", email)
@@ -51,6 +57,10 @@ public class JwtTokenProvider {
     Instant now = Instant.now();
 
     return Jwts.builder()
+        .issuer(jwtProperties.issuer())
+        .audience()
+        .add(jwtProperties.audience())
+        .and()
         .subject(sessionId.toString())
         .issuedAt(Date.from(now))
         .expiration(
@@ -63,9 +73,16 @@ public class JwtTokenProvider {
     return jwtProperties.refreshTokenExpirationMinutes();
   }
 
-  /** Parses and validates a JWT token, returning its claims. */
+  /** Parses and validates a JWT token (signature, expiry, issuer, audience), returning its claims. */
   public Claims parseToken(String token) {
-    return Jwts.parser().verifyWith(publicKey).build().parseSignedClaims(token).getPayload();
+    return Jwts.parser()
+        .verifyWith(publicKey)
+        .requireIssuer(jwtProperties.issuer())
+        .requireAudience(jwtProperties.audience())
+        .clockSkewSeconds(CLOCK_SKEW_SECONDS)
+        .build()
+        .parseSignedClaims(token)
+        .getPayload();
   }
 
   private PrivateKey decodePrivateKey(String base64Key) {

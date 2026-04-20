@@ -1,10 +1,11 @@
 package com.lunisoft.javastarter.core.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.lunisoft.javastarter.core.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,11 +27,13 @@ import org.springframework.stereotype.Component;
  * call site and are handled by {@code GlobalExceptionHandler#handleAccessDenied}.
  */
 @Component
+@RequiredArgsConstructor
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
 
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ErrorResponse BODY =
       new ErrorResponse("ForbiddenException", "Access denied", "FORBIDDEN", null);
+
+  private final ObjectMapper objectMapper;
 
   @Override
   public void handle(
@@ -40,6 +43,6 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
       throws IOException {
     response.setStatus(HttpStatus.FORBIDDEN.value());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    OBJECT_MAPPER.writeValue(response.getWriter(), BODY);
+    objectMapper.writeValue(response.getWriter(), BODY);
   }
 }

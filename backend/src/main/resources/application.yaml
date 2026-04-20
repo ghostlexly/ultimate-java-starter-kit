@@ -46,10 +46,15 @@ app:
   jwt:
     private-key: ${APP_JWT_PRIVATE_KEY}
     public-key: ${APP_JWT_PUBLIC_KEY}
+    issuer: lunisoft-java-starter
+    audience: lunisoft-java-starter
     access-token-expiration-minutes: 15
     refresh-token-expiration-minutes: 10080
   cookie:
     secure: ${APP_COOKIE_SECURE:false}
+  cors:
+    allowed-origins:
+      - https://localhost
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT}
     region: ${APP_STORAGE_REGION:auto}
