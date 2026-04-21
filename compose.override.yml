@@ -1,13 +1,12 @@
 services:
   caddy:
-    build:
-      context: ./caddy
-    ports:
-      - "80:80"
-      - "443:443"
+    build: ./caddy
     environment:
       # Point API routes to host machine (where your IDE runs the backend)
       BACKEND_UPSTREAM: host.docker.internal:3000
+    ports:
+      - "80:80"
+      - "443:443"
     extra_hosts:
       # "host.docker.internal" points to the host machine (where your IDE runs the backend)
       - "host.docker.internal:host-gateway"

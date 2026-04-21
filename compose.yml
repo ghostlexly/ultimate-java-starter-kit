@@ -33,12 +33,12 @@ services:
   java-starter-frontend:
     image: lunisoft/java-starter:frontend
     build: ./frontend
-    expose:
-      - "3000"
     environment:
       NODE_ENV: production
       # Server Components call the backend directly
       BACKEND_INTERNAL_URL: http://java-starter-backend:3000
+    expose:
+      - "3000"
     healthcheck:
       test: "curl -s http://localhost:3000 || exit 1"
       interval: 5s
@@ -50,8 +50,6 @@ services:
   java-starter-backend:
     image: lunisoft/java-starter:backend
     build: ./backend
-    expose:
-      - "3000"
     environment:
       POSTGRES_DATABASE_URL: ${POSTGRES_DATABASE_URL}
       POSTGRES_USER: ${POSTGRES_USER:-lunisoft}
@@ -66,6 +64,8 @@ services:
       APP_STORAGE_BUCKET: ${APP_STORAGE_BUCKET}
       APP_JOBRUNR_DASHBOARD_PASSWORD: ${APP_JOBRUNR_DASHBOARD_PASSWORD}
       APP_BREVO_API_KEY: ${APP_BREVO_API_KEY}
+    expose:
+      - "3000"
     depends_on:
       java-starter-postgres:
         condition: service_healthy
