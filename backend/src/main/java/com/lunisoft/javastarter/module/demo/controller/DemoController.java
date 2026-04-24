@@ -101,8 +101,8 @@ public class DemoController {
     log.info("Lock acquired !");
 
     try {
-      // wait for 3 seconds to simulate doing something
-      Thread.sleep(5000);
+      // wait for 5 seconds to simulate doing something
+      Thread.sleep(5_000);
     } finally {
       lock.unlock();
     }
