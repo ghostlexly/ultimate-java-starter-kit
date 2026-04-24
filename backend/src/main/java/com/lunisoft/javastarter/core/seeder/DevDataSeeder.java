@@ -46,7 +46,7 @@ public class DevDataSeeder implements ApplicationRunner {
   // ── Customer account with addresses ────────────────────────────────────────
 
   private void seedCustomerAccount() {
-    var email = "customer@lunisoft.fr";
+    var email = "contact+customer@lunisoft.fr";
 
     if (accountRepository.findByEmail(email).isPresent()) {
       log.info("Customer account already exists, skipping.");

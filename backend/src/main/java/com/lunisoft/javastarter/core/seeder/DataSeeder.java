@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Order(1) // Run this DataSeeder before DevDataSeeder
 public class DataSeeder implements ApplicationRunner {
 
-  private static final String ADMIN_EMAIL = "admin@lunisoft.fr";
+  private static final String ADMIN_EMAIL = "contact+admin@lunisoft.fr";
   private static final String SEED_PASSWORD = "password";
 
   private final Logger log = LoggerFactory.getLogger(DataSeeder.class);
