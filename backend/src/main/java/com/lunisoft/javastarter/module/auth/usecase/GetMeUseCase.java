@@ -23,7 +23,7 @@ public class GetMeUseCase {
             .orElseThrow(
                 () ->
                     new BusinessRuleException(
-                        "Account not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
+                        "Account not found", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
     return new MeResponse(account.getId(), account.getEmail(), account.getRole().name());
   }

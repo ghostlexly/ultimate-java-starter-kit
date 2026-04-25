@@ -1,5 +1,7 @@
 package com.lunisoft.javastarter.module.auth.usecase;
 
+import static com.lunisoft.javastarter.shared.TestFactory.createCustomerAccount;
+import static com.lunisoft.javastarter.shared.TestFactory.createSession;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,10 +10,9 @@ import static org.mockito.Mockito.*;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
+import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
-import com.lunisoft.javastarter.shared.builder.AccountBuilder;
-import com.lunisoft.javastarter.shared.builder.SessionBuilder;
 import io.jsonwebtoken.Claims;
 import java.time.Instant;
 import java.util.Optional;
@@ -39,10 +40,10 @@ class RefreshTokensUseCaseTest {
 
   @Test
   void execute_validToken_returnsNewTokens() {
-    var refreshToken = "valid-refresh-token";
-    var sessionId = UUID.randomUUID();
-    var account = new AccountBuilder().email("test@example.com").build();
-    var session = new SessionBuilder().id(sessionId).account(account).build();
+    String refreshToken = "valid-refresh-token";
+    Account account = createCustomerAccount();
+    var session = createSession(account);
+    var sessionId = session.getId();
 
     when(jwtTokenProvider.parseToken(refreshToken)).thenReturn(claims);
     when(claims.getSubject()).thenReturn(sessionId.toString());

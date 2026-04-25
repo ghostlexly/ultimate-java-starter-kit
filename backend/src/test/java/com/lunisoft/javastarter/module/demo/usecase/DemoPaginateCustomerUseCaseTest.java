@@ -1,5 +1,6 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
+import static com.lunisoft.javastarter.shared.TestFactory.createCustomerAccount;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -8,8 +9,6 @@ import static org.mockito.Mockito.when;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
-import com.lunisoft.javastarter.shared.builder.AccountBuilder;
-import com.lunisoft.javastarter.shared.builder.CustomerBuilder;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,10 +34,8 @@ class DemoPaginateCustomerUseCaseTest {
 
   @Test
   void execute_returnsPagedResults() {
-    var customer =
-        new CustomerBuilder()
-            .account(new AccountBuilder().email("test@example.com").build())
-            .build();
+    var account = createCustomerAccount();
+    var customer = account.getCustomer();
     var pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
     var page = new PageImpl<>(List.of(customer), pageable, 1);
 
@@ -47,7 +44,7 @@ class DemoPaginateCustomerUseCaseTest {
     var result = demoPaginateCustomerUseCase.execute(0, 10, null);
 
     assertThat(result.content()).hasSize(1);
-    assertThat(result.content().getFirst().email()).isEqualTo("test@example.com");
+    assertThat(result.content().getFirst().email()).isEqualTo("contact+customer@lunisoft.fr");
     assertThat(result.content().getFirst().role()).isEqualTo("CUSTOMER");
     assertThat(result.totalItems()).isEqualTo(1);
     assertThat(result.totalPages()).isEqualTo(1);

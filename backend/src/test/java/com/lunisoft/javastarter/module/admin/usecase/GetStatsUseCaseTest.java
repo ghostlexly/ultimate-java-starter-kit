@@ -5,9 +5,9 @@ import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -17,12 +17,7 @@ class GetStatsUseCaseTest {
   @Mock private AccountRepository accountRepository;
   @Mock private SessionRepository sessionRepository;
 
-  private GetStatsUseCase getStatsUseCase;
-
-  @BeforeEach
-  void setUp() {
-    getStatsUseCase = new GetStatsUseCase(accountRepository, sessionRepository);
-  }
+  @InjectMocks private GetStatsUseCase getStatsUseCase;
 
   @Test
   void execute_returnsAccountsAndSessionCounts() {
