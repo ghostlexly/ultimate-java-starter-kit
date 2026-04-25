@@ -49,7 +49,7 @@ public class DemoController {
   /**
    * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER
    */
-  @GetMapping("/customers")
+  @GetMapping("customers")
   public ResponseEntity<List<DemoSearchCustomerResult>> searchCustomers(@RequestParam Role role) {
 
     List<DemoSearchCustomerResult> results = demoSearchCustomerUseCase.execute(role);
@@ -58,7 +58,7 @@ public class DemoController {
   }
 
   /** Validate the body of the request. The rate limiter run only when the request is valid. */
-  @PostMapping("/body-validation")
+  @PostMapping("body-validation")
   @RateLimit(requests = 1, periodSeconds = 60)
   public ResponseEntity<Map<String, String>> bodyValidationExample(
       @Valid @RequestBody BodyValidationExampleRequest request) {
@@ -71,7 +71,7 @@ public class DemoController {
    * /api/demo/customers/paginated?email=john GET
    * /api/demo/customers/paginated?email=john&page=1&size=5
    */
-  @GetMapping("/customers/paginated")
+  @GetMapping("customers/paginated")
   public ResponseEntity<DemoPaginateCustomerResult> paginateCustomers(
       @Min(1) @RequestParam(defaultValue = "1") int page,
       @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,

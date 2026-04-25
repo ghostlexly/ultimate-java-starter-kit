@@ -31,7 +31,7 @@ public class AuthController {
   private final GetMeUseCase getMeUseCase;
 
   @PublicEndpoint
-  @PostMapping("/send-code")
+  @PostMapping("send-code")
   public ResponseEntity<Map<String, String>> sendCode(@Valid @RequestBody SendCodeRequest request) {
     sendCodeUseCase.execute(request.email());
 
@@ -39,7 +39,7 @@ public class AuthController {
   }
 
   @PublicEndpoint
-  @PostMapping("/verify-code")
+  @PostMapping("verify-code")
   public ResponseEntity<AuthResponse> verifyCode(
       @Valid @RequestBody VerifyCodeRequest request,
       HttpServletRequest httpRequest,
@@ -52,7 +52,7 @@ public class AuthController {
   }
 
   @PublicEndpoint
-  @PostMapping("/refresh")
+  @PostMapping("refresh")
   public ResponseEntity<AuthResponse> refreshTokens(
       @Valid @RequestBody(required = false) RefreshTokenRequest request,
       HttpServletRequest httpRequest,
@@ -71,14 +71,14 @@ public class AuthController {
     return ResponseEntity.ok(response);
   }
 
-  @GetMapping("/me")
+  @GetMapping("me")
   public ResponseEntity<MeResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
     MeResponse response = getMeUseCase.execute(principal.accountId());
 
     return ResponseEntity.ok(response);
   }
 
-  @PostMapping("/logout")
+  @PostMapping("logout")
   public ResponseEntity<Map<String, String>> logout(HttpServletResponse httpResponse) {
     authCookieService.clearAuthCookies(httpResponse);
 

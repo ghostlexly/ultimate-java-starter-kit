@@ -17,7 +17,7 @@ public class AdminController {
 
   private final GetStatsUseCase getStatsUseCase;
 
-  @GetMapping("/stats")
+  @GetMapping("stats")
   public ResponseEntity<Map<String, Long>> getStats() {
 
     return ResponseEntity.ok(getStatsUseCase.execute());

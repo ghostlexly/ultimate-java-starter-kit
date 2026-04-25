@@ -21,7 +21,7 @@ public class CustomerController {
   private final GetProfileUseCase getProfileUseCase;
   private final UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
 
-  @GetMapping("/profile")
+  @GetMapping("profile")
   public ResponseEntity<CustomerResponse> getProfile(
       @AuthenticationPrincipal UserPrincipal principal) {
 
@@ -30,7 +30,7 @@ public class CustomerController {
     return ResponseEntity.ok(response);
   }
 
-  @PatchMapping("/email")
+  @PatchMapping("email")
   public ResponseEntity<CustomerResponse> updateEmail(
       @AuthenticationPrincipal UserPrincipal principal,
       @Valid @RequestBody UpdateCustomerEmailRequest request) {
