@@ -30,13 +30,7 @@ public class JacksonConfig {
     public String deserialize(JsonParser p, DeserializationContext ctxt) {
       String value = p.getString();
 
-      if (value == null) {
-        return null;
-      }
-
-      String trimmed = value.trim();
-
-      return trimmed.isEmpty() ? null : trimmed;
+      return value == null ? null : value.trim();
     }
   }
 }
