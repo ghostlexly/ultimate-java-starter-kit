@@ -10,9 +10,9 @@ import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
@@ -25,12 +25,9 @@ class DemoPaginateCustomerUseCaseTest {
 
   @Mock private DemoCustomerRepository demoCustomerRepository;
 
+  @InjectMocks
   private DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
 
-  @BeforeEach
-  void setUp() {
-    demoPaginateCustomerUseCase = new DemoPaginateCustomerUseCase(demoCustomerRepository);
-  }
 
   @Test
   void execute_returnsPagedResults() {

@@ -35,7 +35,7 @@ class UpdateCustomerEmailUseCaseTest {
   void execute_validRequest_updatesEmailAndPublishesEvent() {
     Account account = createCustomerAccount();
     var accountId = account.getId();
-    Customer customer = createCustomer(account);
+    Customer customer = account.getCustomer();
     var request = new UpdateCustomerEmailRequest("new@example.com");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));

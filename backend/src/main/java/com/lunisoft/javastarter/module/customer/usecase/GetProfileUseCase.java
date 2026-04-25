@@ -22,7 +22,7 @@ public class GetProfileUseCase {
             .orElseThrow(
                 () ->
                     new BusinessRuleException(
-                        "Customer profile not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
+                        "Customer profile not found", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
     return new CustomerResponse(customer.getId(), customer.getAccount().getEmail());
   }

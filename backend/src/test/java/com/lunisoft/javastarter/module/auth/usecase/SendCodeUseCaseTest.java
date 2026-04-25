@@ -18,9 +18,9 @@ import com.lunisoft.javastarter.module.auth.repository.VerificationTokenReposito
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
 import java.time.Instant;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -33,14 +33,7 @@ class SendCodeUseCaseTest {
   @Mock private VerificationTokenRepository verificationTokenRepository;
   @Mock private ApplicationEventPublisher eventPublisher;
 
-  private SendCodeUseCase sendCodeUseCase;
-
-  @BeforeEach
-  void setUp() {
-    sendCodeUseCase =
-        new SendCodeUseCase(
-            accountRepository, customerRepository, verificationTokenRepository, eventPublisher);
-  }
+  @InjectMocks private SendCodeUseCase sendCodeUseCase;
 
   @Test
   void execute_existingAccount_sendsCode() {

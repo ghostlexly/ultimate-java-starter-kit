@@ -17,9 +17,9 @@ import io.jsonwebtoken.Claims;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -31,12 +31,7 @@ class RefreshTokensUseCaseTest {
   @Mock private JwtTokenProvider jwtTokenProvider;
   @Mock private Claims claims;
 
-  private RefreshTokensUseCase refreshTokensUseCase;
-
-  @BeforeEach
-  void setUp() {
-    refreshTokensUseCase = new RefreshTokensUseCase(sessionRepository, jwtTokenProvider);
-  }
+  @InjectMocks private RefreshTokensUseCase refreshTokensUseCase;
 
   @Test
   void execute_validToken_returnsNewTokens() {

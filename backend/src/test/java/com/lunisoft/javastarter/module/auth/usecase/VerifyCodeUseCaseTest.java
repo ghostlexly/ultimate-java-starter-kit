@@ -20,9 +20,9 @@ import com.lunisoft.javastarter.module.auth.repository.VerificationTokenReposito
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -36,14 +36,7 @@ class VerifyCodeUseCaseTest {
   @Mock private JwtTokenProvider jwtTokenProvider;
   @Mock private HttpServletRequest request;
 
-  private VerifyCodeUseCase verifyCodeUseCase;
-
-  @BeforeEach
-  void setUp() {
-    verifyCodeUseCase =
-        new VerifyCodeUseCase(
-            accountRepository, verificationTokenRepository, sessionRepository, jwtTokenProvider);
-  }
+  @InjectMocks private VerifyCodeUseCase verifyCodeUseCase;
 
   @Test
   void execute_validCode_returnsAuthResponse() {
