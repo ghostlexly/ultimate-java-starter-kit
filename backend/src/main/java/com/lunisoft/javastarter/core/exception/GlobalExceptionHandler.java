@@ -20,6 +20,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import tools.jackson.databind.exc.InvalidFormatException;
 
 /** Global exception handler that produces consistent JSON error responses. */
 @RestControllerAdvice
@@ -68,20 +69,55 @@ public class GlobalExceptionHandler {
   }
 
   /**
-   * Handles body validation failures (POST's or PATCH's body is not set). Example: POST
-   * /api/auth/send-code with { } triggers the MessageNotReadableException.
+   * Handles unreadable request bodies — missing body, malformed JSON, or a field that cannot be
+   * deserialized (e.g. {@code "regionId": "qsdsqdds"} for a UUID field).
    */
   @ExceptionHandler(HttpMessageNotReadableException.class)
   public ResponseEntity<ErrorResponse> handleMessageNotReadable(
       HttpMessageNotReadableException ex) {
+
+    InvalidFormatException ife = findCause(ex, InvalidFormatException.class);
+
+    if (ife != null && !ife.getPath().isEmpty()) {
+      String field = ife.getPath().getLast().getPropertyName();
+      String type = ife.getTargetType().getSimpleName();
+      String message =
+          "Invalid value '%s' for field '%s'. Expected type: %s."
+              .formatted(ife.getValue(), field, type);
+      ErrorResponse response =
+          new ErrorResponse(
+              "ValidationException",
+              message,
+              "VALIDATION_ERROR",
+              List.of(new Violation("InvalidFormat", message, field)));
+
+      return ResponseEntity.badRequest().body(response);
+    }
+
     ErrorResponse response =
         new ErrorResponse(
             "MessageNotReadableException",
-            "Required request body is missing",
+            "Required request body is missing or malformed",
             "MESSAGE_NOT_READABLE",
             null);
 
-    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+    return ResponseEntity.badRequest().body(response);
+  }
+
+  /**
+   * Walks the cause chain of {@code ex} and returns the first one matching {@code type}, or null.
+   */
+  @SuppressWarnings("unchecked")
+  private <T extends Throwable> T findCause(Throwable ex, Class<T> type) {
+    Throwable current = ex;
+    while (current != null) {
+      if (type.isInstance(current)) {
+        return (T) current;
+      }
+      current = current.getCause() == current ? null : current.getCause();
+    }
+
+    return null;
   }
 
   /** Handles errors when we send a wrong request type. Example: POST to a PATCH endpoint. */
