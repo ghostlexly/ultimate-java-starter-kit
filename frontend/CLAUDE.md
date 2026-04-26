@@ -26,7 +26,10 @@
   `space-y-*` or wrap inputs in plain `<div>`s.
 - Standard structure:
   ```tsx
-  <form onSubmit={…} noValidate>
+  <form onSubmit={(e) => {
+    form.clearErrors();
+    form.handleSubmit(handleSubmit)(e);
+  }} noValidate>
     <FieldSet>
       <FieldLegend>…</FieldLegend>          {/* optional: group title */}
       <FieldDescription>…</FieldDescription> {/* optional: group context */}
@@ -62,3 +65,40 @@ More examples are available here : https://ui.shadcn.com/docs/components/radix/f
   ```
   For a textarea, use `align="inline-start"` on the addon (and `self-start pt-*` if the icon
   should stick to the top) so it doesn't vertically center on a multi-line field.
+
+### Container / presenter pattern for forms backed by API data
+
+Whenever a form's `defaultValues` come from an API call, **never** use `useEffect` + `form.reset(...)`
+to backfill them once the data arrives. Split the page into a **container** (data fetching + render
+gating) and a **presenter** (pure form, `useForm` initialised from props that are already populated).
+
+- The container owns: route params, the data query, loading skeleton, "not found" empty state.
+- The presenter receives the loaded entity as a prop and is only rendered once that entity exists.
+  Because the entity is in scope at mount time, `useForm({ defaultValues: ... })` works on the
+  first render — no async patching needed, no flash of empty inputs, no re-sync bugs.
+- Mutations (`useUpdate…`) live in the presenter alongside the form they belong to.
+- Apply this pattern to **every** edit page.
+
+```tsx
+// Container — fetches, gates rendering, never touches useForm.
+export default function EditPage({params}: Readonly<PageProps>) {
+    const {id} = use(params);
+    const query = useThing(id);
+    const thing = query.data?.find((item) => item.id === id);
+
+    return (
+        <div>
+            {query.isLoading && <Skeleton/>}
+            {!query.isLoading && !thing && <EmptyState/>}
+            {thing && <FormContent thing={thing}/>}
+        </div>
+    );
+}
+
+// Presenter — pure form, defaults populated from props at mount.
+function FormContent({thing}: Readonly<{ thing: Thing }>) {
+    const form = useForm<FormShape>({defaultValues: {name: thing.name}});
+    const updateMutation = useUpdateThing();
+    // …
+}
+```
