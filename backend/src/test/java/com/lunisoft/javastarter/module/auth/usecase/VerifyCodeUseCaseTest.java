@@ -17,6 +17,8 @@ import com.lunisoft.javastarter.module.auth.entity.Session;
 import com.lunisoft.javastarter.module.auth.entity.VerificationType;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
+import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeInput;
+import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Optional;
@@ -39,10 +41,10 @@ class VerifyCodeUseCaseTest {
   @InjectMocks private VerifyCodeUseCase verifyCodeUseCase;
 
   @Test
-  void execute_validCode_returnsAuthResponse() {
-    var code = "1234";
+  void execute_whenValidCode_thenCorrect() {
     Account account = createCustomerAccount();
     var email = account.getEmail();
+    var code = "1234";
     var token = createVerificationToken(account, code, 0);
     var session = createSession(account);
 
@@ -58,7 +60,7 @@ class VerifyCodeUseCaseTest {
     when(jwtTokenProvider.generateRefreshToken(session.getId())).thenReturn("refresh-token");
     when(jwtTokenProvider.getRefreshTokenExpirationMinutes()).thenReturn(10080);
 
-    var result = verifyCodeUseCase.execute(email, code, request);
+    var result = verifyCodeUseCase.execute(new VerifyCodeInput(email, code, request));
 
     assertThat(result.role()).isEqualTo("CUSTOMER");
     assertThat(result.accessToken()).isEqualTo("access-token");
@@ -69,10 +71,13 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_accountNotFound_throwsBusinessRuleException() {
+  void execute_whenAccountNotFound_thenThrowsBusinessRuleException() {
     when(accountRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> verifyCodeUseCase.execute("unknown@example.com", "1234", request))
+    assertThatThrownBy(
+            () ->
+                verifyCodeUseCase.execute(
+                    new VerifyCodeInput("unknown@example.com", "1234", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -82,9 +87,9 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_noValidToken_throwsBusinessRuleException() {
-    var email = "test@example.com";
+  void execute_whenNoValidToken_thenThrowsBusinessRuleException() {
     var account = createCustomerAccount();
+    var email = account.getEmail();
 
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
     when(verificationTokenRepository
@@ -92,7 +97,7 @@ class VerifyCodeUseCaseTest {
                 eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
         .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> verifyCodeUseCase.execute(email, "1234", request))
+    assertThatThrownBy(() -> verifyCodeUseCase.execute(new VerifyCodeInput(email, "1234", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -102,7 +107,7 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_maxAttemptsReached_throwsBusinessRuleException() {
+  void execute_whenMaxAttemptsReached_thenThrowsBusinessRuleException() {
     var account = createCustomerAccount();
     var token = createVerificationToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
 
@@ -112,7 +117,9 @@ class VerifyCodeUseCaseTest {
                 eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
         .thenReturn(Optional.of(token));
 
-    assertThatThrownBy(() -> verifyCodeUseCase.execute(account.getEmail(), "1234", request))
+    assertThatThrownBy(
+            () ->
+                verifyCodeUseCase.execute(new VerifyCodeInput(account.getEmail(), "1234", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -122,7 +129,7 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_wrongCode_incrementsAttemptsAndThrows() {
+  void execute_whenWrongCode_thenIncrementsAttemptsAndThrows() {
     var account = createCustomerAccount();
     var token = createVerificationToken(account, "1234", 0);
 
@@ -132,7 +139,9 @@ class VerifyCodeUseCaseTest {
                 eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
         .thenReturn(Optional.of(token));
 
-    assertThatThrownBy(() -> verifyCodeUseCase.execute(account.getEmail(), "9999", request))
+    assertThatThrownBy(
+            () ->
+                verifyCodeUseCase.execute(new VerifyCodeInput(account.getEmail(), "9999", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {

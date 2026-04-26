@@ -1,9 +1,8 @@
-package com.lunisoft.javastarter.module.auth.usecase;
+package com.lunisoft.javastarter.module.auth.usecase.refreshtokens;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
-import com.lunisoft.javastarter.module.auth.dto.AuthResponse;
 import com.lunisoft.javastarter.module.auth.entity.Session;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import io.jsonwebtoken.Claims;
@@ -24,7 +23,7 @@ public class RefreshTokensUseCase {
   private final JwtTokenProvider jwtTokenProvider;
 
   @Transactional
-  public AuthResponse execute(String refreshToken) {
+  public RefreshTokensResult execute(String refreshToken) {
     Claims claims;
     try {
       claims = jwtTokenProvider.parseToken(refreshToken);
@@ -56,6 +55,6 @@ public class RefreshTokensUseCase {
             session.getId(), account.getId(), account.getEmail(), account.getRole());
     String newRefreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-    return new AuthResponse(account.getRole().name(), newAccessToken, newRefreshToken);
+    return new RefreshTokensResult(account.getRole().name(), newAccessToken, newRefreshToken);
   }
 }

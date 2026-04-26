@@ -8,7 +8,6 @@ import static org.mockito.Mockito.*;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
-import com.lunisoft.javastarter.module.customer.dto.UpdateCustomerEmailRequest;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
@@ -36,12 +35,12 @@ class UpdateCustomerEmailUseCaseTest {
     Account account = createCustomerAccount();
     var accountId = account.getId();
     Customer customer = account.getCustomer();
-    var request = new UpdateCustomerEmailRequest("new@example.com");
+    var input = new UpdateCustomerEmailInput(accountId, "new@example.com");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.of(customer));
 
-    var result = updateCustomerEmailUseCase.execute(accountId, request);
+    var result = updateCustomerEmailUseCase.execute(input);
 
     // Verify that the account's email was updated'
     assertThat(result.email()).isEqualTo("new@example.com");
@@ -73,7 +72,7 @@ class UpdateCustomerEmailUseCaseTest {
     assertThatThrownBy(
             () ->
                 updateCustomerEmailUseCase.execute(
-                    accountId, new UpdateCustomerEmailRequest("new@example.com")))
+                    new UpdateCustomerEmailInput(accountId, "new@example.com")))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -95,7 +94,7 @@ class UpdateCustomerEmailUseCaseTest {
     assertThatThrownBy(
             () ->
                 updateCustomerEmailUseCase.execute(
-                    accountId, new UpdateCustomerEmailRequest("new@example.com")))
+                    new UpdateCustomerEmailInput(accountId, "new@example.com")))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {

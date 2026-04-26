@@ -4,11 +4,9 @@ import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.module.customer.dto.CustomerResponse;
-import com.lunisoft.javastarter.module.customer.dto.UpdateCustomerEmailRequest;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -24,10 +22,10 @@ public class UpdateCustomerEmailUseCase {
   private final ApplicationEventPublisher eventPublisher;
 
   @Transactional
-  public CustomerResponse execute(UUID accountId, UpdateCustomerEmailRequest request) {
+  public CustomerResponse execute(UpdateCustomerEmailInput input) {
     Account account =
         accountRepository
-            .findById(accountId)
+            .findById(input.accountId())
             .orElseThrow(
                 () ->
                     new BusinessRuleException(
@@ -35,17 +33,17 @@ public class UpdateCustomerEmailUseCase {
 
     Customer customer =
         customerRepository
-            .findByAccountId(accountId)
+            .findByAccountId(input.accountId())
             .orElseThrow(
                 () ->
                     new BusinessRuleException(
                         "Customer profile not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
     // Update the email
-    account.setEmail(request.email());
+    account.setEmail(input.email());
 
     // Publish event so listeners can react (e.g. auto-detect country code)
-    eventPublisher.publishEvent(new CustomerEmailUpdatedEvent(customer, request.email()));
+    eventPublisher.publishEvent(new CustomerEmailUpdatedEvent(customer, input.email()));
 
     return new CustomerResponse(customer.getId(), account.getEmail());
   }

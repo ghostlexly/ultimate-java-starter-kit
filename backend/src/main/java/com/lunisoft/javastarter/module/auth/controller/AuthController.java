@@ -6,9 +6,12 @@ import com.lunisoft.javastarter.core.security.UserPrincipal;
 import com.lunisoft.javastarter.module.auth.dto.*;
 import com.lunisoft.javastarter.module.auth.service.AuthCookieService;
 import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase;
 import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.refreshtokens.RefreshTokensResult;
+import com.lunisoft.javastarter.module.auth.usecase.refreshtokens.RefreshTokensUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeInput;
+import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeResult;
+import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -40,20 +43,22 @@ public class AuthController {
 
   @PublicEndpoint
   @PostMapping("verify-code")
-  public ResponseEntity<AuthResponse> verifyCode(
+  public ResponseEntity<VerifyCodeResult> verifyCode(
       @Valid @RequestBody VerifyCodeRequest request,
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
 
-    AuthResponse response = verifyCodeUseCase.execute(request.email(), request.code(), httpRequest);
-    authCookieService.setAuthCookies(httpResponse, response);
+    var input = new VerifyCodeInput(request.email(), request.code(), httpRequest);
+    VerifyCodeResult result = verifyCodeUseCase.execute(input);
 
-    return ResponseEntity.ok(response);
+    authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
+
+    return ResponseEntity.ok(result);
   }
 
   @PublicEndpoint
   @PostMapping("refresh")
-  public ResponseEntity<AuthResponse> refreshTokens(
+  public ResponseEntity<RefreshTokensResult> refreshTokens(
       @Valid @RequestBody(required = false) RefreshTokenRequest request,
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
@@ -65,10 +70,10 @@ public class AuthController {
           "Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
     }
 
-    AuthResponse response = refreshTokensUseCase.execute(refreshToken);
-    authCookieService.setAuthCookies(httpResponse, response);
+    RefreshTokensResult result = refreshTokensUseCase.execute(refreshToken);
+    authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
 
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(result);
   }
 
   @GetMapping("me")

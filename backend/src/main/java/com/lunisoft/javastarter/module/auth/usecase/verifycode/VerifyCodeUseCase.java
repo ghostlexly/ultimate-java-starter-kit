@@ -1,11 +1,10 @@
-package com.lunisoft.javastarter.module.auth.usecase;
+package com.lunisoft.javastarter.module.auth.usecase.verifycode;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.module.auth.AuthConstants;
-import com.lunisoft.javastarter.module.auth.dto.AuthResponse;
 import com.lunisoft.javastarter.module.auth.entity.Session;
 import com.lunisoft.javastarter.module.auth.entity.VerificationToken;
 import com.lunisoft.javastarter.module.auth.entity.VerificationType;
@@ -33,10 +32,10 @@ public class VerifyCodeUseCase {
   private final JwtTokenProvider jwtTokenProvider;
 
   @Transactional(noRollbackFor = BusinessRuleException.class)
-  public AuthResponse execute(String email, String code, HttpServletRequest request) {
+  public VerifyCodeResult execute(VerifyCodeInput input) {
     Account account =
         accountRepository
-            .findByEmail(email)
+            .findByEmail(input.email())
             .orElseThrow(
                 () ->
                     new BusinessRuleException(
@@ -61,7 +60,7 @@ public class VerifyCodeUseCase {
     token.setAttempts(token.getAttempts() + 1);
     verificationTokenRepository.save(token);
 
-    if (!code.equals(token.getValue())) {
+    if (!input.code().equals(token.getValue())) {
       throw new BusinessRuleException("Invalid code.", "INVALID_CODE", HttpStatus.BAD_REQUEST);
     }
 
@@ -71,14 +70,14 @@ public class VerifyCodeUseCase {
     account.setEmailVerified(true);
     accountRepository.save(account);
 
-    Session session = createSession(account, request);
+    Session session = createSession(account, input.request());
 
     String accessToken =
         jwtTokenProvider.generateAccessToken(
             session.getId(), account.getId(), account.getEmail(), account.getRole());
     String refreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-    return new AuthResponse(account.getRole().name(), accessToken, refreshToken);
+    return new VerifyCodeResult(account.getRole().name(), accessToken, refreshToken);
   }
 
   private Session createSession(Account account, HttpServletRequest request) {

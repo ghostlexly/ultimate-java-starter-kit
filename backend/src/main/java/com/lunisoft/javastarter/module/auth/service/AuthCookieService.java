@@ -2,7 +2,6 @@ package com.lunisoft.javastarter.module.auth.service;
 
 import static com.lunisoft.javastarter.module.auth.AuthConstants.*;
 
-import com.lunisoft.javastarter.module.auth.dto.AuthResponse;
 import com.lunisoft.javastarter.module.auth.dto.RefreshTokenRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,9 +36,9 @@ public class AuthCookieService {
   }
 
   /** Sets the access and refresh token cookies on the response. */
-  public void setAuthCookies(HttpServletResponse response, AuthResponse authResponse) {
-    addCookie(response, ACCESS_TOKEN_COOKIE, authResponse.accessToken(), ACCESS_TOKEN_MAX_AGE);
-    addCookie(response, REFRESH_TOKEN_COOKIE, authResponse.refreshToken(), REFRESH_TOKEN_MAX_AGE);
+  public void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken) {
+    addCookie(response, ACCESS_TOKEN_COOKIE, accessToken, ACCESS_TOKEN_MAX_AGE);
+    addCookie(response, REFRESH_TOKEN_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE);
   }
 
   /** Clears the access and refresh token cookies. */
