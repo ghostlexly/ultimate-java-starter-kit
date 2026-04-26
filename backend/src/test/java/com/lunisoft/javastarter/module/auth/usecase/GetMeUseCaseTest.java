@@ -1,8 +1,8 @@
 package com.lunisoft.javastarter.module.auth.usecase;
 
 import static com.lunisoft.javastarter.shared.TestFactory.createCustomerAccount;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
