@@ -8,6 +8,7 @@ import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
 import com.lunisoft.javastarter.module.demo.usecase.enqueuejob.DemoJobRunrEnqueueJob;
+import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerInput;
 import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerResult;
 import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
 import com.lunisoft.javastarter.module.demo.usecase.searchcustomer.DemoSearchCustomerResult;
@@ -77,8 +78,9 @@ public class DemoController {
       @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String email) {
 
-    DemoPaginateCustomerResult response =
-        demoPaginateCustomerUseCase.execute(page - 1, size, email);
+    DemoPaginateCustomerInput input = new DemoPaginateCustomerInput(page - 1, size, email);
+
+    DemoPaginateCustomerResult response = demoPaginateCustomerUseCase.execute(input);
 
     return ResponseEntity.ok(response);
   }

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
+import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerInput;
 import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -25,9 +26,7 @@ class DemoPaginateCustomerUseCaseTest {
 
   @Mock private DemoCustomerRepository demoCustomerRepository;
 
-  @InjectMocks
-  private DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
-
+  @InjectMocks private DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
 
   @Test
   void execute_returnsPagedResults() {
@@ -38,7 +37,8 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var result = demoPaginateCustomerUseCase.execute(0, 10, null);
+    var input = new DemoPaginateCustomerInput(0, 10, null);
+    var result = demoPaginateCustomerUseCase.execute(input);
 
     assertThat(result.content()).hasSize(1);
     assertThat(result.content().getFirst().email()).isEqualTo("contact+customer@lunisoft.fr");
@@ -56,7 +56,8 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var result = demoPaginateCustomerUseCase.execute(0, 10, null);
+    var input = new DemoPaginateCustomerInput(0, 10, null);
+    var result = demoPaginateCustomerUseCase.execute(input);
 
     assertThat(result.content()).isEmpty();
     assertThat(result.totalItems()).isZero();
@@ -72,7 +73,8 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var result = demoPaginateCustomerUseCase.execute(0, 5, "test@example.com");
+    var input = new DemoPaginateCustomerInput(0, 5, "test@example.com");
+    var result = demoPaginateCustomerUseCase.execute(input);
 
     assertThat(result.content()).isEmpty();
   }
