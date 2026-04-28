@@ -1,0 +1,97 @@
+name: Docker Images Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "25"
+          cache: "maven"
+
+      - name: Run tests
+        run: ./mvnw -B test
+        working-directory: backend
+
+  build:
+    runs-on: ubuntu-24.04
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create environment file(s)
+        run: |
+          echo "${{ secrets.ENV }}" > .env
+
+      - name: Login to docker registry
+        uses: docker/login-action@v2
+        with:
+          username: lunisoft
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push docker images
+        run: |
+          docker compose -f compose.yml build
+          docker compose -f compose.yml push
+
+      - name: Transfer files to production server
+        uses: appleboy/scp-action@master
+        with:
+          host: 37.59.109.9
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "compose.yml,.env"
+          target: "~/docker"
+
+      - name: Deploy on production server
+        uses: appleboy/ssh-action@master
+        with:
+          host: 37.59.109.9
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Go to docker directory
+            cd ~/docker
+
+            # Login to docker registry
+            sudo docker login -u lunisoft -p ${{ secrets.DOCKER_PASSWORD }}
+
+            # Pull new images
+            sudo docker compose pull
+
+            # Backup postgres database before stopping containers
+            mkdir -p ~/docker/auto-backups
+            if sudo docker compose ps java-starter-postgres | grep -q "Up"; then
+              sudo docker compose exec java-starter-postgres pg_dump -U lunisoft java-starter > ~/docker/auto-backups/backup-$(date +%Y-%m-%d--%H-%M).sql
+            else
+              echo "PostgreSQL not running, skipping backup"
+            fi
+
+            # Stop and remove existing containers
+            sudo docker compose down
+
+            # Start new containers
+            sudo docker compose up -d
+
+      - name: Prune untagged docker images
+        uses: appleboy/ssh-action@master
+        with:
+          host: 37.59.109.9
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Prune untagged images
+            sudo docker image prune -f
