@@ -6,4 +6,4 @@ import org.springframework.web.bind.annotation.*;
 @PublicEndpoint
 @RestController
 @RequestMapping("/api/customer")
-public class CustomerPublicController {}
+public class PublicCustomerController {}
