@@ -50,21 +50,21 @@ jobs:
       - name: Transfer files to production server
         uses: appleboy/scp-action@master
         with:
-          host: 37.59.109.9
+          host: 51.38.230.113
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "compose.yml,.env"
-          target: "~/docker"
+          target: "~/java-starter"
 
       - name: Deploy on production server
         uses: appleboy/ssh-action@master
         with:
-          host: 37.59.109.9
+          host: 51.38.230.113
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Go to docker directory
-            cd ~/docker
+            cd ~/java-starter
 
             # Login to docker registry
             sudo docker login -u lunisoft -p ${{ secrets.DOCKER_PASSWORD }}
@@ -73,9 +73,9 @@ jobs:
             sudo docker compose pull
 
             # Backup postgres database before stopping containers
-            mkdir -p ~/docker/auto-backups
+            mkdir -p ~/java-starter/auto-backups
             if sudo docker compose ps java-starter-postgres | grep -q "Up"; then
-              sudo docker compose exec java-starter-postgres pg_dump -U lunisoft java-starter > ~/docker/auto-backups/backup-$(date +%Y-%m-%d--%H-%M).sql
+              sudo docker compose exec java-starter-postgres pg_dump -U lunisoft java-starter > ~/java-starter/auto-backups/backup-$(date +%Y-%m-%d--%H-%M).sql
             else
               echo "PostgreSQL not running, skipping backup"
             fi
@@ -89,7 +89,7 @@ jobs:
       - name: Prune untagged docker images
         uses: appleboy/ssh-action@master
         with:
-          host: 37.59.109.9
+          host: 51.38.230.113
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
