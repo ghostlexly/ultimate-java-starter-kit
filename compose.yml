@@ -18,6 +18,7 @@ services:
       retries: 5
     networks:
       - lunisoft
+    restart: unless-stopped
 
   java-starter-redis:
     image: redis:8.6.2-alpine
@@ -29,6 +30,7 @@ services:
       - redis-data:/data
     networks:
       - lunisoft
+    restart: unless-stopped
 
   java-starter-frontend:
     image: lunisoft/java-starter:frontend
@@ -46,6 +48,7 @@ services:
       retries: 5
     networks:
       - lunisoft
+    restart: unless-stopped
 
   java-starter-backend:
     image: lunisoft/java-starter:backend
@@ -73,6 +76,7 @@ services:
         condition: service_started
     networks:
       - lunisoft
+    restart: unless-stopped
 
 volumes:
   postgres-data:
