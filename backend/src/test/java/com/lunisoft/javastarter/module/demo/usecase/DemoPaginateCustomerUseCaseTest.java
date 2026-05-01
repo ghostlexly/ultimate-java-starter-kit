@@ -32,7 +32,7 @@ class DemoPaginateCustomerUseCaseTest {
   void execute_returnsPagedResults() {
     var account = createCustomerAccount();
     var customer = account.getCustomer();
-    var pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
+    var pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
     var page = new PageImpl<>(List.of(customer), pageable, 1);
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
@@ -51,7 +51,7 @@ class DemoPaginateCustomerUseCaseTest {
 
   @Test
   void execute_emptyResults_returnsEmptyPage() {
-    var pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
+    var pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
     var page = new PageImpl<Customer>(List.of(), pageable, 0);
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
@@ -68,7 +68,7 @@ class DemoPaginateCustomerUseCaseTest {
 
   @Test
   void execute_withFilters_passesSpecificationToRepository() {
-    var pageable = PageRequest.of(0, 5, Sort.by("id").ascending());
+    var pageable = PageRequest.of(0, 5, Sort.by("createdAt").descending());
     var page = new PageImpl<Customer>(List.of(), pageable, 0);
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
