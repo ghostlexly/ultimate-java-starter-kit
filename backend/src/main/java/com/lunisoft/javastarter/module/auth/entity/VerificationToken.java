@@ -11,7 +11,7 @@ import java.time.Instant;
 @Entity
 @Getter
 @Setter
-@Table(name = "verification_token")
+@Table(name = "verification_tokens")
 public class VerificationToken extends BaseEntity {
 
     @Column(nullable = false, unique = true)

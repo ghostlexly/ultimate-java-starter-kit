@@ -23,8 +23,17 @@ public class StorageService {
   private final S3Presigner s3Presigner;
   private final StorageProperties storageProperties;
 
-  /** Uploads a file to S3. */
-  public void upload(String key, byte[] data, String contentType, StorageClass storageClass) {
+  /**
+   * Uploads a file to S3 from an {@link InputStream}. The caller must provide an accurate {@code
+   * contentLength} (S3 requires it for streamed uploads). The stream is consumed by the SDK; the
+   * caller remains responsible for closing it.
+   */
+  public void upload(
+      String key,
+      InputStream inputStream,
+      long contentLength,
+      String contentType,
+      StorageClass storageClass) {
     var request =
         PutObjectRequest.builder()
             .bucket(storageProperties.bucket())
@@ -33,7 +42,7 @@ public class StorageService {
             .storageClass(storageClass)
             .build();
 
-    s3Client.putObject(request, RequestBody.fromBytes(data));
+    s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
   }
 
   /**

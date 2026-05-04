@@ -134,7 +134,7 @@
             <version>${playwright.version}</version>
         </dependency>
 
-        <!-- AWS S3 (sync client only — exclude Netty async client to avoid CVE-2026-33871) -->
+        <!-- Files & Storage -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
@@ -144,6 +144,12 @@
                     <artifactId>netty-nio-client</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>3.3.0</version>
         </dependency>
 
         <!-- Phone number parsing & formatting -->

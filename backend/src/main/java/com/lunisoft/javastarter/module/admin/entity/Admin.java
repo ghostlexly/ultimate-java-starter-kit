@@ -9,7 +9,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "admin")
+@Table(name = "admins")
 public class Admin extends BaseEntity {
 
   @OneToOne(fetch = FetchType.LAZY)

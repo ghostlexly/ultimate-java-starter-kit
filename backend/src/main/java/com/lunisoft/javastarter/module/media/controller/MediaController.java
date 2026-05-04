@@ -1,9 +1,17 @@
 package com.lunisoft.javastarter.module.media.controller;
 
+import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
+import com.lunisoft.javastarter.core.storage.StorageService;
 import com.lunisoft.javastarter.module.media.dto.UploadMediaResponse;
+import com.lunisoft.javastarter.module.media.service.MediaSecurityService;
+import com.lunisoft.javastarter.module.media.usecase.UploadMediaInput;
 import com.lunisoft.javastarter.module.media.usecase.UploadMediaUseCase;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,12 +26,30 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/media")
 public class MediaController {
 
+  private static final Duration PRESIGNED_URL_EXPIRY = Duration.ofHours(1);
+
   private final UploadMediaUseCase uploadMediaUseCase;
+  private final MediaSecurityService mediaSecurityService;
+  private final StorageService storageService;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UploadMediaResponse> upload(@RequestParam("file") MultipartFile file) {
-    var response = uploadMediaUseCase.execute(file);
+    mediaSecurityService.validateImageMedia(file);
 
-    return ResponseEntity.ok(response);
+    try (InputStream inputStream = file.getInputStream()) {
+      var input =
+          new UploadMediaInput(
+              inputStream, file.getOriginalFilename(), file.getContentType(), file.getSize());
+
+      var media = uploadMediaUseCase.execute(input);
+      var url = storageService.generatePresignedGetUrl(media.getKey(), PRESIGNED_URL_EXPIRY);
+
+      return ResponseEntity.ok(new UploadMediaResponse(media.getId(), url));
+    } catch (IOException ex) {
+      throw new BusinessRuleException(
+          "Failed to read uploaded file: %s".formatted(ex.getMessage()),
+          "UPLOAD_FAILED",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }
