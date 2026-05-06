@@ -8,7 +8,6 @@ import com.lunisoft.javastarter.module.media.service.MediaSecurityService;
 import com.lunisoft.javastarter.module.media.usecase.UploadMediaInput;
 import com.lunisoft.javastarter.module.media.usecase.UploadMediaUseCase;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -34,14 +33,17 @@ public class MediaController {
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UploadMediaResponse> upload(@RequestParam("file") MultipartFile file) {
-    mediaSecurityService.validateImageMedia(file);
+    try {
+      String contentType = mediaSecurityService.detectContentType(file.getInputStream());
 
-    try (InputStream inputStream = file.getInputStream()) {
+      mediaSecurityService.validateImageMedia(contentType, file.getSize());
+
       var input =
           new UploadMediaInput(
-              inputStream, file.getOriginalFilename(), file.getContentType(), file.getSize());
+              file.getInputStream(), file.getOriginalFilename(), contentType, file.getSize());
 
       var media = uploadMediaUseCase.execute(input);
+
       var url = storageService.generatePresignedGetUrl(media.getKey(), PRESIGNED_URL_EXPIRY);
 
       return ResponseEntity.ok(new UploadMediaResponse(media.getId(), url));

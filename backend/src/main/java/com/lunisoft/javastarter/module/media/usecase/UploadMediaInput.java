@@ -12,4 +12,4 @@ import java.io.InputStream;
  * stream — S3 requires it for streamed uploads.
  */
 public record UploadMediaInput(
-    InputStream inputStream, String fileName, String mimeType, long size) {}
+    InputStream inputStream, String fileName, String contentType, long size) {}

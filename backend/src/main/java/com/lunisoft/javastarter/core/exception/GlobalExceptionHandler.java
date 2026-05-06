@@ -14,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -26,6 +27,44 @@ import tools.jackson.databind.exc.InvalidFormatException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
   private final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+  /** Handles custom business rule violations thrown from services/use cases. */
+  @ExceptionHandler(BusinessRuleException.class)
+  public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex) {
+    ErrorResponse response =
+        new ErrorResponse("BusinessRuleException", ex.getMessage(), ex.getCode(), null);
+
+    return ResponseEntity.status(ex.getStatus()).body(response);
+  }
+
+  /** Handles errors when we send a wrong request type. Example: POST to a PATCH endpoint. */
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+      HttpRequestMethodNotSupportedException ex) {
+    ErrorResponse response =
+        new ErrorResponse(
+            "MethodNotSupportedException", ex.getMessage(), "METHOD_NOT_SUPPORTED", null);
+
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+  }
+
+  /**
+   * Handles errors when we send a wrong Content-Type. Example: Expecting Content-Type
+   * multipart/form-data but received application/json.
+   */
+  @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
+      HttpMediaTypeNotSupportedException ex) {
+    ErrorResponse response =
+        new ErrorResponse(
+            "MediaTypeNotSupportedException",
+            "Expected Content-Type %s but received Content-Type %s"
+                .formatted(ex.getSupportedMediaTypes(), ex.getContentType()),
+            "CONTENT_TYPE_NOT_SUPPORTED",
+            null);
+
+    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+  }
 
   /**
    * Handles authorization failures thrown by method-level security (e.g. {@code @PreAuthorize}).
@@ -57,15 +96,6 @@ public class GlobalExceptionHandler {
         new ErrorResponse("ForbiddenException", "Access denied", "FORBIDDEN", null);
 
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-  }
-
-  /** Handles custom business rule violations thrown from services/use cases. */
-  @ExceptionHandler(BusinessRuleException.class)
-  public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex) {
-    ErrorResponse response =
-        new ErrorResponse("BusinessRuleException", ex.getMessage(), ex.getCode(), null);
-
-    return ResponseEntity.status(ex.getStatus()).body(response);
   }
 
   /**
@@ -118,17 +148,6 @@ public class GlobalExceptionHandler {
     }
 
     return null;
-  }
-
-  /** Handles errors when we send a wrong request type. Example: POST to a PATCH endpoint. */
-  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-  public ResponseEntity<ErrorResponse> handleMethodNotSupported(
-      HttpRequestMethodNotSupportedException ex) {
-    ErrorResponse response =
-        new ErrorResponse(
-            "MethodNotSupportedException", ex.getMessage(), "METHOD_NOT_SUPPORTED", null);
-
-    return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
   }
 
   /**

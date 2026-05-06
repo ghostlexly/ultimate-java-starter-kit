@@ -36,11 +36,12 @@ public class UploadMediaUseCase {
     var media = new Media();
     media.setFileName(input.fileName());
     media.setKey(key);
-    media.setMimeType(input.mimeType());
+    media.setMimeType(input.contentType());
     media.setSize(input.size());
     mediaRepository.save(media);
 
-    storageService.upload(key, input.inputStream(), input.size(), input.mimeType(), STORAGE_CLASS);
+    storageService.upload(
+        key, input.inputStream(), input.size(), input.contentType(), STORAGE_CLASS);
 
     return media;
   }
