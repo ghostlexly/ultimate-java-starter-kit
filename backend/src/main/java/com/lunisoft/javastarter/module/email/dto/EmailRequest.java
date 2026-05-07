@@ -3,6 +3,7 @@ package com.lunisoft.javastarter.module.email.dto;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Immutable transactional email request. Use {@link Builder} to construct.
@@ -24,6 +25,19 @@ public record EmailRequest(
     String subject,
     Map<String, Object> params,
     List<Map<String, String>> attachments) {
+
+  public EmailRequest {
+    Objects.requireNonNull(recipientEmail, "recipientEmail is required");
+    Objects.requireNonNull(subject, "subject is required");
+
+    if (recipientEmail.isBlank()) {
+      throw new IllegalArgumentException("recipientEmail cannot be blank");
+    }
+
+    if (subject.isBlank()) {
+      throw new IllegalArgumentException("subject cannot be blank");
+    }
+  }
 
   public static Builder builder() {
     return new Builder();

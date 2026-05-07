@@ -40,12 +40,13 @@ public class BrevoEmailService {
    * Send a transactional email using a Brevo template.
    *
    * <pre>{@code
-   * var request = new EmailRequest()
+   * var request = EmailRequest.builder()
    *         .to("client@example.com", "Jean Dupont")
    *         .templateId(42)
    *         .subject("Votre code")
    *         .params(Map.of("code", "123456"))
-   *         .attachment("facture.pdf", base64Content);
+   *         .attachment("facture.pdf", base64Content)
+   *         .build();
    *
    * brevoEmailService.send(request);
    * }</pre>
