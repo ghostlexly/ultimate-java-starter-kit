@@ -1,5 +1,5 @@
 # -- BUILDER
-FROM eclipse-temurin:25-jdk AS build
+FROM eclipse-temurin:25-jdk-noble AS build
 WORKDIR /app
 
 # Copy project files
@@ -18,7 +18,7 @@ RUN ./mvnw dependency:resolve -B
 RUN ./mvnw package -DskipTests -B
 
 # -- RUNNER
-FROM eclipse-temurin:25-jre AS runner
+FROM eclipse-temurin:25-jre-noble AS runner
 WORKDIR /app
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 

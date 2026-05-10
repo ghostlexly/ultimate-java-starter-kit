@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.4</version>
+        <version>4.0.6</version>
         <relativePath/>
     </parent>
     <groupId>com.lunisoft</groupId>
@@ -16,11 +16,11 @@
 
     <properties>
         <java.version>25</java.version>
-        <jjwt.version>0.12.6</jjwt.version>
-        <bucket4j.version>8.17.0</bucket4j.version>
-        <aws-sdk.version>2.31.9</aws-sdk.version>
-        <playwright.version>1.52.0</playwright.version>
-        <libphonenumber.version>8.13.52</libphonenumber.version>
+        <jjwt.version>0.13.0</jjwt.version>
+        <bucket4j.version>8.18.0</bucket4j.version>
+        <aws-sdk.version>2.44.4</aws-sdk.version>
+        <playwright.version>1.59.0</playwright.version>
+        <libphonenumber.version>9.0.30</libphonenumber.version>
         <retry.version>2.0.12</retry.version>
         <jobrunr.version>8.5.2</jobrunr.version>
     </properties>
@@ -138,12 +138,6 @@
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>software.amazon.awssdk</groupId>
-                    <artifactId>netty-nio-client</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
