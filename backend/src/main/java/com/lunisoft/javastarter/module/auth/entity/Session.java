@@ -11,7 +11,6 @@ import java.time.Instant;
 @Entity
 @Getter
 @Setter
-@Table(name = "sessions")
 public class Session extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

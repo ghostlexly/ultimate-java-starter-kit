@@ -8,9 +8,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "app_configs")
-public class AppConfigEntity extends BaseEntity {
-
+public class AppConfig extends BaseEntity {
   @Column(nullable = false, unique = true)
   private String key;
 

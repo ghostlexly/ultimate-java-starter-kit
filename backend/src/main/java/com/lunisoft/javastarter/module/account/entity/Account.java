@@ -14,7 +14,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Table(
-    name = "accounts",
     uniqueConstraints = {
       @UniqueConstraint(columnNames = {"provider_id", "provider_account_id", "role"})
     })

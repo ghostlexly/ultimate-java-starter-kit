@@ -9,7 +9,6 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "customers")
 public class Customer extends BaseEntity {
 
   @OneToOne(fetch = FetchType.LAZY)
