@@ -58,7 +58,6 @@ public class VerifyCodeUseCase {
     }
 
     token.setAttempts(token.getAttempts() + 1);
-    verificationTokenRepository.save(token);
 
     if (!input.code().equals(token.getValue())) {
       throw new BusinessRuleException("Invalid code.", "INVALID_CODE", HttpStatus.BAD_REQUEST);
@@ -68,7 +67,6 @@ public class VerifyCodeUseCase {
     verificationTokenRepository.delete(token);
 
     account.setEmailVerified(true);
-    accountRepository.save(account);
 
     Session session = createSession(account, input.request());
 

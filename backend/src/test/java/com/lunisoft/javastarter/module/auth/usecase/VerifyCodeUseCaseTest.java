@@ -66,7 +66,6 @@ class VerifyCodeUseCaseTest {
     assertThat(result.accessToken()).isEqualTo("access-token");
     assertThat(result.refreshToken()).isEqualTo("refresh-token");
     verify(verificationTokenRepository).delete(token);
-    verify(accountRepository).save(account);
     assertThat(account.isEmailVerified()).isTrue();
   }
 
@@ -151,7 +150,6 @@ class VerifyCodeUseCaseTest {
 
     // Attempts should be incremented and saved
     assertThat(token.getAttempts()).isEqualTo(1);
-    verify(verificationTokenRepository).save(token);
     // Token should NOT be deleted
     verify(verificationTokenRepository, never()).delete(any());
   }

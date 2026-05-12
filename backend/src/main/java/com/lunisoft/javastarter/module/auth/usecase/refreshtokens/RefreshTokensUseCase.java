@@ -46,7 +46,6 @@ public class RefreshTokensUseCase {
     session.setExpiresAt(
         Instant.now()
             .plus(jwtTokenProvider.getRefreshTokenExpirationMinutes(), ChronoUnit.MINUTES));
-    sessionRepository.save(session);
 
     Account account = session.getAccount();
 

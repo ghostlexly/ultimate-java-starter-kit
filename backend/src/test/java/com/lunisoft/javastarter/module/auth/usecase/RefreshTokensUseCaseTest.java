@@ -16,6 +16,7 @@ import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import com.lunisoft.javastarter.module.auth.usecase.refreshtokens.RefreshTokensUseCase;
 import io.jsonwebtoken.Claims;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -56,8 +57,12 @@ class RefreshTokensUseCaseTest {
     assertThat(result.role()).isEqualTo("CUSTOMER");
     assertThat(result.accessToken()).isEqualTo("new-access-token");
     assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
+
     // Session expiry should be extended
-    verify(sessionRepository).save(session);
+    assertThat(session.getExpiresAt())
+        .isAfter(
+            Instant.now()
+                .plus(jwtTokenProvider.getRefreshTokenExpirationMinutes() - 1, ChronoUnit.MINUTES));
   }
 
   @Test
