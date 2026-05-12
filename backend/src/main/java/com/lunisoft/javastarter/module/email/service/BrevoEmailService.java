@@ -1,5 +1,6 @@
 package com.lunisoft.javastarter.module.email.service;
 
+import com.lunisoft.javastarter.module.email.dto.EmailAttachment;
 import com.lunisoft.javastarter.module.email.dto.EmailRequest;
 import com.lunisoft.javastarter.property.BrevoProperties;
 import java.util.HashMap;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -14,13 +16,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 /**
- * Sends transactional emails via the Brevo HTTP API. Uses template IDs and dynamic template
- * parameters.
+ * Brevo implementation of {@link EmailService}. Sends transactional emails via the Brevo HTTP API
+ * using template IDs and dynamic template parameters.
+ *
+ * <p>Active when {@code app.email.provider=brevo} (the default if the property is missing with
+ * "matchIfMissing" set to true). To swap providers, add a new {@link EmailService} implementation
+ * guarded by its own {@code @ConditionalOnProperty} and flip {@code app.email.provider} in YAML —
+ * call sites do not change.
  *
  * @see <a href="https://developers.brevo.com/reference/sendtransacemail">Brevo API docs</a>
  */
 @Service
-public class BrevoEmailService {
+@ConditionalOnProperty(name = "app.email.provider", havingValue = "brevo", matchIfMissing = true)
+public class BrevoEmailService implements EmailService {
 
   private static final Logger log = LoggerFactory.getLogger(BrevoEmailService.class);
   private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
@@ -38,21 +46,7 @@ public class BrevoEmailService {
             .build();
   }
 
-  /**
-   * Send a transactional email using a Brevo template.
-   *
-   * <pre>{@code
-   * var request = EmailRequest.builder()
-   *         .to("client@example.com", "Jean Dupont")
-   *         .templateId(42)
-   *         .subject("Votre code")
-   *         .params(Map.of("code", "123456"))
-   *         .attachment("facture.pdf", base64Content)
-   *         .build();
-   *
-   * brevoEmailService.send(request);
-   * }</pre>
-   */
+  @Override
   @Retryable(backoff = @Backoff(delay = 2000))
   public void send(EmailRequest request) {
     var body = buildBody(request);
@@ -106,9 +100,16 @@ public class BrevoEmailService {
     }
 
     if (request.attachments() != null && !request.attachments().isEmpty()) {
-      body.put("attachment", request.attachments());
+      body.put("attachment", toBrevoAttachments(request.attachments()));
     }
 
     return body;
+  }
+
+  /** Brevo expects attachments as a list of {@code {"name": ..., "content": ...}} objects. */
+  private List<Map<String, String>> toBrevoAttachments(List<EmailAttachment> attachments) {
+    return attachments.stream()
+        .map(att -> Map.of("name", att.name(), "content", att.content()))
+        .toList();
   }
 }

@@ -60,10 +60,12 @@ app:
     access-key: ${APP_STORAGE_ACCESS_KEY}
     secret-key: ${APP_STORAGE_SECRET_KEY}
     bucket: ${APP_STORAGE_BUCKET}
-  brevo:
-    api-key: ${APP_BREVO_API_KEY}
-    sender-name: Java Starter
-    sender-email: contact@lunisoft.fr
+  email:
+    provider: brevo
+    brevo:
+      api-key: ${APP_BREVO_API_KEY}
+      sender-name: Java Starter
+      sender-email: contact@lunisoft.fr
   pdf:
     render-timeout-ms: 10000
     format: A4

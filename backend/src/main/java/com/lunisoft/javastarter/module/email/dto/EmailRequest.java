@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Immutable transactional email request. Use {@link Builder} to construct.
+ * Immutable, provider-agnostic transactional email request. Use {@link Builder} to construct.
  *
  * <pre>{@code
  * var request = EmailRequest.builder()
@@ -16,7 +16,13 @@ import java.util.Objects;
  *         .params(Map.of("orderNumber", "CMD-001"))
  *         .attachment("facture.pdf", base64Content)
  *         .build();
+ *
+ * emailService.send(request);
  * }</pre>
+ *
+ * <p>The {@code templateId} is the numeric template identifier used by the active provider (Brevo,
+ * SendGrid, Mailjet, ...). Move provider-specific values to configuration to keep call sites
+ * portable.
  */
 public record EmailRequest(
     String recipientEmail,
@@ -24,7 +30,7 @@ public record EmailRequest(
     long templateId,
     String subject,
     Map<String, Object> params,
-    List<Map<String, String>> attachments) {
+    List<EmailAttachment> attachments) {
 
   public EmailRequest {
     Objects.requireNonNull(recipientEmail, "recipientEmail is required");
@@ -50,7 +56,7 @@ public record EmailRequest(
     private long templateId;
     private String subject;
     private Map<String, Object> params;
-    private final List<Map<String, String>> attachments = new ArrayList<>();
+    private final List<EmailAttachment> attachments = new ArrayList<>();
 
     public Builder to(String email) {
       this.recipientEmail = email;
@@ -90,7 +96,13 @@ public record EmailRequest(
      * @param content Base64-encoded file content
      */
     public Builder attachment(String name, String content) {
-      this.attachments.add(Map.of("name", name, "content", content));
+      this.attachments.add(new EmailAttachment(name, content));
+
+      return this;
+    }
+
+    public Builder attachment(EmailAttachment attachment) {
+      this.attachments.add(attachment);
 
       return this;
     }
