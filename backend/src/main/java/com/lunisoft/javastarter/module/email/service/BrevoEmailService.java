@@ -8,6 +8,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -51,6 +53,7 @@ public class BrevoEmailService {
    * brevoEmailService.send(request);
    * }</pre>
    */
+  @Retryable(backoff = @Backoff(delay = 2000))
   public void send(EmailRequest request) {
     var body = buildBody(request);
 
@@ -73,6 +76,8 @@ public class BrevoEmailService {
           request.templateId(),
           request.recipientEmail(),
           e.getMessage());
+
+      throw e;
     }
   }
 
