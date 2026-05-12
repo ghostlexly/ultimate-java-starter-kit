@@ -3,6 +3,7 @@ package com.lunisoft.javastarter.core.security;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
@@ -23,7 +24,8 @@ public class PublicEndpointScanner {
 
   private final RequestMatcher publicEndpointsMatcher;
 
-  public PublicEndpointScanner(RequestMappingHandlerMapping handlerMapping) {
+  public PublicEndpointScanner(
+      @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
     List<RequestMatcher> matchers =
         handlerMapping.getHandlerMethods().entrySet().stream()
             .filter(entry -> isPublicEndpoint(entry.getValue()))

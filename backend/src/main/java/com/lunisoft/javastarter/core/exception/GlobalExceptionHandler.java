@@ -21,6 +21,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
 /** Global exception handler that produces consistent JSON error responses. */
@@ -46,6 +47,15 @@ public class GlobalExceptionHandler {
             "MethodNotSupportedException", ex.getMessage(), "METHOD_NOT_SUPPORTED", null);
 
     return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+  }
+
+  /** Handles errors when we try to access a ressource that doesn't exist (404). */
+  @ExceptionHandler(NoResourceFoundException.class)
+  public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+    ErrorResponse response =
+        new ErrorResponse("NoResourceFoundException", ex.getMessage(), "NOT_FOUND", null);
+
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
   }
 
   /**
