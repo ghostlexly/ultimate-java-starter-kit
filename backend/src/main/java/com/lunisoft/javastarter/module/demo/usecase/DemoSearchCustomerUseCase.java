@@ -1,8 +1,9 @@
-package com.lunisoft.javastarter.module.demo.usecase.searchcustomer;
+package com.lunisoft.javastarter.module.demo.usecase;
 
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,13 +18,15 @@ public class DemoSearchCustomerUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
 
+  public record Result(UUID id, String email, String role) {}
+
   @Transactional(readOnly = true)
-  public List<DemoSearchCustomerResult> execute(Role role) {
+  public List<Result> execute(Role role) {
 
     return demoCustomerRepository.findByAccountRole(role).stream()
         .map(
             customer ->
-                new DemoSearchCustomerResult(
+                new Result(
                     customer.getId(),
                     customer.getAccount().getEmail(),
                     customer.getAccount().getRole().name()))

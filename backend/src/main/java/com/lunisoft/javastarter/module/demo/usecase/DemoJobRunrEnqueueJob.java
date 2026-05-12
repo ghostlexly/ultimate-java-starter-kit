@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.demo.usecase.enqueuejob;
+package com.lunisoft.javastarter.module.demo.usecase;
 
 import java.time.Duration;
 import org.jobrunr.jobs.annotations.Job;

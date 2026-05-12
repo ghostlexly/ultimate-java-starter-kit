@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
-import com.lunisoft.javastarter.module.demo.usecase.searchcustomer.DemoSearchCustomerUseCase;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,9 +18,7 @@ class DemoSearchCustomerUseCaseTest {
 
   @Mock private DemoCustomerRepository demoCustomerRepository;
 
-  @InjectMocks
-  private DemoSearchCustomerUseCase demoSearchCustomerUseCase;
-
+  @InjectMocks private DemoSearchCustomerUseCase demoSearchCustomerUseCase;
 
   @Test
   void execute_withResults_returnsMappedResponses() {

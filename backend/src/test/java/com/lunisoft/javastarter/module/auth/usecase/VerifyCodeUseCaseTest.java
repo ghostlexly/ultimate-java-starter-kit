@@ -17,8 +17,6 @@ import com.lunisoft.javastarter.module.auth.entity.Session;
 import com.lunisoft.javastarter.module.auth.entity.VerificationType;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
-import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeInput;
-import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Optional;
@@ -60,7 +58,7 @@ class VerifyCodeUseCaseTest {
     when(jwtTokenProvider.generateRefreshToken(session.getId())).thenReturn("refresh-token");
     when(jwtTokenProvider.getRefreshTokenExpirationMinutes()).thenReturn(10080);
 
-    var result = verifyCodeUseCase.execute(new VerifyCodeInput(email, code, request));
+    var result = verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, code, request));
 
     assertThat(result.role()).isEqualTo("CUSTOMER");
     assertThat(result.accessToken()).isEqualTo("access-token");
@@ -76,7 +74,7 @@ class VerifyCodeUseCaseTest {
     assertThatThrownBy(
             () ->
                 verifyCodeUseCase.execute(
-                    new VerifyCodeInput("unknown@example.com", "1234", request)))
+                    new VerifyCodeUseCase.Input("unknown@example.com", "1234", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -96,7 +94,8 @@ class VerifyCodeUseCaseTest {
                 eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
         .thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> verifyCodeUseCase.execute(new VerifyCodeInput(email, "1234", request)))
+    assertThatThrownBy(
+            () -> verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, "1234", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -118,7 +117,8 @@ class VerifyCodeUseCaseTest {
 
     assertThatThrownBy(
             () ->
-                verifyCodeUseCase.execute(new VerifyCodeInput(account.getEmail(), "1234", request)))
+                verifyCodeUseCase.execute(
+                    new VerifyCodeUseCase.Input(account.getEmail(), "1234", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -140,7 +140,8 @@ class VerifyCodeUseCaseTest {
 
     assertThatThrownBy(
             () ->
-                verifyCodeUseCase.execute(new VerifyCodeInput(account.getEmail(), "9999", request)))
+                verifyCodeUseCase.execute(
+                    new VerifyCodeUseCase.Input(account.getEmail(), "9999", request)))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {

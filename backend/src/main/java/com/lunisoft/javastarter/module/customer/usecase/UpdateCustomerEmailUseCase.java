@@ -7,6 +7,7 @@ import com.lunisoft.javastarter.module.customer.dto.CustomerResponse;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,11 @@ public class UpdateCustomerEmailUseCase {
   private final CustomerRepository customerRepository;
   private final AccountRepository accountRepository;
   private final ApplicationEventPublisher eventPublisher;
+  
+  public record Input(UUID accountId, String email) {}
 
   @Transactional
-  public CustomerResponse execute(UpdateCustomerEmailInput input) {
+  public CustomerResponse execute(Input input) {
     Account account =
         accountRepository
             .findById(input.accountId())

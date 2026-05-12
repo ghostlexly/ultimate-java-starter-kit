@@ -4,7 +4,6 @@ import com.lunisoft.javastarter.core.security.UserPrincipal;
 import com.lunisoft.javastarter.module.customer.dto.CustomerResponse;
 import com.lunisoft.javastarter.module.customer.dto.UpdateCustomerEmailRequest;
 import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase;
-import com.lunisoft.javastarter.module.customer.usecase.UpdateCustomerEmailInput;
 import com.lunisoft.javastarter.module.customer.usecase.UpdateCustomerEmailUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +35,7 @@ public class CustomerController {
       @AuthenticationPrincipal UserPrincipal principal,
       @Valid @RequestBody UpdateCustomerEmailRequest request) {
 
-    var input = new UpdateCustomerEmailInput(principal.accountId(), request.email());
+    var input = new UpdateCustomerEmailUseCase.Input(principal.accountId(), request.email());
 
     CustomerResponse response = updateCustomerEmailUseCase.execute(input);
 

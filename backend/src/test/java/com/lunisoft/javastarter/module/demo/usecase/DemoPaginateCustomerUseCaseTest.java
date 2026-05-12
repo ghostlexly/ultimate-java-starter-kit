@@ -8,8 +8,6 @@ import static org.mockito.Mockito.when;
 
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
-import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerInput;
-import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +35,7 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var input = new DemoPaginateCustomerInput(0, 10, null);
+    var input = new DemoPaginateCustomerUseCase.Input(0, 10, null);
     var result = demoPaginateCustomerUseCase.execute(input);
 
     assertThat(result.content()).hasSize(1);
@@ -56,7 +54,7 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var input = new DemoPaginateCustomerInput(0, 10, null);
+    var input = new DemoPaginateCustomerUseCase.Input(0, 10, null);
     var result = demoPaginateCustomerUseCase.execute(input);
 
     assertThat(result.content()).isEmpty();
@@ -73,7 +71,7 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var input = new DemoPaginateCustomerInput(0, 5, "test@example.com");
+    var input = new DemoPaginateCustomerUseCase.Input(0, 5, "test@example.com");
     var result = demoPaginateCustomerUseCase.execute(input);
 
     assertThat(result.content()).isEmpty();

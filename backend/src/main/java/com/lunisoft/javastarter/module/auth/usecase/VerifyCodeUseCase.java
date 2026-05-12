@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.auth.usecase.verifycode;
+package com.lunisoft.javastarter.module.auth.usecase;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
@@ -31,8 +31,12 @@ public class VerifyCodeUseCase {
   private final SessionRepository sessionRepository;
   private final JwtTokenProvider jwtTokenProvider;
 
+  public record Input(String email, String code, HttpServletRequest request) {}
+
+  public record Result(String role, String accessToken, String refreshToken) {}
+
   @Transactional(noRollbackFor = BusinessRuleException.class)
-  public VerifyCodeResult execute(VerifyCodeInput input) {
+  public Result execute(Input input) {
     Account account =
         accountRepository
             .findByEmail(input.email())
@@ -75,7 +79,7 @@ public class VerifyCodeUseCase {
             session.getId(), account.getId(), account.getEmail(), account.getRole());
     String refreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-    return new VerifyCodeResult(account.getRole().name(), accessToken, refreshToken);
+    return new Result(account.getRole().name(), accessToken, refreshToken);
   }
 
   private Session createSession(Account account, HttpServletRequest request) {

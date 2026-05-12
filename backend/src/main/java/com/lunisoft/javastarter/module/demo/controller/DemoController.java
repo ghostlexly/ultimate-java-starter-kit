@@ -7,12 +7,9 @@ import com.lunisoft.javastarter.core.storage.StorageService;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
-import com.lunisoft.javastarter.module.demo.usecase.enqueuejob.DemoJobRunrEnqueueJob;
-import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerInput;
-import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerResult;
-import com.lunisoft.javastarter.module.demo.usecase.paginatecustomer.DemoPaginateCustomerUseCase;
-import com.lunisoft.javastarter.module.demo.usecase.searchcustomer.DemoSearchCustomerResult;
-import com.lunisoft.javastarter.module.demo.usecase.searchcustomer.DemoSearchCustomerUseCase;
+import com.lunisoft.javastarter.module.demo.usecase.DemoJobRunrEnqueueJob;
+import com.lunisoft.javastarter.module.demo.usecase.DemoPaginateCustomerUseCase;
+import com.lunisoft.javastarter.module.demo.usecase.DemoSearchCustomerUseCase;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -51,9 +48,10 @@ public class DemoController {
    * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER
    */
   @GetMapping("customers")
-  public ResponseEntity<List<DemoSearchCustomerResult>> searchCustomers(@RequestParam Role role) {
+  public ResponseEntity<List<DemoSearchCustomerUseCase.Result>> searchCustomers(
+      @RequestParam Role role) {
 
-    List<DemoSearchCustomerResult> results = demoSearchCustomerUseCase.execute(role);
+    List<DemoSearchCustomerUseCase.Result> results = demoSearchCustomerUseCase.execute(role);
 
     return ResponseEntity.ok(results);
   }
@@ -73,14 +71,14 @@ public class DemoController {
    * /api/demo/customers/paginated?email=john&page=1&size=5
    */
   @GetMapping("customers/paginated")
-  public ResponseEntity<DemoPaginateCustomerResult> paginateCustomers(
+  public ResponseEntity<DemoPaginateCustomerUseCase.Result> paginateCustomers(
       @Min(1) @RequestParam(defaultValue = "1") int page,
       @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String email) {
 
-    DemoPaginateCustomerInput input = new DemoPaginateCustomerInput(page - 1, size, email);
+    var input = new DemoPaginateCustomerUseCase.Input(page - 1, size, email);
 
-    DemoPaginateCustomerResult response = demoPaginateCustomerUseCase.execute(input);
+    var response = demoPaginateCustomerUseCase.execute(input);
 
     return ResponseEntity.ok(response);
   }

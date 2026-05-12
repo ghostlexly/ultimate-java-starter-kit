@@ -5,7 +5,6 @@ import com.lunisoft.javastarter.core.security.PublicEndpoint;
 import com.lunisoft.javastarter.core.storage.StorageService;
 import com.lunisoft.javastarter.module.media.dto.UploadMediaResponse;
 import com.lunisoft.javastarter.module.media.service.MediaSecurityService;
-import com.lunisoft.javastarter.module.media.usecase.UploadMediaInput;
 import com.lunisoft.javastarter.module.media.usecase.UploadMediaUseCase;
 import java.io.IOException;
 import java.time.Duration;
@@ -39,7 +38,7 @@ public class MediaController {
       mediaSecurityService.validateImageMedia(contentType, file.getSize());
 
       var input =
-          new UploadMediaInput(
+          new UploadMediaUseCase.Input(
               file.getInputStream(), file.getOriginalFilename(), contentType, file.getSize());
 
       var media = uploadMediaUseCase.execute(input);

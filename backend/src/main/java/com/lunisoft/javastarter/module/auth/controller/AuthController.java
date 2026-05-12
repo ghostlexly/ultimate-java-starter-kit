@@ -6,12 +6,9 @@ import com.lunisoft.javastarter.core.security.UserPrincipal;
 import com.lunisoft.javastarter.module.auth.dto.*;
 import com.lunisoft.javastarter.module.auth.service.AuthCookieService;
 import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase;
 import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.refreshtokens.RefreshTokensResult;
-import com.lunisoft.javastarter.module.auth.usecase.refreshtokens.RefreshTokensUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeInput;
-import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeResult;
-import com.lunisoft.javastarter.module.auth.usecase.verifycode.VerifyCodeUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -43,13 +40,13 @@ public class AuthController {
 
   @PublicEndpoint
   @PostMapping("verify-code")
-  public ResponseEntity<VerifyCodeResult> verifyCode(
+  public ResponseEntity<VerifyCodeUseCase.Result> verifyCode(
       @Valid @RequestBody VerifyCodeRequest request,
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
 
-    var input = new VerifyCodeInput(request.email(), request.code(), httpRequest);
-    VerifyCodeResult result = verifyCodeUseCase.execute(input);
+    var input = new VerifyCodeUseCase.Input(request.email(), request.code(), httpRequest);
+    var result = verifyCodeUseCase.execute(input);
 
     authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
 
@@ -58,7 +55,7 @@ public class AuthController {
 
   @PublicEndpoint
   @PostMapping("refresh")
-  public ResponseEntity<RefreshTokensResult> refreshTokens(
+  public ResponseEntity<RefreshTokensUseCase.Result> refreshTokens(
       @Valid @RequestBody(required = false) RefreshTokenRequest request,
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
@@ -70,7 +67,7 @@ public class AuthController {
           "Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
     }
 
-    RefreshTokensResult result = refreshTokensUseCase.execute(refreshToken);
+    var result = refreshTokensUseCase.execute(refreshToken);
     authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
 
     return ResponseEntity.ok(result);

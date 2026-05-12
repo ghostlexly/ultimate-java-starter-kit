@@ -35,7 +35,7 @@ class UpdateCustomerEmailUseCaseTest {
     Account account = createCustomerAccount();
     var accountId = account.getId();
     Customer customer = account.getCustomer();
-    var input = new UpdateCustomerEmailInput(accountId, "new@example.com");
+    var input = new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com");
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.of(customer));
@@ -72,7 +72,7 @@ class UpdateCustomerEmailUseCaseTest {
     assertThatThrownBy(
             () ->
                 updateCustomerEmailUseCase.execute(
-                    new UpdateCustomerEmailInput(accountId, "new@example.com")))
+                    new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
@@ -94,7 +94,7 @@ class UpdateCustomerEmailUseCaseTest {
     assertThatThrownBy(
             () ->
                 updateCustomerEmailUseCase.execute(
-                    new UpdateCustomerEmailInput(accountId, "new@example.com")))
+                    new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
