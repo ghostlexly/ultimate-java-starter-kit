@@ -2,6 +2,7 @@ package com.lunisoft.javastarter.module.email.service;
 
 import com.lunisoft.javastarter.module.email.dto.EmailAttachment;
 import com.lunisoft.javastarter.module.email.dto.EmailRequest;
+import com.lunisoft.javastarter.module.email.exception.EmailSendException;
 import com.lunisoft.javastarter.property.BrevoProperties;
 import java.util.HashMap;
 import java.util.List;
@@ -66,12 +67,15 @@ public class BrevoEmailService implements EmailService {
           request.params());
     } catch (Exception e) {
       log.error(
-          "Failed to send Brevo email — template={}, to={}: {}",
+          "Failed to send Brevo email — template={}, to={}",
           request.templateId(),
           request.recipientEmail(),
-          e.getMessage());
+          e);
 
-      throw e;
+      throw new EmailSendException(
+          "Failed to send Brevo email — template=%d, to=%s"
+              .formatted(request.templateId(), request.recipientEmail()),
+          e);
     }
   }
 
