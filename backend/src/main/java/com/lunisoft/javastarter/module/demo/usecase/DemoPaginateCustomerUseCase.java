@@ -46,10 +46,10 @@ public class DemoPaginateCustomerUseCase {
         PageRequest.of(input.page(), input.size(), Sort.by("createdAt").ascending());
     Specification<Customer> spec = buildSpec(input.email());
 
-    var result = demoCustomerRepository.findAll(spec, pageable);
+    var page = demoCustomerRepository.findAll(spec, pageable);
 
-    var items =
-        result.getContent().stream()
+    var content =
+        page.getContent().stream()
             .map(
                 customer ->
                     new Output.CustomerItem(
@@ -59,11 +59,7 @@ public class DemoPaginateCustomerUseCase {
             .toList();
 
     return new Output(
-        items,
-        result.getTotalElements(),
-        result.getTotalPages(),
-        result.isFirst(),
-        result.isLast());
+        content, page.getTotalElements(), page.getTotalPages(), page.isFirst(), page.isLast());
   }
 
   /** Builds the specification by chaining optional filters onto the base spec. */
