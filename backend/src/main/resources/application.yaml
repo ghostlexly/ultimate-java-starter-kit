@@ -19,9 +19,12 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        default_batch_fetch_size: 50 # Batch the SELECT SQL queries automatically
         jdbc:
-          batch_size: 50
+          batch_size: 50 # Batch the INSERT/UPDATE/DELETE SQL queries automatically
           batch_versioned_data: true
+        order_inserts: true
+        order_updates: true
   flyway:
     enabled: true
     locations: classpath:db/migration
