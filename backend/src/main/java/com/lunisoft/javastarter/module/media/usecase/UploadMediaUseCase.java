@@ -27,13 +27,15 @@ public class UploadMediaUseCase {
 
   public record Input(InputStream inputStream, String fileName, String contentType, long size) {}
 
+  public record Output(UUID id, String fileName, String key, String mimeType, long size) {}
+
   /**
    * Stores the provided file in S3 and persists its metadata. Generic on purpose: callers from any
    * module can supply a stream from any source (multipart upload, in-memory bytes, another S3
    * object, ...). Validation (mime type, size, ...) is the caller's responsibility.
    */
   @Transactional
-  public Media execute(Input input) {
+  public Output execute(Input input) {
     var key = buildKey(input.fileName());
 
     var media = new Media();
@@ -46,7 +48,8 @@ public class UploadMediaUseCase {
     storageService.upload(
         key, input.inputStream(), input.size(), input.contentType(), STORAGE_CLASS);
 
-    return media;
+    return new Output(
+        media.getId(), media.getFileName(), media.getKey(), media.getMimeType(), media.getSize());
   }
 
   private String buildKey(String fileName) {

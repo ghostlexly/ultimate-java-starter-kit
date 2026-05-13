@@ -33,10 +33,10 @@ public class VerifyCodeUseCase {
 
   public record Input(String email, String code, HttpServletRequest request) {}
 
-  public record Result(String role, String accessToken, String refreshToken) {}
+  public record Output(String role, String accessToken, String refreshToken) {}
 
   @Transactional(noRollbackFor = BusinessRuleException.class)
-  public Result execute(Input input) {
+  public Output execute(Input input) {
     Account account =
         accountRepository
             .findByEmail(input.email())
@@ -79,7 +79,7 @@ public class VerifyCodeUseCase {
             session.getId(), account.getId(), account.getEmail(), account.getRole());
     String refreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-    return new Result(account.getRole().name(), accessToken, refreshToken);
+    return new Output(account.getRole().name(), accessToken, refreshToken);
   }
 
   private Session createSession(Account account, HttpServletRequest request) {

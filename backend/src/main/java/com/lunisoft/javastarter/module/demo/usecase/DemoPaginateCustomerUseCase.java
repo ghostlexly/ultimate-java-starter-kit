@@ -31,7 +31,7 @@ public class DemoPaginateCustomerUseCase {
    * Paginated response containing a list of customers and pagination metadata. Example: GET
    * /api/demo/customers/paginated?page=1&size=10&email=john
    */
-  public record Result(
+  public record Output(
       List<CustomerItem> content,
       long totalItems,
       int totalPages,
@@ -41,7 +41,7 @@ public class DemoPaginateCustomerUseCase {
     public record CustomerItem(UUID id, String email, String role) {}
   }
 
-  public Result execute(Input input) {
+  public Output execute(Input input) {
     Pageable pageable =
         PageRequest.of(input.page(), input.size(), Sort.by("createdAt").ascending());
     Specification<Customer> spec = buildSpec(input.email());
@@ -52,13 +52,13 @@ public class DemoPaginateCustomerUseCase {
         result.getContent().stream()
             .map(
                 customer ->
-                    new Result.CustomerItem(
+                    new Output.CustomerItem(
                         customer.getId(),
                         customer.getAccount().getEmail(),
                         customer.getAccount().getRole().name()))
             .toList();
 
-    return new Result(
+    return new Output(
         items,
         result.getTotalElements(),
         result.getTotalPages(),

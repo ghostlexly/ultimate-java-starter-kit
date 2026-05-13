@@ -40,7 +40,7 @@ public class AuthController {
 
   @PublicEndpoint
   @PostMapping("verify-code")
-  public ResponseEntity<VerifyCodeUseCase.Result> verifyCode(
+  public ResponseEntity<VerifyCodeUseCase.Output> verifyCode(
       @Valid @RequestBody VerifyCodeRequest request,
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
@@ -55,7 +55,7 @@ public class AuthController {
 
   @PublicEndpoint
   @PostMapping("refresh")
-  public ResponseEntity<RefreshTokensUseCase.Result> refreshTokens(
+  public ResponseEntity<RefreshTokensUseCase.Output> refreshTokens(
       @Valid @RequestBody(required = false) RefreshTokenRequest request,
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {

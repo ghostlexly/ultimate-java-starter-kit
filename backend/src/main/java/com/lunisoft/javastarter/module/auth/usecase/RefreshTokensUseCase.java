@@ -22,10 +22,10 @@ public class RefreshTokensUseCase {
   private final SessionRepository sessionRepository;
   private final JwtTokenProvider jwtTokenProvider;
 
-  public record Result(String role, String accessToken, String refreshToken) {}
+  public record Output(String role, String accessToken, String refreshToken) {}
 
   @Transactional
-  public Result execute(String refreshToken) {
+  public Output execute(String refreshToken) {
     Claims claims;
     try {
       claims = jwtTokenProvider.parseToken(refreshToken);
@@ -56,6 +56,6 @@ public class RefreshTokensUseCase {
             session.getId(), account.getId(), account.getEmail(), account.getRole());
     String newRefreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-    return new Result(account.getRole().name(), newAccessToken, newRefreshToken);
+    return new Output(account.getRole().name(), newAccessToken, newRefreshToken);
   }
 }

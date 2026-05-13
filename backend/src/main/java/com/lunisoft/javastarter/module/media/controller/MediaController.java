@@ -41,11 +41,11 @@ public class MediaController {
           new UploadMediaUseCase.Input(
               file.getInputStream(), file.getOriginalFilename(), contentType, file.getSize());
 
-      var media = uploadMediaUseCase.execute(input);
+      var output = uploadMediaUseCase.execute(input);
 
-      var url = storageService.generatePresignedGetUrl(media.getKey(), PRESIGNED_URL_EXPIRY);
+      var url = storageService.generatePresignedGetUrl(output.key(), PRESIGNED_URL_EXPIRY);
 
-      return ResponseEntity.ok(new UploadMediaResponse(media.getId(), url));
+      return ResponseEntity.ok(new UploadMediaResponse(output.id(), url));
     } catch (IOException ex) {
       throw new BusinessRuleException(
           "Failed to read uploaded file: %s".formatted(ex.getMessage()),
