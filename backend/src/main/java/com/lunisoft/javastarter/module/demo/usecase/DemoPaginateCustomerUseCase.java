@@ -43,7 +43,7 @@ public class DemoPaginateCustomerUseCase {
 
   public Result execute(Input input) {
     Pageable pageable =
-        PageRequest.of(input.page(), input.size(), Sort.by("createdAt").descending());
+        PageRequest.of(input.page(), input.size(), Sort.by("createdAt").ascending());
     Specification<Customer> spec = buildSpec(input.email());
 
     var result = demoCustomerRepository.findAll(spec, pageable);
