@@ -36,15 +36,15 @@ class DemoPaginateCustomerUseCaseTest {
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
     var input = new DemoPaginateCustomerUseCase.Input(0, 10, null);
-    var result = demoPaginateCustomerUseCase.execute(input);
+    var output = demoPaginateCustomerUseCase.execute(input);
 
-    assertThat(result.content()).hasSize(1);
-    assertThat(result.content().getFirst().email()).isEqualTo("contact+customer@lunisoft.fr");
-    assertThat(result.content().getFirst().role()).isEqualTo("CUSTOMER");
-    assertThat(result.totalItems()).isEqualTo(1);
-    assertThat(result.totalPages()).isEqualTo(1);
-    assertThat(result.isFirst()).isTrue();
-    assertThat(result.isLast()).isTrue();
+    assertThat(output.content()).hasSize(1);
+    assertThat(output.content().getFirst().email()).isEqualTo("contact+customer@lunisoft.fr");
+    assertThat(output.content().getFirst().role()).isEqualTo("CUSTOMER");
+    assertThat(output.totalItems()).isEqualTo(1);
+    assertThat(output.totalPages()).isEqualTo(1);
+    assertThat(output.isFirst()).isTrue();
+    assertThat(output.isLast()).isTrue();
   }
 
   @Test
@@ -55,13 +55,13 @@ class DemoPaginateCustomerUseCaseTest {
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
     var input = new DemoPaginateCustomerUseCase.Input(0, 10, null);
-    var result = demoPaginateCustomerUseCase.execute(input);
+    var output = demoPaginateCustomerUseCase.execute(input);
 
-    assertThat(result.content()).isEmpty();
-    assertThat(result.totalItems()).isZero();
-    assertThat(result.totalPages()).isZero();
-    assertThat(result.isFirst()).isTrue();
-    assertThat(result.isLast()).isTrue();
+    assertThat(output.content()).isEmpty();
+    assertThat(output.totalItems()).isZero();
+    assertThat(output.totalPages()).isZero();
+    assertThat(output.isFirst()).isTrue();
+    assertThat(output.isLast()).isTrue();
   }
 
   @Test
@@ -72,8 +72,8 @@ class DemoPaginateCustomerUseCaseTest {
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
     var input = new DemoPaginateCustomerUseCase.Input(0, 5, "test@example.com");
-    var result = demoPaginateCustomerUseCase.execute(input);
+    var output = demoPaginateCustomerUseCase.execute(input);
 
-    assertThat(result.content()).isEmpty();
+    assertThat(output.content()).isEmpty();
   }
 }

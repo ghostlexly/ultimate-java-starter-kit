@@ -51,11 +51,11 @@ class RefreshTokensUseCaseTest {
         .thenReturn("new-access-token");
     when(jwtTokenProvider.generateRefreshToken(sessionId)).thenReturn("new-refresh-token");
 
-    var result = refreshTokensUseCase.execute(refreshToken);
+    var output = refreshTokensUseCase.execute(refreshToken);
 
-    assertThat(result.role()).isEqualTo("CUSTOMER");
-    assertThat(result.accessToken()).isEqualTo("new-access-token");
-    assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
+    assertThat(output.role()).isEqualTo("CUSTOMER");
+    assertThat(output.accessToken()).isEqualTo("new-access-token");
+    assertThat(output.refreshToken()).isEqualTo("new-refresh-token");
 
     // Session expiry should be extended
     assertThat(session.getExpiresAt())

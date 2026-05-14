@@ -46,11 +46,11 @@ public class AuthController {
       HttpServletResponse httpResponse) {
 
     var input = new VerifyCodeUseCase.Input(request.email(), request.code(), httpRequest);
-    var result = verifyCodeUseCase.execute(input);
+    var output = verifyCodeUseCase.execute(input);
 
-    authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
+    authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
 
-    return ResponseEntity.ok(result);
+    return ResponseEntity.ok(output);
   }
 
   @PublicEndpoint
@@ -67,10 +67,10 @@ public class AuthController {
           "Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
     }
 
-    var result = refreshTokensUseCase.execute(refreshToken);
-    authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
+    var output = refreshTokensUseCase.execute(refreshToken);
+    authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
 
-    return ResponseEntity.ok(result);
+    return ResponseEntity.ok(output);
   }
 
   @GetMapping("me")

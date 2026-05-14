@@ -30,11 +30,11 @@ class GetMeUseCaseTest {
 
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
 
-    var result = getMeUseCase.execute(accountId);
+    var output = getMeUseCase.execute(accountId);
 
-    assertThat(result.accountId()).isEqualTo(accountId);
-    assertThat(result.email()).isEqualTo(account.getEmail());
-    assertThat(result.role()).isEqualTo(account.getRole().name());
+    assertThat(output.accountId()).isEqualTo(accountId);
+    assertThat(output.email()).isEqualTo(account.getEmail());
+    assertThat(output.role()).isEqualTo(account.getRole().name());
   }
 
   @Test

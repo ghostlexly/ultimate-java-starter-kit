@@ -24,9 +24,9 @@ class GetStatsUseCaseTest {
     when(accountRepository.count()).thenReturn(42L);
     when(sessionRepository.count()).thenReturn(7L);
 
-    var result = getStatsUseCase.execute();
+    var output = getStatsUseCase.execute();
 
-    assertThat(result).containsEntry("accounts", 42L).containsEntry("activeSessions", 7L);
+    assertThat(output).containsEntry("accounts", 42L).containsEntry("activeSessions", 7L);
   }
 
   @Test
@@ -34,8 +34,8 @@ class GetStatsUseCaseTest {
     when(accountRepository.count()).thenReturn(0L);
     when(sessionRepository.count()).thenReturn(0L);
 
-    var result = getStatsUseCase.execute();
+    var output = getStatsUseCase.execute();
 
-    assertThat(result).containsEntry("accounts", 0L).containsEntry("activeSessions", 0L);
+    assertThat(output).containsEntry("accounts", 0L).containsEntry("activeSessions", 0L);
   }
 }

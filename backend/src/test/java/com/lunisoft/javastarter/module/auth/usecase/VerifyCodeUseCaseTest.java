@@ -58,11 +58,11 @@ class VerifyCodeUseCaseTest {
     when(jwtTokenProvider.generateRefreshToken(session.getId())).thenReturn("refresh-token");
     when(jwtTokenProvider.getRefreshTokenExpirationMinutes()).thenReturn(10080);
 
-    var result = verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, code, request));
+    var output = verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, code, request));
 
-    assertThat(result.role()).isEqualTo("CUSTOMER");
-    assertThat(result.accessToken()).isEqualTo("access-token");
-    assertThat(result.refreshToken()).isEqualTo("refresh-token");
+    assertThat(output.role()).isEqualTo("CUSTOMER");
+    assertThat(output.accessToken()).isEqualTo("access-token");
+    assertThat(output.refreshToken()).isEqualTo("refresh-token");
     verify(verificationTokenRepository).delete(token);
     assertThat(account.isEmailVerified()).isTrue();
   }

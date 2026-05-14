@@ -40,10 +40,10 @@ class UpdateCustomerEmailUseCaseTest {
     when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
     when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.of(customer));
 
-    var result = updateCustomerEmailUseCase.execute(input);
+    var output = updateCustomerEmailUseCase.execute(input);
 
     // Verify that the account's email was updated'
-    assertThat(result.email()).isEqualTo("new@example.com");
+    assertThat(output.email()).isEqualTo("new@example.com");
     assertThat(account.getEmail()).isEqualTo("new@example.com");
 
     // Verify that the CustomerEmailUpdated event was published

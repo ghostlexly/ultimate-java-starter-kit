@@ -30,10 +30,10 @@ class GetProfileUseCaseTest {
 
     when(customerRepository.findByAccountId(account.getId())).thenReturn(Optional.of(customer));
 
-    var result = getProfileUseCase.execute(account.getId());
+    var output = getProfileUseCase.execute(account.getId());
 
-    assertThat(result.id()).isEqualTo(customer.getId());
-    assertThat(result.email()).isEqualTo("contact+customer@lunisoft.fr");
+    assertThat(output.id()).isEqualTo(customer.getId());
+    assertThat(output.email()).isEqualTo("contact+customer@lunisoft.fr");
   }
 
   @Test
