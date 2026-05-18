@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
@@ -20,15 +20,10 @@ import org.springframework.web.client.RestClient;
  * Brevo implementation of {@link EmailService}. Sends transactional emails via the Brevo HTTP API
  * using template IDs and dynamic template parameters.
  *
- * <p>Active when {@code app.email.provider=brevo} (the default if the property is missing with
- * "matchIfMissing" set to true). To swap providers, add a new {@link EmailService} implementation
- * guarded by its own {@code @ConditionalOnProperty} and flip {@code app.email.provider} in YAML —
- * call sites do not change.
- *
  * @see <a href="https://developers.brevo.com/reference/sendtransacemail">Brevo API docs</a>
  */
 @Service
-@ConditionalOnProperty(name = "app.email.provider", havingValue = "brevo", matchIfMissing = true)
+@Primary
 public class BrevoEmailService implements EmailService {
 
   private static final Logger log = LoggerFactory.getLogger(BrevoEmailService.class);

@@ -95,7 +95,6 @@ app:
     secret-key: ${APP_STORAGE_SECRET_KEY}
     bucket: ${APP_STORAGE_BUCKET}
   email:
-    provider: brevo
     brevo:
       api-key: ${APP_BREVO_API_KEY}
       sender-name: Java Starter
