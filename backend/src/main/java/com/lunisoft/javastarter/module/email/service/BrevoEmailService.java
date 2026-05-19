@@ -56,15 +56,18 @@ public class BrevoEmailService implements EmailService {
           .toBodilessEntity();
 
       log.info(
-          "Brevo email sent — template={}, to={} params={}",
+          "Brevo email sent — subject={}, template={}, to={}, params={}",
+          request.subject(),
           request.templateId(),
           request.recipientEmail(),
           request.params());
     } catch (Exception e) {
       log.error(
-          "Failed to send Brevo email — template={}, to={}",
+          "Failed to send Brevo email — subject={}, template={}, to={}, params={}",
+          request.subject(),
           request.templateId(),
           request.recipientEmail(),
+          request.params(),
           e);
 
       throw new EmailSendException(
