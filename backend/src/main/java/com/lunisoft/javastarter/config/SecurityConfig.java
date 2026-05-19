@@ -22,8 +22,9 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
+import static org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher.pathPattern;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -32,6 +33,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+  // Public health check endpoint (used by Uptime Kuma and other monitoring tools).
+  private static final RequestMatcher HEALTH_ENDPOINT =
+      pathPattern(HttpMethod.GET, "/api/actuator/health");
+
+  // All other actuator endpoints (info, loggers, metrics, env, logfile) require ADMIN.
+  private static final RequestMatcher ACTUATOR_ENDPOINTS = pathPattern("/api/actuator/**");
 
   private final PublicEndpointScanner publicEndpointScanner;
   private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
@@ -51,7 +59,9 @@ public class SecurityConfig {
             auth ->
                 auth.requestMatchers(publicEndpointScanner.getRequestMatcher())
                     .permitAll()
-                    .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/actuator/**"))
+                    .requestMatchers(HEALTH_ENDPOINT)
+                    .permitAll()
+                    .requestMatchers(ACTUATOR_ENDPOINTS)
                     .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated())
