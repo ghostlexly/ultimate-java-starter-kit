@@ -82,9 +82,9 @@ app:
     issuer: lunisoft-java-starter
     audience: lunisoft-java-starter
     access-token-expiration-minutes: 15
-    refresh-token-expiration-minutes: 10080
+    refresh-token-expiration-minutes: 44640
   cookie:
-    secure: ${APP_COOKIE_SECURE:false}
+    secure: true
   cors:
     allowed-origins:
       - https://localhost

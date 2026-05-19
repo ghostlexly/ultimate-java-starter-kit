@@ -1,0 +1,10 @@
+logging:
+  file:
+    name: backend/logs/application.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: backend/logs/application-%d{yyyy-MM-dd}.%i.log
+
+app:
+  cookie:
+    secure: false
