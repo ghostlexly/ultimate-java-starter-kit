@@ -35,7 +35,7 @@ class RefreshTokensUseCaseTest {
   @InjectMocks private RefreshTokensUseCase refreshTokensUseCase;
 
   @Test
-  void execute_validToken_returnsNewTokens() {
+  void execute_valid_token_returns_new_tokens() {
     String refreshToken = "valid-refresh-token";
     Account account = createCustomerAccount();
     var session = createSession(account);
@@ -65,7 +65,7 @@ class RefreshTokensUseCaseTest {
   }
 
   @Test
-  void execute_invalidToken_throwsBusinessRuleException() {
+  void execute_invalid_token_throws_business_rule_exception() {
     when(jwtTokenProvider.parseToken("bad-token")).thenThrow(new RuntimeException("Invalid"));
 
     assertThatThrownBy(() -> refreshTokensUseCase.execute("bad-token"))
@@ -79,7 +79,7 @@ class RefreshTokensUseCaseTest {
   }
 
   @Test
-  void execute_expiredSession_throwsBusinessRuleException() {
+  void execute_expired_session_throws_business_rule_exception() {
     var sessionId = UUID.randomUUID();
 
     when(jwtTokenProvider.parseToken("expired-session-token")).thenReturn(claims);

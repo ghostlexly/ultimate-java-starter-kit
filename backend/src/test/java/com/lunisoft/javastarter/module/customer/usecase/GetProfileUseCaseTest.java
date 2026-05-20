@@ -24,7 +24,7 @@ class GetProfileUseCaseTest {
   @InjectMocks private GetProfileUseCase getProfileUseCase;
 
   @Test
-  void execute_existingProfile_returnsCustomerResponse() {
+  void execute_existing_profile_returns_customer_response() {
     var account = createCustomerAccount();
     var customer = account.getCustomer();
 
@@ -37,7 +37,7 @@ class GetProfileUseCaseTest {
   }
 
   @Test
-  void execute_profileNotFound_throwsBusinessRuleException() {
+  void execute_profile_not_found_throws_business_rule_exception() {
     var accountId = UUID.randomUUID();
     when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.empty());
 

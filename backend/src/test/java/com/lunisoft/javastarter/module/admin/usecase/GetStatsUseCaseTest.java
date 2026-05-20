@@ -20,7 +20,7 @@ class GetStatsUseCaseTest {
   @InjectMocks private GetStatsUseCase getStatsUseCase;
 
   @Test
-  void execute_returnsAccountsAndSessionCounts() {
+  void execute_returns_accounts_and_session_counts() {
     when(accountRepository.count()).thenReturn(42L);
     when(sessionRepository.count()).thenReturn(7L);
 
@@ -30,7 +30,7 @@ class GetStatsUseCaseTest {
   }
 
   @Test
-  void execute_zeroCounts_returnsZeros() {
+  void execute_zero_counts_returns_zeros() {
     when(accountRepository.count()).thenReturn(0L);
     when(sessionRepository.count()).thenReturn(0L);
 

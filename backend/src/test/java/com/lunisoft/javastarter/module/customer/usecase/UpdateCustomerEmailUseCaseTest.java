@@ -31,7 +31,7 @@ class UpdateCustomerEmailUseCaseTest {
   @InjectMocks private UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
 
   @Test
-  void execute_validRequest_updatesEmailAndPublishesEvent() {
+  void execute_valid_request_updates_email_and_publishes_event() {
     Account account = createCustomerAccount();
     var accountId = account.getId();
     Customer customer = account.getCustomer();
@@ -65,7 +65,7 @@ class UpdateCustomerEmailUseCaseTest {
   }
 
   @Test
-  void execute_accountNotFound_throwsBusinessRuleException() {
+  void execute_account_not_found_throws_business_rule_exception() {
     var accountId = UUID.randomUUID();
     when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
@@ -84,7 +84,7 @@ class UpdateCustomerEmailUseCaseTest {
   }
 
   @Test
-  void execute_customerNotFound_throwsBusinessRuleException() {
+  void execute_customer_not_found_throws_business_rule_exception() {
     Account account = createCustomerAccount();
     var accountId = account.getId();
 

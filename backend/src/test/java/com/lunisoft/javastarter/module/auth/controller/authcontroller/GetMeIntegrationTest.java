@@ -15,12 +15,12 @@ class GetMeIntegrationTest extends AbstractIntegrationTest {
   private static final String URL = "/api/auth/me";
 
   @Test
-  void returns401_whenUnauthenticated() throws Exception {
+  void returns_401_when_unauthenticated() throws Exception {
     mockMvc.perform(get(URL)).andExpect(status().isUnauthorized());
   }
 
   @Test
-  void returnsAuthenticatedUser_whenJwtIsValid() throws Exception {
+  void returns_authenticated_user_when_jwt_is_valid() throws Exception {
     var account = fixtures.givenCustomer("me@example.com");
     var accessToken =
         jwtTokenProvider.generateAccessToken(

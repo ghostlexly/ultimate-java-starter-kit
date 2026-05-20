@@ -15,12 +15,12 @@ class GetProfileIntegrationTest extends AbstractIntegrationTest {
   private static final String URL = "/api/customer/profile";
 
   @Test
-  void returns401_whenNoToken() throws Exception {
+  void returns_401_when_no_token() throws Exception {
     mockMvc.perform(get(URL)).andExpect(status().isUnauthorized());
   }
 
   @Test
-  void returns200_withCustomerData_whenAuthenticatedAsCustomer() throws Exception {
+  void returns_200_with_customer_data_when_authenticated_as_customer() throws Exception {
     var account = fixtures.givenCustomer("customer-profile@example.com");
     var customer = account.getCustomer();
 
@@ -36,7 +36,7 @@ class GetProfileIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns403_whenAuthenticatedAsAdmin() throws Exception {
+  void returns_403_when_authenticated_as_admin() throws Exception {
     var account = fixtures.givenAdmin("admin@example.com");
     var token =
         jwtTokenProvider.generateAccessToken(

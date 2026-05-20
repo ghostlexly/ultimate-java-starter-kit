@@ -15,7 +15,7 @@ class RefreshTokensIntegrationTest extends AbstractIntegrationTest {
   private static final String URL = "/api/auth/refresh";
 
   @Test
-  void returnsNewTokens_givenValidRefreshToken() throws Exception {
+  void returns_new_tokens_given_valid_refresh_token() throws Exception {
     var account = fixtures.givenCustomer("refresh@example.com");
     var session = fixtures.givenSession(account);
     var refreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
@@ -31,7 +31,7 @@ class RefreshTokensIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns400_whenTokenMissing() throws Exception {
+  void returns_400_when_token_missing() throws Exception {
     mockMvc
         .perform(post(URL).contentType(MediaType.APPLICATION_JSON).content("{}"))
         .andExpect(status().isBadRequest())
@@ -39,7 +39,7 @@ class RefreshTokensIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns401_whenTokenIsGarbage() throws Exception {
+  void returns_401_when_token_is_garbage() throws Exception {
     var body = jsonMapper.writeValueAsString(Map.of("refreshToken", "not-a-real-jwt"));
 
     mockMvc

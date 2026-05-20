@@ -27,7 +27,7 @@ class DemoPaginateCustomerUseCaseTest {
   @InjectMocks private DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
 
   @Test
-  void execute_returnsPagedResults() {
+  void execute_returns_paged_results() {
     var account = createCustomerAccount();
     var customer = account.getCustomer();
     var pageable = PageRequest.of(0, 10, Sort.by("createdAt").ascending());
@@ -48,7 +48,7 @@ class DemoPaginateCustomerUseCaseTest {
   }
 
   @Test
-  void execute_emptyResults_returnsEmptyPage() {
+  void execute_empty_results_returns_empty_page() {
     var pageable = PageRequest.of(0, 10, Sort.by("createdAt").ascending());
     var page = new PageImpl<Customer>(List.of(), pageable, 0);
 
@@ -65,7 +65,7 @@ class DemoPaginateCustomerUseCaseTest {
   }
 
   @Test
-  void execute_withFilters_passesSpecificationToRepository() {
+  void execute_with_filters_passes_specification_to_repository() {
     var pageable = PageRequest.of(0, 5, Sort.by("createdAt").ascending());
     var page = new PageImpl<Customer>(List.of(), pageable, 0);
 

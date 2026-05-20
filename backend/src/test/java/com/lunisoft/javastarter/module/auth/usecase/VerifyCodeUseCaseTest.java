@@ -39,7 +39,7 @@ class VerifyCodeUseCaseTest {
   @InjectMocks private VerifyCodeUseCase verifyCodeUseCase;
 
   @Test
-  void execute_whenValidCode_thenCorrect() {
+  void execute_when_valid_code_then_correct() {
     Account account = createCustomerAccount();
     var email = account.getEmail();
     var code = "1234";
@@ -68,7 +68,7 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_whenAccountNotFound_thenThrowsBusinessRuleException() {
+  void execute_when_account_not_found_then_throws_business_rule_exception() {
     when(accountRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
 
     assertThatThrownBy(
@@ -84,7 +84,7 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_whenNoValidToken_thenThrowsBusinessRuleException() {
+  void execute_when_no_valid_token_then_throws_business_rule_exception() {
     var account = createCustomerAccount();
     var email = account.getEmail();
 
@@ -105,7 +105,7 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_whenMaxAttemptsReached_thenThrowsBusinessRuleException() {
+  void execute_when_max_attempts_reached_then_throws_business_rule_exception() {
     var account = createCustomerAccount();
     var token = createVerificationToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
 
@@ -128,7 +128,7 @@ class VerifyCodeUseCaseTest {
   }
 
   @Test
-  void execute_whenWrongCode_thenIncrementsAttemptsAndThrows() {
+  void execute_when_wrong_code_then_increments_attempts_and_throws() {
     var account = createCustomerAccount();
     var token = createVerificationToken(account, "1234", 0);
 

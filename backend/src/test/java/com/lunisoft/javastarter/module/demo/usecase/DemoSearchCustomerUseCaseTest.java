@@ -21,7 +21,7 @@ class DemoSearchCustomerUseCaseTest {
   @InjectMocks private DemoSearchCustomerUseCase demoSearchCustomerUseCase;
 
   @Test
-  void execute_withResults_returnsMappedResponses() {
+  void execute_with_results_returns_mapped_responses() {
     var account1 = createCustomerAccount();
     account1.setEmail("alice@example.com");
     var customer1 = account1.getCustomer();
@@ -42,7 +42,7 @@ class DemoSearchCustomerUseCaseTest {
   }
 
   @Test
-  void execute_noResults_returnsEmptyList() {
+  void execute_no_results_returns_empty_list() {
     when(demoCustomerRepository.findByAccountRole(Role.ADMIN)).thenReturn(List.of());
 
     var output = demoSearchCustomerUseCase.execute(Role.ADMIN);

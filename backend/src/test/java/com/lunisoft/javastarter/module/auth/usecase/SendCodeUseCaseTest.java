@@ -36,7 +36,7 @@ class SendCodeUseCaseTest {
   @InjectMocks private SendCodeUseCase sendCodeUseCase;
 
   @Test
-  void execute_existingAccount_sendsCode() {
+  void execute_existing_account_sends_code() {
     Account account = createCustomerAccount();
     when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
@@ -52,7 +52,7 @@ class SendCodeUseCaseTest {
   }
 
   @Test
-  void execute_newAccount_createsAccountAndCustomerThenSendsCode() {
+  void execute_new_account_creates_account_and_customer_then_sends_code() {
     Account account = createCustomerAccount();
     when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.empty());
     when(accountRepository.save(any(Account.class))).thenReturn(account);
@@ -80,7 +80,7 @@ class SendCodeUseCaseTest {
   }
 
   @Test
-  void execute_cooldownNotExpired_throwsBusinessRuleException() {
+  void execute_cooldown_not_expired_throws_business_rule_exception() {
     Account account = createCustomerAccount();
     String email = account.getEmail();
     when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
@@ -104,7 +104,7 @@ class SendCodeUseCaseTest {
   }
 
   @Test
-  void execute_cooldownExpired_sendsCodeSuccessfully() {
+  void execute_cooldown_expired_sends_code_successfully() {
     Account account = createCustomerAccount();
     when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
 
@@ -124,7 +124,7 @@ class SendCodeUseCaseTest {
   }
 
   @Test
-  void execute_savesTokenWithCorrectFields() {
+  void execute_saves_token_with_correct_fields() {
     Account account = createCustomerAccount();
     when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
     when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(

@@ -15,12 +15,12 @@ class GetStatsIntegrationTest extends AbstractIntegrationTest {
   private static final String URL = "/api/admin/stats";
 
   @Test
-  void returns401_whenNoToken() throws Exception {
+  void returns_401_when_no_token() throws Exception {
     mockMvc.perform(get(URL)).andExpect(status().isUnauthorized());
   }
 
   @Test
-  void returns403_whenAuthenticatedAsCustomer() throws Exception {
+  void returns_403_when_authenticated_as_customer() throws Exception {
     var account = fixtures.givenCustomer("not-admin@example.com");
     var token =
         jwtTokenProvider.generateAccessToken(
@@ -32,7 +32,7 @@ class GetStatsIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns200_withCounts_whenAuthenticatedAsAdmin() throws Exception {
+  void returns_200_with_counts_when_authenticated_as_admin() throws Exception {
     var admin = fixtures.givenAdmin("admin-stats@example.com");
     fixtures.givenCustomer("c1@example.com");
     fixtures.givenCustomer("c2@example.com");

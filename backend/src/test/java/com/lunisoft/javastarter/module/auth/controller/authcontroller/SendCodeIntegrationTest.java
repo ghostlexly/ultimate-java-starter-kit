@@ -26,7 +26,7 @@ class SendCodeIntegrationTest extends AbstractIntegrationTest {
   @Autowired private VerificationTokenRepository verificationTokenRepository;
 
   @Test
-  void createsAccountAndVerificationToken_forNewEmail() throws Exception {
+  void creates_account_and_verification_token_for_new_email() throws Exception {
     var email = "new-user@example.com";
     var body = jsonMapper.writeValueAsString(Map.of("email", email));
 
@@ -48,7 +48,7 @@ class SendCodeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns400_whenEmailIsInvalid() throws Exception {
+  void returns_400_when_email_is_invalid() throws Exception {
     var body = jsonMapper.writeValueAsString(Map.of("email", "not-an-email"));
 
     mockMvc
@@ -57,7 +57,7 @@ class SendCodeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns429_whenRequestedWithinCooldown() throws Exception {
+  void returns_429_when_requested_within_cooldown() throws Exception {
     var account = fixtures.givenCustomer("cooldown-user@example.com");
     fixtures.givenLoginCode(account, "1234");
 

@@ -26,7 +26,7 @@ class VerifyCodeIntegrationTest extends AbstractIntegrationTest {
   @Autowired private SessionRepository sessionRepository;
 
   @Test
-  void returnsTokensAndSetsCookies_onValidCode() throws Exception {
+  void returns_tokens_and_sets_cookies_on_valid_code() throws Exception {
     var account = fixtures.givenCustomer("verify-success@example.com");
     fixtures.givenLoginCode(account, "4321");
 
@@ -52,7 +52,7 @@ class VerifyCodeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns400_onWrongCode() throws Exception {
+  void returns_400_on_wrong_code() throws Exception {
     var account = fixtures.givenCustomer("wrong-code@example.com");
     fixtures.givenLoginCode(account, "1111");
 
@@ -73,7 +73,7 @@ class VerifyCodeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns429_whenMaxAttemptsReached() throws Exception {
+  void returns_429_when_max_attempts_reached() throws Exception {
     var account = fixtures.givenCustomer("max-attempts@example.com");
     fixtures.givenLoginCode(account, "1111", t -> t.setAttempts(5));
 
@@ -86,7 +86,7 @@ class VerifyCodeIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns400_whenCodeExpired() throws Exception {
+  void returns_400_when_code_expired() throws Exception {
     var account = fixtures.givenCustomer("expired-code@example.com");
     fixtures.givenLoginCode(
         account, "2222", t -> t.setExpiresAt(Instant.now().minus(1, ChronoUnit.MINUTES)));

@@ -24,7 +24,7 @@ class GetMeUseCaseTest {
   @InjectMocks private GetMeUseCase getMeUseCase;
 
   @Test
-  void execute_existingAccount_returnsMeResponse() {
+  void execute_existing_account_returns_me_response() {
     Account account = createCustomerAccount();
     var accountId = account.getId();
 
@@ -38,7 +38,7 @@ class GetMeUseCaseTest {
   }
 
   @Test
-  void execute_accountNotFound_throwsBusinessRuleException() {
+  void execute_account_not_found_throws_business_rule_exception() {
     var accountId = UUID.randomUUID();
     when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 

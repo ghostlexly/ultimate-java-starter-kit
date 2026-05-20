@@ -15,7 +15,7 @@ class LogoutIntegrationTest extends AbstractIntegrationTest {
   private static final String URL = "/api/auth/logout";
 
   @Test
-  void clearsAuthCookies() throws Exception {
+  void clears_auth_cookies() throws Exception {
     var account = fixtures.givenCustomer("logout@example.com");
     var accessToken =
         jwtTokenProvider.generateAccessToken(
