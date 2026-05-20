@@ -1,0 +1,59 @@
+# Integration test profile.
+# Datasource + Redis are wired by Testcontainers via @ServiceConnection.
+# JWT keys are injected at runtime by AbstractIntegrationTest (DynamicPropertySource).
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+logging:
+  level:
+    com.lunisoft: INFO
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+jobrunr:
+  background-job-server:
+    enabled: false
+  dashboard:
+    enabled: false
+  database:
+    skip-create: false
+  jobs:
+    metrics:
+      enabled: false
+  background-job-server-metrics:
+    enabled: false
+
+server:
+  port: 0
+
+app:
+  cookie:
+    secure: false
+  cors:
+    allowed-origins:
+      - http://localhost
+  storage:
+    endpoint: http://localhost:9000
+    region: us-east-1
+    access-key: test-access-key
+    secret-key: test-secret-key
+    bucket: test-bucket
+  email:
+    brevo:
+      api-key: test-key
+      sender-name: Test Sender
+      sender-email: test@example.com
+  pdf:
+    render-timeout-ms: 10000
+    format: A4
+    print-background: true
