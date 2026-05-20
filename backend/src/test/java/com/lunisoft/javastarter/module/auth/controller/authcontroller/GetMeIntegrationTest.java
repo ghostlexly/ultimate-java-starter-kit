@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.auth.controller;
+package com.lunisoft.javastarter.module.auth.controller.authcontroller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;

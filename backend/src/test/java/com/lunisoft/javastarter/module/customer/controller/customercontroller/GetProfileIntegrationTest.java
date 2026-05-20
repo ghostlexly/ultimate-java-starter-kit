@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.admin.controller;
+package com.lunisoft.javastarter.module.customer.controller.customercontroller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -9,10 +9,10 @@ import com.lunisoft.javastarter.shared.AbstractIntegrationTest;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
-/** GET /api/admin/stats */
-class GetStatsIntegrationTest extends AbstractIntegrationTest {
+/** GET /api/customer/profile */
+class GetProfileIntegrationTest extends AbstractIntegrationTest {
 
-  private static final String URL = "/api/admin/stats";
+  private static final String URL = "/api/customer/profile";
 
   @Test
   void returns401_whenNoToken() throws Exception {
@@ -20,32 +20,31 @@ class GetStatsIntegrationTest extends AbstractIntegrationTest {
   }
 
   @Test
-  void returns403_whenAuthenticatedAsCustomer() throws Exception {
-    var account = fixtures.givenCustomer("not-admin@example.com");
+  void returns200_withCustomerData_whenAuthenticatedAsCustomer() throws Exception {
+    var account = fixtures.givenCustomer("customer-profile@example.com");
+    var customer = account.getCustomer();
+
     var token =
         jwtTokenProvider.generateAccessToken(
             UUID.randomUUID(), account.getId(), account.getEmail(), Role.CUSTOMER);
 
     mockMvc
         .perform(get(URL).header("Authorization", "Bearer " + token))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(customer.getId().toString()))
+        .andExpect(jsonPath("$.email").value(account.getEmail()));
   }
 
   @Test
-  void returns200_withCounts_whenAuthenticatedAsAdmin() throws Exception {
-    var admin = fixtures.givenAdmin("admin-stats@example.com");
-    fixtures.givenCustomer("c1@example.com");
-    fixtures.givenCustomer("c2@example.com");
-
+  void returns403_whenAuthenticatedAsAdmin() throws Exception {
+    var account = fixtures.givenAdmin("admin@example.com");
     var token =
         jwtTokenProvider.generateAccessToken(
-            UUID.randomUUID(), admin.getId(), admin.getEmail(), Role.ADMIN);
+            UUID.randomUUID(), account.getId(), account.getEmail(), Role.ADMIN);
 
+    // Admin role doesn't satisfy hasRole('CUSTOMER').
     mockMvc
         .perform(get(URL).header("Authorization", "Bearer " + token))
-        .andExpect(status().isOk())
-        // 2 customers + 1 admin
-        .andExpect(jsonPath("$.accounts").value(3))
-        .andExpect(jsonPath("$.activeSessions").value(0));
+        .andExpect(status().isForbidden());
   }
 }
