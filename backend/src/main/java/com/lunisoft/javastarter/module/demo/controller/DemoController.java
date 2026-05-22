@@ -1,5 +1,6 @@
 package com.lunisoft.javastarter.module.demo.controller;
 
+import com.lunisoft.javastarter.core.dto.MessageResponse;
 import com.lunisoft.javastarter.core.pdf.PdfService;
 import com.lunisoft.javastarter.core.ratelimit.RateLimit;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
@@ -85,8 +86,8 @@ public class DemoController {
   }
 
   @GetMapping("simple-json-response")
-  public ResponseEntity<Map<String, String>> simpleJsonResponse() {
-    return ResponseEntity.ok(Map.of("message", "Success"));
+  public ResponseEntity<MessageResponse> simpleJsonResponse() {
+    return ResponseEntity.ok(new MessageResponse("Success"));
   }
 
   @GetMapping("simple-message-response")
@@ -95,7 +96,7 @@ public class DemoController {
   }
 
   @GetMapping("lock")
-  public ResponseEntity<Map<String, String>> lockTest() throws InterruptedException {
+  public ResponseEntity<MessageResponse> lockTest() throws InterruptedException {
     Lock lock = lockRegistry.obtain("test-lock");
     lock.lock();
 
@@ -108,30 +109,30 @@ public class DemoController {
       lock.unlock();
     }
 
-    return ResponseEntity.ok(Map.of("message", "Lock acquired"));
+    return ResponseEntity.ok(new MessageResponse("Lock acquired"));
   }
 
   @GetMapping("rate-limited")
   @RateLimit(requests = 5, periodSeconds = 60)
-  public ResponseEntity<Map<String, String>> rateLimited() {
+  public ResponseEntity<MessageResponse> rateLimited() {
     return ResponseEntity.ok(
-        Map.of(
-            "message", "Send multiple requests to this endpoint to see rate limiting in action."));
+        new MessageResponse(
+            "Send multiple requests to this endpoint to see rate limiting in action."));
   }
 
   @GetMapping("accessible-to-public")
   @PublicEndpoint
-  public ResponseEntity<Map<String, String>> accessibleToPublic() {
+  public ResponseEntity<MessageResponse> accessibleToPublic() {
     return ResponseEntity.ok(
-        Map.of("message", "This endpoint is accessible to public without any authentication."));
+        new MessageResponse("This endpoint is accessible to public without any authentication."));
   }
 
   @GetMapping("jobrunr-demo")
   @PublicEndpoint
-  public ResponseEntity<Map<String, String>> jobrunrDemo() {
+  public ResponseEntity<MessageResponse> jobrunrDemo() {
     BackgroundJob.enqueue(() -> demoJobRunrEnqueueJob.execute("abcdef"));
 
-    return ResponseEntity.ok(Map.of("message", "The new job has been scheduled."));
+    return ResponseEntity.ok(new MessageResponse("The new job has been scheduled."));
   }
 
   @GetMapping("preview-uploaded-medias")
