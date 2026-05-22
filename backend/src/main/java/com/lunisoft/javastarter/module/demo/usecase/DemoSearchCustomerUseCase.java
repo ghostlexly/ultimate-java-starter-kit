@@ -18,12 +18,13 @@ public class DemoSearchCustomerUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
 
+  public record Input(Role role) {}
+
   public record Output(UUID id, String email, String role) {}
 
   @Transactional(readOnly = true)
-  public List<Output> execute(Role role) {
-
-    return demoCustomerRepository.findByAccountRole(role).stream()
+  public List<Output> execute(Input input) {
+    return demoCustomerRepository.findByAccountRole(input.role()).stream()
         .map(
             customer ->
                 new Output(

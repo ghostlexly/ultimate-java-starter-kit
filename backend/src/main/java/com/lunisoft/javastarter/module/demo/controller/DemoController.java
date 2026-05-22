@@ -51,7 +51,8 @@ public class DemoController {
   public ResponseEntity<List<DemoSearchCustomerUseCase.Output>> searchCustomers(
       @RequestParam Role role) {
 
-    List<DemoSearchCustomerUseCase.Output> outputs = demoSearchCustomerUseCase.execute(role);
+    var input = new DemoSearchCustomerUseCase.Input(Role.CUSTOMER);
+    List<DemoSearchCustomerUseCase.Output> outputs = demoSearchCustomerUseCase.execute(input);
 
     return ResponseEntity.ok(outputs);
   }

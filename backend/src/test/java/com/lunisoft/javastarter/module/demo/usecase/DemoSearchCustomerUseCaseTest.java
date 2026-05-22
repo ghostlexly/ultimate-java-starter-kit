@@ -33,7 +33,8 @@ class DemoSearchCustomerUseCaseTest {
     when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER))
         .thenReturn(List.of(customer1, customer2));
 
-    var output = demoSearchCustomerUseCase.execute(Role.CUSTOMER);
+    var input = new DemoSearchCustomerUseCase.Input(Role.CUSTOMER);
+    var output = demoSearchCustomerUseCase.execute(input);
 
     assertThat(output).hasSize(2);
     assertThat(output.get(0).email()).isEqualTo("alice@example.com");
@@ -45,7 +46,8 @@ class DemoSearchCustomerUseCaseTest {
   void execute_no_results_returns_empty_list() {
     when(demoCustomerRepository.findByAccountRole(Role.ADMIN)).thenReturn(List.of());
 
-    var output = demoSearchCustomerUseCase.execute(Role.ADMIN);
+    var input = new DemoSearchCustomerUseCase.Input(Role.ADMIN);
+    var output = demoSearchCustomerUseCase.execute(input);
 
     assertThat(output).isEmpty();
   }
