@@ -43,7 +43,7 @@ public class BrevoEmailService implements EmailService {
   }
 
   @Override
-  @Retryable(backoff = @Backoff(delay = 2000))
+  @Retryable(backoff = @Backoff(delay = 2000), maxAttempts = 10)
   public void send(EmailRequest request) {
     var body = buildBody(request);
 
