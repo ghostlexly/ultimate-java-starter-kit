@@ -30,12 +30,12 @@ import org.springframework.boot.test.context.TestComponent;
  * {@link TestFactory} when you want a detached entity). Each method has two overloads:
  *
  * <ul>
- *   <li><strong>Plain</strong>: sensible defaults, one-line setup for the happy path
- *       — {@code fixtures.givenCustomer("a@b.com")}.
+ *   <li><strong>Plain</strong>: sensible defaults, one-line setup for the happy path — {@code
+ *       fixtures.givenCustomer("a@b.com")}.
  *   <li><strong>Customizer</strong>: same defaults, plus a {@link Consumer} that gets the
- *       freshly-built entity before it hits the DB — {@code fixtures.givenCustomer("a@b.com",
- *       a -> a.setEmailVerified(false))}. Override only what the test cares about; everything
- *       else stays default.
+ *       freshly-built entity before it hits the DB — {@code fixtures.givenCustomer("a@b.com", a ->
+ *       a.setEmailVerified(false))}. Override only what the test cares about; everything else stays
+ *       default.
  * </ul>
  */
 @TestComponent
@@ -62,21 +62,21 @@ public class IntegrationTestFixtures {
     account.setEmail(email);
     account.setRole(Role.CUSTOMER);
     account.setEmailVerified(true);
-    customizer.accept(account);
-    accountRepository.save(account);
 
     var customer = new Customer();
     customer.setAccount(account);
-    customerRepository.save(customer);
-    // Wire the inverse side so callers can do account.getCustomer().getId() without re-querying.
     account.setCustomer(customer);
+
+    customizer.accept(account);
+
+    accountRepository.save(account);
+    customerRepository.save(customer);
 
     return account;
   }
 
   /** Admin account with the matching {@link Admin} row, both persisted and linked back. */
   public Account givenAdmin(String email) {
-
     return givenAdmin(email, _ -> {});
   }
 
@@ -86,13 +86,15 @@ public class IntegrationTestFixtures {
     account.setEmail(email);
     account.setRole(Role.ADMIN);
     account.setEmailVerified(true);
-    customizer.accept(account);
-    accountRepository.save(account);
 
     var admin = new Admin();
     admin.setAccount(account);
-    adminRepository.save(admin);
     account.setAdmin(admin);
+
+    customizer.accept(account);
+
+    accountRepository.save(account);
+    adminRepository.save(admin);
 
     return account;
   }
