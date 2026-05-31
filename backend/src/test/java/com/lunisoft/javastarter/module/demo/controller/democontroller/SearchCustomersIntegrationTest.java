@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.shared.AbstractIntegrationTest;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -17,15 +16,12 @@ class SearchCustomersIntegrationTest extends AbstractIntegrationTest {
   @Test
   void returns_searched_customers_list() throws Exception {
     var account = fixtures.givenCustomer("me@example.com");
-    var accessToken =
-        jwtTokenProvider.generateAccessToken(
-            UUID.randomUUID(), account.getId(), account.getEmail(), Role.CUSTOMER);
 
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("role", "CUSTOMER");
 
     mockMvc
-        .perform(get(URL).header("Authorization", "Bearer " + accessToken).params(params))
+        .perform(get(URL).header("Authorization", bearer(account)).params(params))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].id").value(account.getCustomer().getId().toString()))
         .andExpect(jsonPath("$[0].email").value(account.getEmail()))

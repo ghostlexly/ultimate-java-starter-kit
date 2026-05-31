@@ -1,12 +1,15 @@
 package com.lunisoft.javastarter.shared;
 
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
+import com.lunisoft.javastarter.module.account.entity.Account;
+import com.lunisoft.javastarter.module.email.service.EmailService;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Playwright;
 import com.redis.testcontainers.RedisContainer;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Base64;
+import java.util.UUID;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -81,6 +86,7 @@ public abstract class AbstractIntegrationTest {
   @MockitoBean protected S3Presigner s3Presigner;
   @MockitoBean protected Playwright playwright;
   @MockitoBean protected Browser browser;
+  @MockitoBean protected EmailService emailService;
 
   // ── Common collaborators tests will need ─────────────────────────────────
 
@@ -89,6 +95,7 @@ public abstract class AbstractIntegrationTest {
   @Autowired protected JwtTokenProvider jwtTokenProvider;
   @Autowired protected IntegrationTestFixtures fixtures;
   @Autowired private DataSource dataSource;
+  @Autowired private PlatformTransactionManager transactionManager;
 
   /**
    * Truncate every application table after each test so cases stay isolated even though the
@@ -101,13 +108,13 @@ public abstract class AbstractIntegrationTest {
     jdbc.execute(
         """
         TRUNCATE TABLE
-          verification_token,
-          session,
-          customer,
-          admin,
-          media,
-          app_config,
-          account
+            verification_token,
+            session,
+            customer,
+            admin,
+            media,
+            app_config,
+            account
         RESTART IDENTITY CASCADE
         """);
   }
@@ -134,5 +141,24 @@ public abstract class AbstractIntegrationTest {
     var pem = "-----BEGIN %s-----%n%s%n-----END %s-----".formatted(label, base64Der, label);
 
     return Base64.getEncoder().encodeToString(pem.getBytes());
+  }
+
+  /**
+   * Runs DB-state assertions inside a single read transaction so lazy associations can be traversed
+   * after the request under test has already committed. Open Session In View is disabled, so
+   * without this wrapper accessing a lazy relation here would throw {@code
+   * LazyInitializationException}.
+   */
+  public void assertPersistedState(Runnable assertions) {
+    new TransactionTemplate(transactionManager).executeWithoutResult(_ -> assertions.run());
+  }
+
+  /** Builds an {@code Authorization} header value with a fresh access token for the account. */
+  public String bearer(Account account) {
+    var token =
+        jwtTokenProvider.generateAccessToken(
+            UUID.randomUUID(), account.getId(), account.getEmail(), account.getRole());
+
+    return "Bearer %s".formatted(token);
   }
 }

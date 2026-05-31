@@ -4,9 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.shared.AbstractIntegrationTest;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /** GET /api/admin/stats */
@@ -22,12 +20,9 @@ class GetStatsIntegrationTest extends AbstractIntegrationTest {
   @Test
   void returns_403_when_authenticated_as_customer() throws Exception {
     var account = fixtures.givenCustomer("not-admin@example.com");
-    var token =
-        jwtTokenProvider.generateAccessToken(
-            UUID.randomUUID(), account.getId(), account.getEmail(), Role.CUSTOMER);
 
     mockMvc
-        .perform(get(URL).header("Authorization", "Bearer " + token))
+        .perform(get(URL).header("Authorization", bearer(account)))
         .andExpect(status().isForbidden());
   }
 
@@ -37,12 +32,8 @@ class GetStatsIntegrationTest extends AbstractIntegrationTest {
     fixtures.givenCustomer("c1@example.com");
     fixtures.givenCustomer("c2@example.com");
 
-    var token =
-        jwtTokenProvider.generateAccessToken(
-            UUID.randomUUID(), admin.getId(), admin.getEmail(), Role.ADMIN);
-
     mockMvc
-        .perform(get(URL).header("Authorization", "Bearer " + token))
+        .perform(get(URL).header("Authorization", bearer(admin)))
         .andExpect(status().isOk())
         // 2 customers + 1 admin
         .andExpect(jsonPath("$.accounts").value(3))

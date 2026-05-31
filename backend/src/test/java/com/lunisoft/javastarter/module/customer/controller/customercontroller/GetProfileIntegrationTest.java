@@ -4,9 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.shared.AbstractIntegrationTest;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /** GET /api/customer/profile */
@@ -24,12 +22,8 @@ class GetProfileIntegrationTest extends AbstractIntegrationTest {
     var account = fixtures.givenCustomer("customer-profile@example.com");
     var customer = account.getCustomer();
 
-    var token =
-        jwtTokenProvider.generateAccessToken(
-            UUID.randomUUID(), account.getId(), account.getEmail(), Role.CUSTOMER);
-
     mockMvc
-        .perform(get(URL).header("Authorization", "Bearer " + token))
+        .perform(get(URL).header("Authorization", bearer(account)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.id").value(customer.getId().toString()))
         .andExpect(jsonPath("$.email").value(account.getEmail()));
@@ -38,13 +32,10 @@ class GetProfileIntegrationTest extends AbstractIntegrationTest {
   @Test
   void returns_403_when_authenticated_as_admin() throws Exception {
     var account = fixtures.givenAdmin("admin@example.com");
-    var token =
-        jwtTokenProvider.generateAccessToken(
-            UUID.randomUUID(), account.getId(), account.getEmail(), Role.ADMIN);
 
     // Admin role doesn't satisfy hasRole('CUSTOMER').
     mockMvc
-        .perform(get(URL).header("Authorization", "Bearer " + token))
+        .perform(get(URL).header("Authorization", bearer(account)))
         .andExpect(status().isForbidden());
   }
 }
