@@ -32,14 +32,14 @@ public class MediaSecurityService {
 
     if (!allowedContentTypes.contains(contentType)) {
       throw new BusinessRuleException(
-          "File type is not allowed. Allowed types: JPEG, PNG, WebP, PDF",
+          "File type is not allowed. Allowed types: JPEG, PNG, WebP, PDF.",
           "INVALID_FILE_TYPE",
           HttpStatus.BAD_REQUEST);
     }
 
     if (fileSize > maxFileSize) {
       throw new BusinessRuleException(
-          "File size exceeds the maximum allowed size of %s MB"
+          "File size exceeds the maximum allowed size of %s MB."
               .formatted(maxFileSize / (1024 * 1024)),
           "FILE_TOO_LARGE",
           HttpStatus.BAD_REQUEST);
