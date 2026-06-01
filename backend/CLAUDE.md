@@ -185,6 +185,11 @@ public record SendCodeRequest(
 - `GlobalExceptionHandler` catches all exceptions and returns `ErrorResponse`
 - Error codes are `UPPER_SNAKE_CASE` strings
 - All error responses follow the same structure: `{ type, message, code, violations }`
+- End user-facing `BusinessRuleException` messages with a period (they are surfaced to the
+  frontend via `ErrorResponse`). Omit the period only when the message ends in an interpolated
+  value (e.g. `"Failed to load resource: %s"`) or is a pure internal/diagnostic string
+  (e.g. `INTERNAL_SERVER_ERROR`). A `%s` mid-string still gets a period if the message ends in
+  static text (e.g. `"... maximum allowed size of %s MB."`).
 
 ## Rate Limiting
 
