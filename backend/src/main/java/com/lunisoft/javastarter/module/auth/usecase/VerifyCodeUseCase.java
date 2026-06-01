@@ -37,9 +37,11 @@ public class VerifyCodeUseCase {
 
   @Transactional(noRollbackFor = BusinessRuleException.class)
   public Output execute(Input input) {
+    String normalizedEmail = input.email.toLowerCase();
+
     Account account =
         accountRepository
-            .findByEmail(input.email())
+            .findByEmail(normalizedEmail)
             .orElseThrow(
                 () ->
                     new BusinessRuleException(
@@ -63,7 +65,7 @@ public class VerifyCodeUseCase {
 
     token.setAttempts(token.getAttempts() + 1);
 
-    if (!input.code().equals(token.getValue())) {
+    if (!input.code.equals(token.getValue())) {
       throw new BusinessRuleException("Invalid code.", "INVALID_CODE", HttpStatus.BAD_REQUEST);
     }
 
@@ -72,7 +74,7 @@ public class VerifyCodeUseCase {
 
     account.setEmailVerified(true);
 
-    Session session = createSession(account, input.request());
+    Session session = createSession(account, input.request);
 
     String accessToken =
         jwtTokenProvider.generateAccessToken(

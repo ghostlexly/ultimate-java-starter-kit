@@ -39,13 +39,16 @@ public class SendCodeUseCase {
    */
   @Transactional
   public void execute(String email) {
+    // Normalize the email so lookups and storage are case insensitive
+    String normalizedEmail = email.toLowerCase();
+
     Account account =
         accountRepository
-            .findByEmail(email)
+            .findByEmail(normalizedEmail)
             .orElseGet(
                 () -> {
                   Account newAccount = new Account();
-                  newAccount.setEmail(email);
+                  newAccount.setEmail(normalizedEmail);
                   newAccount.setRole(Role.CUSTOMER);
                   Account savedAccount = accountRepository.save(newAccount);
 
@@ -73,7 +76,7 @@ public class SendCodeUseCase {
         Instant.now().plus(AuthConstants.LOGIN_CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES));
     verificationTokenRepository.save(token);
 
-    eventPublisher.publishEvent(new LoginCodeRequestedEvent(email, code));
+    eventPublisher.publishEvent(new LoginCodeRequestedEvent(normalizedEmail, code));
   }
 
   private void checkCooldown(VerificationToken lastToken) {
