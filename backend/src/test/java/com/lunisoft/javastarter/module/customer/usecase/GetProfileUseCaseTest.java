@@ -45,7 +45,7 @@ class GetProfileUseCaseTest {
         .isInstanceOfSatisfying(
             BusinessRuleException.class,
             exception -> {
-              assertThat(exception.getMessage()).isEqualTo("Customer profile not found");
+              assertThat(exception.getMessage()).isEqualTo("Customer profile not found.");
               assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
               assertThat(exception.getCode()).isEqualTo("NOT_FOUND");
             });

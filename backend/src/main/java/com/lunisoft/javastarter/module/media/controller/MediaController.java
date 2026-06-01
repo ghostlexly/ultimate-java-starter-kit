@@ -33,7 +33,7 @@ public class MediaController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UploadMediaResponse> upload(@RequestParam("file") MultipartFile file) {
     try {
-      String contentType = mediaSecurityService.detectContentType(file.getInputStream());
+      String contentType = mediaSecurityService.getContentType(file.getInputStream());
 
       mediaSecurityService.validateImageMedia(contentType, file.getSize());
 

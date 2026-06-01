@@ -15,7 +15,7 @@ public class MediaSecurityService {
   private final MediaRepository mediaRepository;
   private final Tika tika = new Tika();
 
-  public String detectContentType(InputStream inputStream) {
+  public String getContentType(InputStream inputStream) {
     try {
       return tika.detect(inputStream);
     } catch (Exception ex) {

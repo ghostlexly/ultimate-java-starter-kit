@@ -44,6 +44,6 @@ class GetMeUseCaseTest {
 
     assertThatThrownBy(() -> getMeUseCase.execute(accountId))
         .isInstanceOf(BusinessRuleException.class)
-        .hasMessage("Account not found");
+        .hasMessage("Account not found.");
   }
 }
