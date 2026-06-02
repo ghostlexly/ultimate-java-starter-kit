@@ -286,3 +286,25 @@ method() { ...}
 - Naming: `V{version}__{description}.sql`
 - `spring.jpa.hibernate.ddl-auto=validate` (Flyway handles schema)
 - JPA auditing enabled via `@EnableJpaAuditing`
+
+## Testing
+
+Two tiers, split by the standard Maven Surefire/Failsafe convention:
+
+- **Unit tests** — suffix `*Test` (use cases are `[Verb][Entity]UseCaseTest`). Pure Mockito
+  (`@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`), no Spring context. Run by
+  **Surefire** in `mvn test`. Build entities with `TestFactory` (detached, no DB).
+- **Integration tests** — suffix `*IT`, run by **Failsafe** in `mvn verify` (kept out of the fast
+  unit-test phase). Boot the full context against Testcontainers Postgres + Redis by extending
+  `AbstractIntegrationTest`; drive endpoints through `MockMvc`. Persist state with the `fixtures`
+  (`givenX(...)`) helpers, not `TestFactory`.
+
+### Integration test conventions
+
+- **One class per controller**, named `[Entity]ControllerIT`, in the controller's own package
+  (`module.[feature].controller`).
+- **One `@Nested` class per endpoint**, named after the action (`SendCode`, `VerifyCode`), each
+  with a `/** HTTP_METHOD /api/path */` Javadoc and a `private static final String URL` constant.
+- Shared `@Autowired` repositories live on the outer class; nested classes reference them.
+- Assert the HTTP contract (status, JSON body, cookies) **and** the persisted DB state. Use
+  `assertPersistedState(...)` when traversing lazy associations after the request commits.
