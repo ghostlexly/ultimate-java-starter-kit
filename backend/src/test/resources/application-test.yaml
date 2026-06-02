@@ -30,8 +30,6 @@ jobrunr:
   jobs:
     metrics:
       enabled: false
-  background-job-server-metrics:
-    enabled: false
 
 server:
   port: 0
