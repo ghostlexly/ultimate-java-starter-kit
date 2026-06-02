@@ -53,7 +53,7 @@ public abstract class AbstractIntegrationTest {
 
   @ServiceConnection
   protected static final PostgreSQLContainer POSTGRES =
-      new PostgreSQLContainer(DockerImageName.parse("postgres:17.9-alpine"));
+      new PostgreSQLContainer(DockerImageName.parse("postgres:17.9"));
 
   @ServiceConnection(name = "redis")
   protected static final RedisContainer REDIS =

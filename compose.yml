@@ -1,6 +1,6 @@
 services:
   java-starter-postgres:
-    image: postgres:17.9-alpine
+    image: postgres:17.9
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lunisoft}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe}
