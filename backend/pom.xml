@@ -23,6 +23,7 @@
         <libphonenumber.version>9.0.30</libphonenumber.version>
         <retry.version>2.0.12</retry.version>
         <jobrunr.version>8.5.2</jobrunr.version>
+        <tika.version>3.3.0</tika.version>
     </properties>
 
     <dependencyManagement>
@@ -62,6 +63,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- AspectJ/AOP — required by @Aspect (RateLimitAspect) and @Retryable -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
 
         <!-- Spring Cache and Redis for caching -->
@@ -147,7 +154,7 @@
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
-            <version>3.3.0</version>
+            <version>${tika.version}</version>
         </dependency>
 
         <!-- Phone number parsing & formatting -->
