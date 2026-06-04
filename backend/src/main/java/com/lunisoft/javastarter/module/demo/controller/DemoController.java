@@ -53,7 +53,7 @@ public class DemoController {
       @RequestParam Role role) {
 
     var input = new DemoSearchCustomerUseCase.Input(Role.CUSTOMER);
-    List<DemoSearchCustomerUseCase.Output> outputs = demoSearchCustomerUseCase.execute(input);
+    List<DemoSearchCustomerUseCase.Output> outputs = this.demoSearchCustomerUseCase.execute(input);
 
     return ResponseEntity.ok(outputs);
   }
@@ -80,7 +80,7 @@ public class DemoController {
 
     var input = new DemoPaginateCustomerUseCase.Input(page - 1, size, email);
 
-    var response = demoPaginateCustomerUseCase.execute(input);
+    var response = this.demoPaginateCustomerUseCase.execute(input);
 
     return ResponseEntity.ok(response);
   }
@@ -97,7 +97,7 @@ public class DemoController {
 
   @GetMapping("lock")
   public ResponseEntity<MessageResponse> lockTest() throws InterruptedException {
-    Lock lock = lockRegistry.obtain("test-lock");
+    Lock lock = this.lockRegistry.obtain("test-lock");
     lock.lock();
 
     log.info("Lock acquired !");
@@ -130,7 +130,7 @@ public class DemoController {
   @GetMapping("jobrunr-demo")
   @PublicEndpoint
   public ResponseEntity<MessageResponse> jobrunrDemo() {
-    BackgroundJob.enqueue(() -> demoJobRunrEnqueueJob.execute("abcdef"));
+    BackgroundJob.enqueue(() -> this.demoJobRunrEnqueueJob.execute("abcdef"));
 
     return ResponseEntity.ok(new MessageResponse("The new job has been scheduled."));
   }
@@ -138,7 +138,7 @@ public class DemoController {
   @GetMapping("preview-uploaded-medias")
   public ResponseEntity<List<DemoPreviewUploadedMediasResponse>> previewUploadedMedias() {
     List<DemoPreviewUploadedMediasResponse> previewUrls =
-        mediaRepository.findAll().stream()
+        this.mediaRepository.findAll().stream()
             .map(
                 media ->
                     new DemoPreviewUploadedMediasResponse(
@@ -160,9 +160,9 @@ public class DemoController {
   @GetMapping("preview-pdf")
   @PublicEndpoint
   public ResponseEntity<byte[]> generatePdf() {
-    var avatarUri = pdfService.toDataUri("templates/assets/avatar.png", "image/png");
+    var avatarUri = this.pdfService.toDataUri("templates/assets/avatar.png", "image/png");
     byte[] pdf =
-        pdfService.generate(
+        this.pdfService.generate(
             "sample-pdf",
             Map.of(
                 "title", "Sample PDF Document",
@@ -182,9 +182,9 @@ public class DemoController {
   @GetMapping("download-pdf")
   @PublicEndpoint
   public ResponseEntity<byte[]> downloadPdf() {
-    var avatarUri = pdfService.toDataUri("templates/assets/avatar.png", "image/png");
+    var avatarUri = this.pdfService.toDataUri("templates/assets/avatar.png", "image/png");
     byte[] pdf =
-        pdfService.generate(
+        this.pdfService.generate(
             "sample-pdf",
             Map.of(
                 "title", "Sample PDF Document",

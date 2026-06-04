@@ -25,7 +25,7 @@ public class CustomerController {
   public ResponseEntity<CustomerResponse> getProfile(
       @AuthenticationPrincipal UserPrincipal principal) {
 
-    CustomerResponse response = getProfileUseCase.execute(principal.accountId());
+    CustomerResponse response = this.getProfileUseCase.execute(principal.accountId());
 
     return ResponseEntity.ok(response);
   }
@@ -37,7 +37,7 @@ public class CustomerController {
 
     var input = new UpdateCustomerEmailUseCase.Input(principal.accountId(), request.email());
 
-    CustomerResponse response = updateCustomerEmailUseCase.execute(input);
+    CustomerResponse response = this.updateCustomerEmailUseCase.execute(input);
 
     return ResponseEntity.ok(response);
   }

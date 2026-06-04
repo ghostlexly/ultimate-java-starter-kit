@@ -14,12 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
-
   private final GetStatsUseCase getStatsUseCase;
 
   @GetMapping("stats")
   public ResponseEntity<Map<String, Long>> getStats() {
-
-    return ResponseEntity.ok(getStatsUseCase.execute());
+    return ResponseEntity.ok(this.getStatsUseCase.execute());
   }
 }

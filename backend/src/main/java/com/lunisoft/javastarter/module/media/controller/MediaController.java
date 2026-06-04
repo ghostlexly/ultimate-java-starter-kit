@@ -33,17 +33,17 @@ public class MediaController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UploadMediaResponse> upload(@RequestParam("file") MultipartFile file) {
     try {
-      String contentType = mediaSecurityService.getContentType(file.getInputStream());
+      String contentType = this.mediaSecurityService.getContentType(file.getInputStream());
 
-      mediaSecurityService.validateImageMedia(contentType, file.getSize());
+      this.mediaSecurityService.validateImageMedia(contentType, file.getSize());
 
       var input =
           new UploadMediaUseCase.Input(
               file.getInputStream(), file.getOriginalFilename(), contentType, file.getSize());
 
-      var output = uploadMediaUseCase.execute(input);
+      var output = this.uploadMediaUseCase.execute(input);
 
-      var url = storageService.generatePresignedGetUrl(output.key(), PRESIGNED_URL_EXPIRY);
+      var url = this.storageService.generatePresignedGetUrl(output.key(), PRESIGNED_URL_EXPIRY);
 
       return ResponseEntity.ok(new UploadMediaResponse(output.id(), url));
     } catch (IOException ex) {

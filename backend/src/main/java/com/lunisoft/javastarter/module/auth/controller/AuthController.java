@@ -33,7 +33,7 @@ public class AuthController {
   @PublicEndpoint
   @PostMapping("send-code")
   public ResponseEntity<Map<String, String>> sendCode(@Valid @RequestBody SendCodeRequest request) {
-    sendCodeUseCase.execute(request.email());
+    this.sendCodeUseCase.execute(request.email());
 
     return ResponseEntity.ok(Map.of("message", "Login code sent successfully."));
   }
@@ -46,9 +46,10 @@ public class AuthController {
       HttpServletResponse httpResponse) {
 
     var input = new VerifyCodeUseCase.Input(request.email(), request.code(), httpRequest);
-    var output = verifyCodeUseCase.execute(input);
+    var output = this.verifyCodeUseCase.execute(input);
 
-    authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
+    this.authCookieService.setAuthCookies(
+        httpResponse, output.accessToken(), output.refreshToken());
 
     return ResponseEntity.ok(output);
   }
@@ -60,29 +61,30 @@ public class AuthController {
       HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
 
-    String refreshToken = authCookieService.resolveRefreshToken(request, httpRequest);
+    String refreshToken = this.authCookieService.resolveRefreshToken(request, httpRequest);
 
     if (refreshToken == null) {
       throw new BusinessRuleException(
           "Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
     }
 
-    var output = refreshTokensUseCase.execute(refreshToken);
-    authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
+    var output = this.refreshTokensUseCase.execute(refreshToken);
+    this.authCookieService.setAuthCookies(
+        httpResponse, output.accessToken(), output.refreshToken());
 
     return ResponseEntity.ok(output);
   }
 
   @GetMapping("me")
   public ResponseEntity<MeResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
-    MeResponse response = getMeUseCase.execute(principal.accountId());
+    MeResponse response = this.getMeUseCase.execute(principal.accountId());
 
     return ResponseEntity.ok(response);
   }
 
   @PostMapping("logout")
   public ResponseEntity<Map<String, String>> logout(HttpServletResponse httpResponse) {
-    authCookieService.clearAuthCookies(httpResponse);
+    this.authCookieService.clearAuthCookies(httpResponse);
 
     return ResponseEntity.ok(Map.of("message", "You have been successfully logged out"));
   }
