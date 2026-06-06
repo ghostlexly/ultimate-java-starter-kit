@@ -1,6 +1,7 @@
 package com.lunisoft.javastarter.module.demo.repository;
 
 import com.lunisoft.javastarter.module.customer.entity.Customer;
+import jakarta.persistence.criteria.JoinType;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -10,33 +11,21 @@ import org.springframework.data.jpa.domain.Specification;
  * <p>Usage example:
  *
  * <pre>
- *   Specification<Customer> spec = DemoCustomerSpecification.build()
- *       .and(DemoCustomerSpecification.hasEmail("john"));
- *   repository.findAll(spec, pageable);
+ *   Specification<Customer> specs = Specification.unrestricted()
+ *       .and(DemoCustomerSpecification.emailContaining("john"));
+ *   repository.findAll(specs, pageable);
  * </pre>
  */
 public final class DemoCustomerSpecification {
 
   private DemoCustomerSpecification() {}
 
-  /**
-   * Eagerly fetches the account relation to avoid LazyInitializationException. Should always be
-   * used as the base spec when mapping results that access account fields.
-   */
-  public static Specification<Customer> build() {
-    return (root, query, cb) -> {
-      // Only fetch for the main query, not for the count query (which doesn't support fetch)
-      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-        root.fetch("account");
-      }
-
-      return cb.conjunction();
-    };
-  }
-
   /** Filters customers whose account email contains the given value (case-insensitive). */
-  public static Specification<Customer> hasEmail(String email) {
-    return (root, query, cb) ->
-        cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
+  public static Specification<Customer> emailContaining(String email) {
+    return (root, _, cb) -> {
+      var account = root.join("account", JoinType.LEFT);
+
+      return cb.like(cb.lower(account.get("email")), "%" + email.trim().toLowerCase() + "%");
+    };
   }
 }

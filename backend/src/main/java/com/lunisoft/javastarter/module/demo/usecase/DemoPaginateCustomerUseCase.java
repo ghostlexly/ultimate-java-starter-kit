@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Demo use case: paginated search of customers with optional filters. Illustrates how to use
@@ -41,12 +42,13 @@ public class DemoPaginateCustomerUseCase {
     public record CustomerItem(UUID id, String email, String role) {}
   }
 
+  @Transactional(readOnly = true)
   public Output execute(Input input) {
     Pageable pageable =
         PageRequest.of(input.page(), input.size(), Sort.by("createdAt").ascending());
-    Specification<Customer> spec = buildSpec(input.email());
+    Specification<Customer> specs = buildSpecs(input.email);
 
-    var page = demoCustomerRepository.findAll(spec, pageable);
+    var page = demoCustomerRepository.findAll(specs, pageable);
 
     var content =
         page.getContent().stream()
@@ -54,8 +56,10 @@ public class DemoPaginateCustomerUseCase {
                 customer ->
                     new Output.CustomerItem(
                         customer.getId(),
-                        customer.getAccount().getEmail(),
-                        customer.getAccount().getRole().name()))
+                        customer.getAccount() != null ? customer.getAccount().getEmail() : null,
+                        customer.getAccount() != null
+                            ? customer.getAccount().getRole().name()
+                            : null))
             .toList();
 
     return new Output(
@@ -63,13 +67,13 @@ public class DemoPaginateCustomerUseCase {
   }
 
   /** Builds the specification by chaining optional filters onto the base spec. */
-  private Specification<Customer> buildSpec(String email) {
-    Specification<Customer> spec = DemoCustomerSpecification.build();
+  private Specification<Customer> buildSpecs(String email) {
+    Specification<Customer> specs = Specification.unrestricted();
 
-    if (email != null && !email.isBlank()) {
-      spec = spec.and(DemoCustomerSpecification.hasEmail(email.trim()));
+    if (email != null) {
+      specs = specs.and(DemoCustomerSpecification.emailContaining(email));
     }
 
-    return spec;
+    return specs;
   }
 }
