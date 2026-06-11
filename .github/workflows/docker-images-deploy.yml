@@ -44,7 +44,7 @@ jobs:
 
       - name: Build and push docker images
         run: |
-          docker compose -f compose.yml build
+          NODE_ENV=production docker compose -f compose.yml build
           docker compose -f compose.yml push
 
       - name: Transfer files to production server
