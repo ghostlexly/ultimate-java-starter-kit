@@ -1,6 +1,6 @@
-import 'server-only';
+import "server-only";
 
-import { cookies } from 'next/headers';
+import { cookies } from "next/headers";
 
 /**
  * Wolfios (server) — minimal fetch helper for Server Components.
@@ -11,13 +11,13 @@ import { cookies } from 'next/headers';
  * inside the docker network (caddy → backend container in prod, caddy →
  * host.docker.internal in dev).
  *
- * Override with BACKEND_INTERNAL_URL when running Next outside Docker.
+ * Override with BACKEND_BASE_URL when running Next outside Docker.
  *
  * Use this from Server Components only. For Client Components, use
  * `wolfios` from "@/lib/wolfios".
  */
 
-const BACKEND_BASE_URL = process.env.BACKEND_INTERNAL_URL;
+const BACKEND_BASE_URL = process.env.BACKEND_BASE_URL;
 
 interface ServerFetchOptions extends RequestInit {
   // Disables Next's fetch cache for the call. Defaults to "no-store" because
@@ -33,10 +33,10 @@ export async function wolfiosServer<T>(
   const cookieHeader = cookieStore
     .getAll()
     .map((c) => `${c.name}=${c.value}`)
-    .join('; ');
+    .join("; ");
 
   const response = await fetch(`${BACKEND_BASE_URL}${path}`, {
-    cache: 'no-store',
+    cache: "no-store",
     ...options,
     headers: {
       ...(cookieHeader ? { cookie: cookieHeader } : {}),
