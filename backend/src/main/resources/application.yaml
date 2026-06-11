@@ -89,6 +89,10 @@ app:
     allowed-origins:
       - https://localhost
       - https://tunnel.lunisoft.fr
+  rate-limit:
+    global:
+      requests: 100
+      period-seconds: 60
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT}
     region: ${APP_STORAGE_REGION:auto}
