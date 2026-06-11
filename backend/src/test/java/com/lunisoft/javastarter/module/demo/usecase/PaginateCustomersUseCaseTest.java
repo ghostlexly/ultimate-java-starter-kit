@@ -20,11 +20,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
-class DemoPaginateCustomerUseCaseTest {
+class PaginateCustomersUseCaseTest {
 
   @Mock private DemoCustomerRepository demoCustomerRepository;
 
-  @InjectMocks private DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
+  @InjectMocks private PaginateCustomersUseCase paginateCustomersUseCase;
 
   @Test
   void execute_returns_paged_results() {
@@ -35,8 +35,8 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var input = new DemoPaginateCustomerUseCase.Input(0, 10, null);
-    var output = demoPaginateCustomerUseCase.execute(input);
+    var input = new PaginateCustomersUseCase.Input(0, 10, null);
+    var output = paginateCustomersUseCase.execute(input);
 
     assertThat(output.content()).hasSize(1);
     assertThat(output.content().getFirst().email()).isEqualTo("contact+customer@lunisoft.fr");
@@ -54,8 +54,8 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var input = new DemoPaginateCustomerUseCase.Input(0, 10, null);
-    var output = demoPaginateCustomerUseCase.execute(input);
+    var input = new PaginateCustomersUseCase.Input(0, 10, null);
+    var output = paginateCustomersUseCase.execute(input);
 
     assertThat(output.content()).isEmpty();
     assertThat(output.totalItems()).isZero();
@@ -71,8 +71,8 @@ class DemoPaginateCustomerUseCaseTest {
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
-    var input = new DemoPaginateCustomerUseCase.Input(0, 5, "test@example.com");
-    var output = demoPaginateCustomerUseCase.execute(input);
+    var input = new PaginateCustomersUseCase.Input(0, 5, "test@example.com");
+    var output = paginateCustomersUseCase.execute(input);
 
     assertThat(output.content()).isEmpty();
   }

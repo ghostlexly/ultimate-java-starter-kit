@@ -12,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 /**
  * Demo use case: paginated search of customers with optional filters. Illustrates how to use
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-public class DemoPaginateCustomerUseCase {
+public class PaginateCustomersUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
 
@@ -44,9 +45,13 @@ public class DemoPaginateCustomerUseCase {
 
   @Transactional(readOnly = true)
   public Output execute(Input input) {
+    Assert.notNull(input, "Input cannot be null");
+    Assert.isTrue(input.page() >= 0, "Page cannot be negative");
+    Assert.isTrue(input.size() > 0, "Size cannot be zero or negative");
+
     Pageable pageable =
         PageRequest.of(input.page(), input.size(), Sort.by("createdAt").ascending());
-    Specification<Customer> specs = buildSpecs(input.email);
+    Specification<Customer> specs = buildSpecs(input.email());
 
     var page = demoCustomerRepository.findAll(specs, pageable);
 

@@ -14,11 +14,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DemoSearchCustomerUseCaseTest {
+class SearchCustomersUseCaseTest {
 
   @Mock private DemoCustomerRepository demoCustomerRepository;
 
-  @InjectMocks private DemoSearchCustomerUseCase demoSearchCustomerUseCase;
+  @InjectMocks private SearchCustomersUseCase searchCustomersUseCase;
 
   @Test
   void execute_with_results_returns_mapped_responses() {
@@ -33,8 +33,8 @@ class DemoSearchCustomerUseCaseTest {
     when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER))
         .thenReturn(List.of(customer1, customer2));
 
-    var input = new DemoSearchCustomerUseCase.Input(Role.CUSTOMER);
-    var output = demoSearchCustomerUseCase.execute(input);
+    var input = new SearchCustomersUseCase.Input(Role.CUSTOMER);
+    var output = searchCustomersUseCase.execute(input);
 
     assertThat(output).hasSize(2);
     assertThat(output.get(0).email()).isEqualTo("alice@example.com");
@@ -46,8 +46,8 @@ class DemoSearchCustomerUseCaseTest {
   void execute_no_results_returns_empty_list() {
     when(demoCustomerRepository.findByAccountRole(Role.ADMIN)).thenReturn(List.of());
 
-    var input = new DemoSearchCustomerUseCase.Input(Role.ADMIN);
-    var output = demoSearchCustomerUseCase.execute(input);
+    var input = new SearchCustomersUseCase.Input(Role.ADMIN);
+    var output = searchCustomersUseCase.execute(input);
 
     assertThat(output).isEmpty();
   }

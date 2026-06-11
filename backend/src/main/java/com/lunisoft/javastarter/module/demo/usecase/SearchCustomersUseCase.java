@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 @RequiredArgsConstructor
-public class DemoSearchCustomerUseCase {
+public class SearchCustomersUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
 

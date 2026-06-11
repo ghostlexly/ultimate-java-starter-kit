@@ -1,18 +1,3 @@
-### Hook
-
-```ts
-import {useMutation} from '@tanstack/react-query';
-import {SendSupportMessageRequest} from '@/types/support';
-import {wolfios} from '@/lib/wolfios';
-
-export function useSendSupportMessage() {
-    return useMutation({
-        mutationFn: (data: SendSupportMessageRequest) =>
-            wolfios.post('/api/support', data).then((res) => res.data),
-    });
-}
-```
-
 ### Interface
 
 ```ts
@@ -24,11 +9,21 @@ export interface SendSupportMessageRequest {
 
 ### Usage
 
+The mutation is declared with `useMutation` directly in the component, in the same file as `handleSubmit`. Do not extract it into a separate custom hook.
+
 ```tsx
+import {useMutation} from '@tanstack/react-query';
+import {SendSupportMessageRequest} from '@/types/support';
+import {wolfios} from '@/lib/wolfios';
+
 const form = useForm<SupportFormValues>({
     defaultValues: {email: '', message: ''},
 });
-const sendSupportMessage = useSendSupportMessage();
+
+const sendSupportMessage = useMutation({
+    mutationFn: (data: SendSupportMessageRequest) =>
+        wolfios.post('/api/support', data).then((res) => res.data),
+});
 
 async function handleSubmit(values: SupportFormValues) {
     // The mutation will still throw an error if it fails, even with the onError

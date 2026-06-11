@@ -76,7 +76,8 @@ gating) and a **presenter** (pure form, `useForm` initialised from props that ar
 - The presenter receives the loaded entity as a prop and is only rendered once that entity exists.
   Because the entity is in scope at mount time, `useForm({ defaultValues: ... })` works on the
   first render — no async patching needed, no flash of empty inputs, no re-sync bugs.
-- Mutations (`useUpdate…`) live in the presenter alongside the form they belong to.
+- Mutations are declared inline with `useMutation` in the presenter, in the same file as the
+  `handleSubmit` they belong to — never extracted into a separate custom hook.
 - Apply this pattern to **every** edit page.
 
 ```tsx
@@ -98,7 +99,10 @@ export default function EditPage({params}: Readonly<PageProps>) {
 // Presenter — pure form, defaults populated from props at mount.
 function FormContent({thing}: Readonly<{ thing: Thing }>) {
     const form = useForm<FormShape>({defaultValues: {name: thing.name}});
-    const updateMutation = useUpdateThing();
+    const updateThing = useMutation({
+        mutationFn: (data: UpdateThingRequest) =>
+            wolfios.patch(`/api/things/${thing.id}`, data).then((res) => res.data),
+    });
     // …
 }
 ```

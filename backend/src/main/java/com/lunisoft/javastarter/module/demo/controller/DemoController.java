@@ -9,8 +9,8 @@ import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
 import com.lunisoft.javastarter.module.demo.usecase.DemoJobRunrEnqueueJob;
-import com.lunisoft.javastarter.module.demo.usecase.DemoPaginateCustomerUseCase;
-import com.lunisoft.javastarter.module.demo.usecase.DemoSearchCustomerUseCase;
+import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase;
+import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -37,8 +37,8 @@ import org.springframework.web.bind.annotation.*;
 public class DemoController {
 
   private static final Logger log = LoggerFactory.getLogger(DemoController.class);
-  private final DemoSearchCustomerUseCase demoSearchCustomerUseCase;
-  private final DemoPaginateCustomerUseCase demoPaginateCustomerUseCase;
+  private final SearchCustomersUseCase searchCustomersUseCase;
+  private final PaginateCustomersUseCase paginateCustomersUseCase;
   private final MediaRepository mediaRepository;
   private final StorageService storageService;
   private final PdfService pdfService;
@@ -49,11 +49,11 @@ public class DemoController {
    * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER
    */
   @GetMapping("customers")
-  public ResponseEntity<List<DemoSearchCustomerUseCase.Output>> searchCustomers(
+  public ResponseEntity<List<SearchCustomersUseCase.Output>> searchCustomers(
       @RequestParam Role role) {
 
-    var input = new DemoSearchCustomerUseCase.Input(Role.CUSTOMER);
-    List<DemoSearchCustomerUseCase.Output> outputs = this.demoSearchCustomerUseCase.execute(input);
+    var input = new SearchCustomersUseCase.Input(Role.CUSTOMER);
+    List<SearchCustomersUseCase.Output> outputs = this.searchCustomersUseCase.execute(input);
 
     return ResponseEntity.ok(outputs);
   }
@@ -73,14 +73,14 @@ public class DemoController {
    * /api/demo/customers/paginated?email=john&page=1&size=5
    */
   @GetMapping("customers/paginated")
-  public ResponseEntity<DemoPaginateCustomerUseCase.Output> paginateCustomers(
+  public ResponseEntity<PaginateCustomersUseCase.Output> paginateCustomers(
       @Min(1) @RequestParam(defaultValue = "1") int page,
       @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String email) {
 
-    var input = new DemoPaginateCustomerUseCase.Input(page - 1, size, email);
+    var input = new PaginateCustomersUseCase.Input(page - 1, size, email);
 
-    var response = this.demoPaginateCustomerUseCase.execute(input);
+    var response = this.paginateCustomersUseCase.execute(input);
 
     return ResponseEntity.ok(response);
   }
