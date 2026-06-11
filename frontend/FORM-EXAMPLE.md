@@ -9,7 +9,8 @@ export interface SendSupportMessageRequest {
 
 ### Usage
 
-The mutation is declared with `useMutation` directly in the component, in the same file as `handleSubmit`. Do not extract it into a separate custom hook.
+The mutation is declared with `useMutation` directly in the component, in the same file as `handleSubmit`. Do not
+extract it into a separate custom hook.
 
 ```tsx
 import {useMutation} from '@tanstack/react-query';
@@ -47,4 +48,8 @@ async function handleSubmit(values: SupportFormValues) {
 }
 
 useBackendFormErrors(form, sendSupportMessage.error);
+
+<Button type="submit" loading={form.formState.isSubmitting}>
+    Enregistrer
+</Button>
 ```
