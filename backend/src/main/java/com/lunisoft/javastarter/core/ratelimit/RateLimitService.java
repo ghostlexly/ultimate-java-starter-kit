@@ -39,6 +39,9 @@ public class RateLimitService {
 
   }
 
+  private static final String CLOUDFLARE_IP_HEADER = "CF-Connecting-IP";
+  private static final String FORWARDED_FOR_HEADER = "X-Forwarded-For";
+
   private static final Duration EVICTION_THRESHOLD = Duration.ofMinutes(10);
 
   private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
@@ -86,14 +89,14 @@ public class RateLimitService {
    */
   public String resolveIpAddress(HttpServletRequest request) {
     // Secure Customer's IP Address sent by Cloudflare
-    String cfIp = request.getHeader("CF-Connecting-IP");
+    String cfIp = request.getHeader(CLOUDFLARE_IP_HEADER);
 
     if (cfIp != null && !cfIp.isBlank()) {
       return cfIp.trim();
     }
 
     // IP Address sent by a proxy
-    String forwarded = request.getHeader("X-Forwarded-For");
+    String forwarded = request.getHeader(FORWARDED_FOR_HEADER);
 
     if (forwarded != null && !forwarded.isBlank()) {
       // Take the first IP in the chain (original client)
@@ -103,6 +106,24 @@ public class RateLimitService {
     // IP Address sent by the client
     return request.getRemoteAddr();
   }
+
+  /**
+   * Returns true for trusted server-to-server traffic (e.g. Next.js SSR — all SSR requests share
+   * the frontend server's IP and would otherwise exhaust a single bucket): the request was not
+   * forwarded by a proxy.
+   *
+   * <p>Browser traffic also reaches us from a private address (the Caddy container), but always
+   * carries the forwarding headers proxies append — a client cannot remove them — so it is never
+   * treated as internal.
+   */
+  public boolean isTrustedInternalRequest(HttpServletRequest request) {
+    boolean isForwardedByProxy =
+        request.getHeader(FORWARDED_FOR_HEADER) != null
+            || request.getHeader(CLOUDFLARE_IP_HEADER) != null;
+
+    return !isForwardedByProxy;
+  }
+
 
   private Bucket createBucket(long requests, Duration period) {
 
