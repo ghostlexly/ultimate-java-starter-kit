@@ -32,8 +32,12 @@ public class RateLimitService {
 
   private final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
-  /** Wraps a bucket with its last access time for eviction. */
-  private record BucketEntry(Bucket bucket, Instant lastAccess) {}
+  /**
+   * Wraps a bucket with its last access time for eviction.
+   */
+  private record BucketEntry(Bucket bucket, Instant lastAccess) {
+
+  }
 
   private static final Duration EVICTION_THRESHOLD = Duration.ofMinutes(10);
 
@@ -58,7 +62,9 @@ public class RateLimitService {
     return entry.bucket().tryConsumeAndReturnRemaining(1);
   }
 
-  /** Writes a 429 Too Many Requests response with Retry-After header. */
+  /**
+   * Writes a 429 Too Many Requests response with Retry-After header.
+   */
   public void writeRateLimitResponse(HttpServletResponse response, ConsumptionProbe probe)
       throws IOException {
     long waitSeconds = probe.getNanosToWaitForRefill() / 1_000_000_000 + 1;
@@ -75,8 +81,18 @@ public class RateLimitService {
     objectMapper.writeValue(response.getWriter(), errorResponse);
   }
 
-  /** Reads the client IP from X-Forwarded-For header or falls back to remoteAddr. */
+  /**
+   * Reads the client IP from header or falls back to remoteAddr.
+   */
   public String resolveIpAddress(HttpServletRequest request) {
+    // Secure Customer's IP Address sent by Cloudflare
+    String cfIp = request.getHeader("CF-Connecting-IP");
+
+    if (cfIp != null && !cfIp.isBlank()) {
+      return cfIp.trim();
+    }
+
+    // IP Address sent by a proxy
     String forwarded = request.getHeader("X-Forwarded-For");
 
     if (forwarded != null && !forwarded.isBlank()) {
@@ -84,6 +100,7 @@ public class RateLimitService {
       return forwarded.split(",")[0].trim();
     }
 
+    // IP Address sent by the client
     return request.getRemoteAddr();
   }
 
@@ -94,7 +111,9 @@ public class RateLimitService {
         .build();
   }
 
-  /** Removes buckets that haven't been accessed in the last 10 minutes. */
+  /**
+   * Removes buckets that haven't been accessed in the last 10 minutes.
+   */
   @Scheduled(fixedRate = 600_000)
   public void evictIdleBuckets() {
     Instant threshold = Instant.now().minus(EVICTION_THRESHOLD);
