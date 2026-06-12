@@ -28,7 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Order(2) // Run this DevDataSeeder after ProductionDataSeeder
 public class DevDataSeeder implements ApplicationRunner {
 
-  private static final String SEED_PASSWORD = "password";
+  // For testing purposes only
+  private static final String HASHED_BCRYPT = "{bcrypt}$2a$10$vqXouglkzcu59WGAeVchzekx8a26sJ9GPUHUqNTCSCi/ira.5s1G.";
 
   private final Logger log = LoggerFactory.getLogger(DevDataSeeder.class);
 
@@ -46,7 +47,7 @@ public class DevDataSeeder implements ApplicationRunner {
   // ── Customer account with addresses ────────────────────────────────────────
 
   private void seedCustomerAccount() {
-    var email = "contact.customer@lunisoft.fr";
+    var email = "customer@lunisoft.fr";
 
     if (accountRepository.findByEmail(email).isPresent()) {
       log.info("Customer account already exists, skipping.");
@@ -57,7 +58,7 @@ public class DevDataSeeder implements ApplicationRunner {
     // Account
     var account = new Account();
     account.setEmail(email);
-    account.setPassword(passwordEncoder.encode(SEED_PASSWORD));
+    account.setPassword(HASHED_BCRYPT);
     account.setRole(Role.CUSTOMER);
     account.setEmailVerified(true);
     accountRepository.save(account);

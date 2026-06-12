@@ -25,8 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Order(1) // Run this DataSeeder before DevDataSeeder
 public class DataSeeder implements ApplicationRunner {
 
-  private static final String ADMIN_EMAIL = "contact.admin@lunisoft.fr";
-  private static final String SEED_PASSWORD = "password";
+  private static final String ADMIN_EMAIL = "admin@lunisoft.fr";
+  // For testing purposes only - Change this on production
+  private static final String HASHED_BCRYPT = "{bcrypt}$2a$10$vqXouglkzcu59WGAeVchzekx8a26sJ9GPUHUqNTCSCi/ira.5s1G.";
 
   private final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
@@ -52,7 +53,7 @@ public class DataSeeder implements ApplicationRunner {
 
     var account = new Account();
     account.setEmail(ADMIN_EMAIL);
-    account.setPassword(passwordEncoder.encode(SEED_PASSWORD));
+    account.setPassword(HASHED_BCRYPT);
     account.setRole(Role.ADMIN);
     account.setEmailVerified(true);
     accountRepository.save(account);
