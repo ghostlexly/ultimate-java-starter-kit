@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.config;
 
 import com.lunisoft.javastarter.core.security.JwtAuthenticationFilter;
-import com.lunisoft.javastarter.core.security.JwtAuthenticationProvider;
+import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.core.security.PublicEndpointScanner;
 import com.lunisoft.javastarter.core.security.RestAccessDeniedHandler;
 import com.lunisoft.javastarter.core.security.RestAuthenticationEntryPoint;
@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -49,7 +47,7 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http,
-      AuthenticationManager authenticationManager,
+      JwtTokenProvider jwtTokenProvider,
       CorsConfigurationSource corsConfigurationSource) {
     return http.csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -70,7 +68,7 @@ public class SecurityConfig {
                 ex.authenticationEntryPoint(restAuthenticationEntryPoint)
                     .accessDeniedHandler(restAccessDeniedHandler))
         .addFilterBefore(
-            new JwtAuthenticationFilter(authenticationManager),
+            new JwtAuthenticationFilter(jwtTokenProvider),
             UsernamePasswordAuthenticationFilter.class)
         .build();
   }
@@ -100,11 +98,5 @@ public class SecurityConfig {
   @Bean
   public PasswordEncoder passwordEncoder() {
     return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-  }
-
-  @Bean
-  public AuthenticationManager authenticationManager(
-      JwtAuthenticationProvider jwtAuthenticationProvider) {
-    return new ProviderManager(jwtAuthenticationProvider);
   }
 }
