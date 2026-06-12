@@ -1,5 +1,6 @@
 package com.lunisoft.javastarter.module.demo.controller;
 
+import com.lunisoft.javastarter.config.CacheConfig;
 import com.lunisoft.javastarter.core.dto.MessageResponse;
 import com.lunisoft.javastarter.core.pdf.PdfService;
 import com.lunisoft.javastarter.core.ratelimit.RateLimit;
@@ -9,6 +10,7 @@ import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
 import com.lunisoft.javastarter.module.demo.usecase.DemoJobRunrEnqueueJob;
+import com.lunisoft.javastarter.module.demo.usecase.GetCachedTimeUseCase;
 import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase;
 import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
@@ -16,6 +18,10 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -23,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.jobrunr.scheduling.BackgroundJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -44,9 +51,11 @@ public class DemoController {
   private final PdfService pdfService;
   private final RedisLockRegistry lockRegistry;
   private final DemoJobRunrEnqueueJob demoJobRunrEnqueueJob;
+  private final GetCachedTimeUseCase getCachedTimeUseCase;
 
   /**
-   * Demo endpoint: search customers by account role. Example: GET /api/demo/customers?role=CUSTOMER
+   * Demo endpoint: search customers by account role. Example: GET
+   * /api/demo/customers?role=CUSTOMER
    */
   @GetMapping("customers")
   public ResponseEntity<List<SearchCustomersUseCase.Output>> searchCustomers(
@@ -58,7 +67,9 @@ public class DemoController {
     return ResponseEntity.ok(outputs);
   }
 
-  /** Validate the body of the request. The rate limiter run only when the request is valid. */
+  /**
+   * Validate the body of the request. The rate limiter run only when the request is valid.
+   */
   @PostMapping("body-validation")
   @RateLimit(requests = 1, periodSeconds = 60)
   public ResponseEntity<Map<String, String>> bodyValidationExample(
@@ -195,5 +206,18 @@ public class DemoController {
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"sample.pdf\"")
         .contentType(MediaType.APPLICATION_PDF)
         .body(pdf);
+  }
+
+  @GetMapping("cached")
+  @PublicEndpoint
+  public ResponseEntity<GetCachedTimeUseCase.Output> cached() {
+    return ResponseEntity.ok(this.getCachedTimeUseCase.execute());
+  }
+
+  @GetMapping("evict-cache")
+  @PublicEndpoint
+  @CacheEvict(value = CacheConfig.CACHED_TIME)
+  public ResponseEntity<Map<String, String>> evictCache() {
+    return ResponseEntity.ok(Map.of("message", "Cache cleared"));
   }
 }
