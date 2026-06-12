@@ -30,8 +30,6 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class RateLimitService {
 
-  private final Logger log = LoggerFactory.getLogger(RateLimitService.class);
-
   /**
    * Wraps a bucket with its last access time for eviction.
    */
@@ -126,11 +124,11 @@ public class RateLimitService {
 
 
   private Bucket createBucket(long requests, Duration period) {
-
     return Bucket.builder()
         .addLimit(Bandwidth.builder().capacity(requests).refillGreedy(requests, period).build())
         .build();
   }
+
 
   /**
    * Removes buckets that haven't been accessed in the last 10 minutes.
@@ -138,13 +136,6 @@ public class RateLimitService {
   @Scheduled(fixedRate = 600_000)
   public void evictIdleBuckets() {
     Instant threshold = Instant.now().minus(EVICTION_THRESHOLD);
-    int before = buckets.size();
-
     buckets.entrySet().removeIf(entry -> entry.getValue().lastAccess().isBefore(threshold));
-
-    int removed = before - buckets.size();
-    if (removed > 0) {
-      log.debug("Evicted {} idle rate limit buckets", removed);
-    }
   }
 }

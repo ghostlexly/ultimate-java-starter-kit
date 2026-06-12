@@ -55,7 +55,9 @@ public class RateLimitAspect {
     return pjp.proceed();
   }
 
-  /** Builds a unique key per endpoint per client. */
+  /**
+   * Builds a unique key per endpoint per client.
+   */
   private String buildKey(ProceedingJoinPoint pjp, HttpServletRequest request) {
     MethodSignature signature = (MethodSignature) pjp.getSignature();
     Method method = signature.getMethod();
@@ -66,7 +68,9 @@ public class RateLimitAspect {
     return endpoint + ":" + clientId;
   }
 
-  /** Returns "user:<accountId>" if authenticated, otherwise "ip:<address>". */
+  /**
+   * Returns "user:<accountId>" if authenticated, otherwise "ip:<address>".
+   */
   private String resolveClientId(HttpServletRequest request) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -78,7 +82,6 @@ public class RateLimitAspect {
   }
 
   private HttpServletRequest currentRequest() {
-
     return currentAttrs().getRequest();
   }
 
