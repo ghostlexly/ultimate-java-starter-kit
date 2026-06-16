@@ -12,6 +12,8 @@ import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
+import com.lunisoft.javastarter.module.media.entity.Media;
+import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -47,16 +49,22 @@ public class IntegrationTestFixtures {
   private final AdminRepository adminRepository;
   private final VerificationTokenRepository verificationTokenRepository;
   private final SessionRepository sessionRepository;
+  private final MediaRepository mediaRepository;
 
   // ── Accounts ─────────────────────────────────────────────────────────────
 
-  /** Customer account with the matching {@link Customer} row, both persisted and linked back. */
+  /**
+   * Customer account with the matching {@link Customer} row, both persisted and linked back.
+   */
   public Account givenCustomer(String email) {
 
-    return givenCustomer(email, _ -> {});
+    return givenCustomer(email, _ -> {
+    });
   }
 
-  /** Same as {@link #givenCustomer(String)} but lets the test mutate the {@link Account} first. */
+  /**
+   * Same as {@link #givenCustomer(String)} but lets the test mutate the {@link Account} first.
+   */
   public Account givenCustomer(String email, Consumer<Account> customizer) {
     var account = new Account();
     account.setEmail(email);
@@ -75,12 +83,17 @@ public class IntegrationTestFixtures {
     return account;
   }
 
-  /** Admin account with the matching {@link Admin} row, both persisted and linked back. */
+  /**
+   * Admin account with the matching {@link Admin} row, both persisted and linked back.
+   */
   public Account givenAdmin(String email) {
-    return givenAdmin(email, _ -> {});
+    return givenAdmin(email, _ -> {
+    });
   }
 
-  /** Same as {@link #givenAdmin(String)} but lets the test mutate the {@link Account} first. */
+  /**
+   * Same as {@link #givenAdmin(String)} but lets the test mutate the {@link Account} first.
+   */
   public Account givenAdmin(String email, Consumer<Account> customizer) {
     var account = new Account();
     account.setEmail(email);
@@ -101,10 +114,13 @@ public class IntegrationTestFixtures {
 
   // ── Auth state ───────────────────────────────────────────────────────────
 
-  /** Login code: never tried, 15-minute expiry. */
+  /**
+   * Login code: never tried, 15-minute expiry.
+   */
   public VerificationToken givenLoginCode(Account account, String code) {
 
-    return givenLoginCode(account, code, _ -> {});
+    return givenLoginCode(account, code, _ -> {
+    });
   }
 
   /**
@@ -126,13 +142,18 @@ public class IntegrationTestFixtures {
     return verificationTokenRepository.save(token);
   }
 
-  /** Session with a 1-day expiry — enough for refresh-flow tests. */
+  /**
+   * Session with a 1-day expiry — enough for refresh-flow tests.
+   */
   public Session givenSession(Account account) {
 
-    return givenSession(account, _ -> {});
+    return givenSession(account, _ -> {
+    });
   }
 
-  /** Same as {@link #givenSession(Account)} but lets the test override expiry / ip / user-agent. */
+  /**
+   * Same as {@link #givenSession(Account)} but lets the test override expiry / ip / user-agent.
+   */
   public Session givenSession(Account account, Consumer<Session> customizer) {
     var session = new Session();
     session.setAccount(account);
@@ -140,5 +161,30 @@ public class IntegrationTestFixtures {
     customizer.accept(session);
 
     return sessionRepository.save(session);
+  }
+
+  // ── Media ────────────────────────────────────────────────────────────────
+
+  /**
+   * Persisted {@link Media} row with PNG defaults — enough to stand in for an uploaded image.
+   */
+  public Media givenMedia() {
+
+    return givenMedia(_ -> {
+    });
+  }
+
+  /**
+   * Same as {@link #givenMedia()} but lets the test override file name / key / mime type / size.
+   */
+  public Media givenMedia(Consumer<Media> customizer) {
+    var media = new Media();
+    media.setFileName("profile.png");
+    media.setKey("media/2026/01/01/%s.png".formatted(UUID.randomUUID()));
+    media.setMimeType("image/png");
+    media.setSize(1024);
+    customizer.accept(media);
+
+    return mediaRepository.save(media);
   }
 }
