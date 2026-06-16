@@ -25,9 +25,10 @@ public class UploadMediaUseCase {
   private final StorageService storageService;
   private final MediaRepository mediaRepository;
 
-  public record Input(InputStream inputStream, String fileName, String contentType, long size) {}
+  public record Input(InputStream inputStream, String fileName, String contentType, long size) {
 
-  public record Output(UUID id, String fileName, String key, String mimeType, long size) {}
+  }
+
 
   /**
    * Stores the provided file in S3 and persists its metadata. Generic on purpose: callers from any
@@ -35,7 +36,7 @@ public class UploadMediaUseCase {
    * object, ...). Validation (mime type, size, ...) is the caller's responsibility.
    */
   @Transactional
-  public Output execute(Input input) {
+  public Media execute(Input input) {
     var key = buildKey(input.fileName());
 
     var media = new Media();
@@ -48,8 +49,7 @@ public class UploadMediaUseCase {
     storageService.upload(
         key, input.inputStream(), input.size(), input.contentType(), STORAGE_CLASS);
 
-    return new Output(
-        media.getId(), media.getFileName(), media.getKey(), media.getMimeType(), media.getSize());
+    return media;
   }
 
   private String buildKey(String fileName) {

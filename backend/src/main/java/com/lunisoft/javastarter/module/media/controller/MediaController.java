@@ -43,9 +43,9 @@ public class MediaController {
 
       var output = this.uploadMediaUseCase.execute(input);
 
-      var url = this.storageService.generatePresignedGetUrl(output.key(), PRESIGNED_URL_EXPIRY);
+      var url = this.storageService.generatePresignedGetUrl(output.getKey(), PRESIGNED_URL_EXPIRY);
 
-      return ResponseEntity.ok(new UploadMediaResponse(output.id(), url));
+      return ResponseEntity.ok(new UploadMediaResponse(output.getId(), url));
     } catch (IOException ex) {
       throw new BusinessRuleException(
           "Failed to read uploaded file: %s".formatted(ex.getMessage()),
