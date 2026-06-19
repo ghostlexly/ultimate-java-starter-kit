@@ -17,16 +17,16 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 
 @Service
 @RequiredArgsConstructor
-public class StorageService {
+public class S3Service {
 
   private final S3Client s3Client;
   private final S3Presigner s3Presigner;
   private final StorageProperties storageProperties;
 
   /**
-   * Uploads a file to S3 from an {@link InputStream}. The caller must provide an accurate {@code
-   * contentLength} (S3 requires it for streamed uploads). The stream is consumed by the SDK; the
-   * caller remains responsible for closing it.
+   * Uploads a file to S3 from an {@link InputStream}. The caller must provide an accurate
+   * {@code contentLength} (S3 requires it for streamed uploads). The stream is consumed by the SDK;
+   * the caller remains responsible for closing it.
    */
   public void upload(
       String key,
@@ -56,14 +56,18 @@ public class StorageService {
     return s3Client.getObject(request);
   }
 
-  /** Deletes a file from S3. */
+  /**
+   * Deletes a file from S3.
+   */
   public void delete(String key) {
     var request = DeleteObjectRequest.builder().bucket(storageProperties.bucket()).key(key).build();
 
     s3Client.deleteObject(request);
   }
 
-  /** Generates a presigned URL to preview/download a file. */
+  /**
+   * Generates a presigned URL to preview/download a file.
+   */
   public String generatePresignedGetUrl(String key, Duration expiry) {
     var presignRequest =
         GetObjectPresignRequest.builder()
@@ -74,7 +78,9 @@ public class StorageService {
     return s3Presigner.presignGetObject(presignRequest).url().toString();
   }
 
-  /** Generates a presigned URL to upload a file directly to S3. */
+  /**
+   * Generates a presigned URL to upload a file directly to S3.
+   */
   public String generatePresignedPutUrl(String key, String contentType, Duration expiry) {
     var presignRequest =
         PutObjectPresignRequest.builder()

@@ -2,7 +2,7 @@ package com.lunisoft.javastarter.module.media.controller;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
-import com.lunisoft.javastarter.core.storage.StorageService;
+import com.lunisoft.javastarter.core.storage.S3Service;
 import com.lunisoft.javastarter.module.media.dto.UploadMediaResponse;
 import com.lunisoft.javastarter.module.media.service.MediaSecurityService;
 import com.lunisoft.javastarter.module.media.usecase.UploadMediaUseCase;
@@ -28,7 +28,7 @@ public class MediaController {
 
   private final UploadMediaUseCase uploadMediaUseCase;
   private final MediaSecurityService mediaSecurityService;
-  private final StorageService storageService;
+  private final S3Service s3Service;
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<UploadMediaResponse> upload(@RequestParam("file") MultipartFile file) {
@@ -43,7 +43,7 @@ public class MediaController {
 
       var output = this.uploadMediaUseCase.execute(input);
 
-      var url = this.storageService.generatePresignedGetUrl(output.getKey(), PRESIGNED_URL_EXPIRY);
+      var url = this.s3Service.generatePresignedGetUrl(output.getKey(), PRESIGNED_URL_EXPIRY);
 
       return ResponseEntity.ok(new UploadMediaResponse(output.getId(), url));
     } catch (IOException ex) {

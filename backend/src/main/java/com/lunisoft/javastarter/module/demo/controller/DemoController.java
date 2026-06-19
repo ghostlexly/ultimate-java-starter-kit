@@ -5,7 +5,7 @@ import com.lunisoft.javastarter.core.dto.MessageResponse;
 import com.lunisoft.javastarter.core.pdf.PdfService;
 import com.lunisoft.javastarter.core.ratelimit.RateLimit;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
-import com.lunisoft.javastarter.core.storage.StorageService;
+import com.lunisoft.javastarter.core.storage.S3Service;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
@@ -18,10 +18,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -47,7 +43,7 @@ public class DemoController {
   private final SearchCustomersUseCase searchCustomersUseCase;
   private final PaginateCustomersUseCase paginateCustomersUseCase;
   private final MediaRepository mediaRepository;
-  private final StorageService storageService;
+  private final S3Service s3Service;
   private final PdfService pdfService;
   private final RedisLockRegistry lockRegistry;
   private final DemoJobRunrEnqueueJob demoJobRunrEnqueueJob;
@@ -157,7 +153,7 @@ public class DemoController {
                         media.getFileName(),
                         media.getKey(),
                         media.getMimeType(),
-                        storageService.generatePresignedGetUrl(
+                        s3Service.generatePresignedGetUrl(
                             media.getKey(), Duration.ofHours(1))))
             .toList();
 

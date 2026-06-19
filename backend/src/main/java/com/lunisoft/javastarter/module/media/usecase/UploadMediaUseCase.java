@@ -1,6 +1,6 @@
 package com.lunisoft.javastarter.module.media.usecase;
 
-import com.lunisoft.javastarter.core.storage.StorageService;
+import com.lunisoft.javastarter.core.storage.S3Service;
 import com.lunisoft.javastarter.module.media.entity.Media;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import java.io.InputStream;
@@ -22,7 +22,7 @@ public class UploadMediaUseCase {
   private static final DateTimeFormatter DATE_FOLDER_FORMAT =
       DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
-  private final StorageService storageService;
+  private final S3Service s3Service;
   private final MediaRepository mediaRepository;
 
   public record Input(InputStream inputStream, String fileName, String contentType, long size) {
@@ -46,7 +46,7 @@ public class UploadMediaUseCase {
     media.setSize(input.size());
     mediaRepository.save(media);
 
-    storageService.upload(
+    s3Service.upload(
         key, input.inputStream(), input.size(), input.contentType(), STORAGE_CLASS);
 
     return media;
