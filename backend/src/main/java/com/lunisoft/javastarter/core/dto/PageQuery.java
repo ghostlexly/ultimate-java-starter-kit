@@ -17,8 +17,8 @@ public record PageQuery(Integer page, Integer size) {
 
   public Pageable toPageable(Sort sort) {
     int currentPage = (page == null || page < 1) ? 1 : page;
-    int currentSize = (size == null || size < 1) ? DEFAULT_SIZE : Math.min(size, MAX_SIZE);
+    int pageSize = (size == null || size < 1) ? DEFAULT_SIZE : Math.min(size, MAX_SIZE);
 
-    return PageRequest.of(currentPage - 1, currentSize, sort);
+    return PageRequest.of(currentPage - 1, pageSize, sort);
   }
 }
