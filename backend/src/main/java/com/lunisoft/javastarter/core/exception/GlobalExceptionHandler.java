@@ -21,15 +21,21 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
-/** Global exception handler that produces consistent JSON error responses. */
+/**
+ * Global exception handler that produces consistent JSON error responses.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
   private final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-  /** Handles custom business rule violations thrown from services/use cases. */
+  /**
+   * Handles custom business rule violations thrown from services/use cases.
+   */
   @ExceptionHandler(BusinessRuleException.class)
   public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex) {
     ErrorResponse response =
@@ -38,7 +44,23 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(ex.getStatus()).body(response);
   }
 
-  /** Handles errors when we send a wrong request type. Example: POST to a PATCH endpoint. */
+  /**
+   * Handles uploads exceeding the configured multipart size limit (413).
+   */
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+    log.warn("Upload rejected: file too large", ex);
+
+    ErrorResponse response =
+        new ErrorResponse(
+            "PayloadTooLargeException", "The file is too large.", "PAYLOAD_TOO_LARGE", null);
+
+    return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
+  }
+
+  /**
+   * Handles errors when we send a wrong request type. Example: POST to a PATCH endpoint.
+   */
   @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
   public ResponseEntity<ErrorResponse> handleMethodNotSupported(
       HttpRequestMethodNotSupportedException ex) {
@@ -49,7 +71,9 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
   }
 
-  /** Handles errors when we try to access a ressource that doesn't exist (404). */
+  /**
+   * Handles errors when we try to access a ressource that doesn't exist (404).
+   */
   @ExceptionHandler(NoResourceFoundException.class)
   public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
     ErrorResponse response =
@@ -80,11 +104,12 @@ public class GlobalExceptionHandler {
    * Handles authorization failures thrown by method-level security (e.g. {@code @PreAuthorize}).
    * Returns 401 if the current request has no authenticated user, otherwise 403.
    *
-   * <p>Method-level {@code @PreAuthorize} runs as an AOP interceptor around the controller call, so
+   * <p>Method-level {@code @PreAuthorize} runs as an AOP interceptor around the controller call,
+   * so
    * the {@code AccessDeniedException} it throws bubbles up through the {@code DispatcherServlet}
    * and reaches {@code @RestControllerAdvice} — unlike URL-level rules in {@code SecurityConfig},
-   * which fail inside the security filter chain and are handled by {@code
-   * RestAuthenticationEntryPoint} / {@code RestAccessDeniedHandler} instead.
+   * which fail inside the security filter chain and are handled by
+   * {@code RestAuthenticationEntryPoint} / {@code RestAccessDeniedHandler} instead.
    */
   @ExceptionHandler(AccessDeniedException.class)
   public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
