@@ -17,11 +17,11 @@ module/
     controller/    # REST endpoints
     entity/        # JPA entities
     repository/    # Spring Data repositories + Specifications
-    usecase/       # Business logic (one class = one action)
-    dto/           # Request/Response records
+    usecase/       # Business logic (one class = one action) — owns its Input/Output records
+    dto/           # Only for payloads shared across use cases / standalone request bodies
     event/         # Domain events + listeners
 core/
-  dto/             # Shared DTOs (ErrorResponse, Violation)
+  dto/             # Shared DTOs (ErrorResponse, Violation, PaginatedResponse, PageQuery)
   exception/       # BusinessRuleException, GlobalExceptionHandler
   security/        # JWT filter, provider, UserPrincipal, @PublicEndpoint + scanner
   ratelimit/       # @RateLimit annotation + interceptor
@@ -42,7 +42,8 @@ shared/
 - **Entities**: singular PascalCase, extend `BaseEntity`
 - **Events**: `[Name]Event` / `[Name]Listener`
 - **Constants**: `[Feature]Constants` with `UPPER_SNAKE_CASE` fields
-- **Prefix with module name** when a class name could conflict across modules (e.g. `DemoCustomerRepository`)
+- **Prefix with module name** when a class name could conflict across modules (e.g.
+  `DemoCustomerRepository`)
 
 ## Annotation Ordering
 
@@ -86,43 +87,123 @@ shared/
 @Service
 public class CreateProfileUseCase {
 
-    private final CustomerRepository customerRepository;
-    private final AccountRepository accountRepository;
+  private final CustomerRepository customerRepository;
+  private final AccountRepository accountRepository;
 
-    public CreateProfileUseCase(
-            CustomerRepository customerRepository,
-            AccountRepository accountRepository) {
-        this.customerRepository = customerRepository;
-        this.accountRepository = accountRepository;
-    }
+  public CreateProfileUseCase(
+      CustomerRepository customerRepository,
+      AccountRepository accountRepository) {
+    this.customerRepository = customerRepository;
+    this.accountRepository = accountRepository;
+  }
 }
 ```
 
 ## Use Case Pattern
 
-- One class per business action
-- Single public method: `execute(...)`
+- One class per business action, `@Service @RequiredArgsConstructor`
+- Single public method: `execute(Input input)`
 - `@Transactional` on writes, `@Transactional(readOnly = true)` on reads
 - Extract helper logic into private methods (e.g. `checkCooldown`, `buildSpec`)
 
+### Input / Output records (canonical shape)
+
+Each use case declares its own **nested `Input` and `Output` records** — do NOT create separate
+`dto/` Response classes for them. The entity → `Output` mapping is a `static Output from(Entity)`
+factory on the nested record. Reads return `Output` (or `List<Output>` /
+`PaginatedResponse<Output>`);
+**writes return only the id** of the affected element (e.g. `record Output(UUID id) {}`), never the
+full object.
+
+```java
+
+@Service
+@RequiredArgsConstructor
+public class GetTownsUseCase {
+
+  private static final Sort SORT = Sort.by(Sort.Direction.DESC, "population");
+
+  private final TownRepository townRepository;
+
+  public record Input(
+      String id, String postalCode, String city, String search, Integer page, Integer size) {
+
+  }
+
+  public record Output(UUID id, String inseeCode, String name, int population) {
+
+    static Output from(Town town) {
+
+      return new Output(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public PaginatedResponse<Output> execute(Input input) {
+    Specification<Town> spec = buildSpec(input);
+    Pageable pageable = new PageQuery(input.page(), input.size()).toPageable(SORT);
+
+    Page<Output> page = townRepository.findAll(spec, pageable).map(Output::from);
+
+    return PaginatedResponse.from(page);
+  }
+
+  // One conditional block per filter; combine with Specification.allOf (empty list -> match all).
+  private Specification<Town> buildSpec(Input input) {
+    List<Specification<Town>> specs = new ArrayList<>();
+
+    if (StringUtils.hasText(input.id())) {
+      specs.add(TownSpecification.hasId(input.id()));
+    }
+
+    if (StringUtils.hasText(input.search())) {
+      specs.add(TownSpecification.matchesSearch(input.search()));
+    }
+
+    return Specification.allOf(specs);
+  }
+}
+```
+
+- Filtering: build a `List<Specification<T>>` in `buildSpec`, guarding each with
+  `StringUtils.hasText(...)`, then `Specification.allOf(specs)`.
+
 ## Controller Pattern
 
-- Return `ResponseEntity<T>` always
+- Return `ResponseEntity<T>` always, typed with the use case's nested record:
+  `ResponseEntity<GetTownsUseCase.Output>`,
+  `ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>>`.
+- Controller builds the `Input` and calls `execute(input)`; it holds no business logic.
 - `@Valid @RequestBody` for body validation
-- `@Validated` on class for `@RequestParam` / `@PathVariable` validation
+- `@Validated` on class for `@RequestParam` / `@PathVariable` validation (add `@Size`/etc. to
+  params)
 - `@AuthenticationPrincipal UserPrincipal principal` for authenticated user
+- Pagination params are `page` (1-based) and `size`
 - Blank line before every `return`
 
 ```java
 
-@PostMapping("/profile")
-public ResponseEntity<CustomerResponse> createProfile(
-        @AuthenticationPrincipal UserPrincipal principal,
-        @Valid @RequestBody RegisterCustomerRequest request) {
+@PublicEndpoint
+@RestController
+@Validated
+@RequiredArgsConstructor
+@RequestMapping("/api/towns")
+public class TownController {
 
-    CustomerResponse response = createProfileUseCase.execute(principal.accountId(), request);
+  private final GetTownsUseCase getTownsUseCase;
+
+  @GetMapping
+  public ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>> getTowns(
+      @RequestParam(required = false) @Size(max = 191) String search,
+      @RequestParam(required = false) Integer page,
+      @RequestParam(required = false) Integer size) {
+
+    var input = new GetTownsUseCase.Input(null, null, null, search, page, size);
+
+    PaginatedResponse<GetTownsUseCase.Output> response = getTownsUseCase.execute(input);
 
     return ResponseEntity.ok(response);
+  }
 }
 ```
 
@@ -146,36 +227,40 @@ public ResponseEntity<CustomerResponse> createProfile(
 ```java
 public final class CustomerSpecification {
 
-    private CustomerSpecification() {
-    }
+  private CustomerSpecification() {
+  }
 
-    public static Specification<Customer> fetchAccount() {
-        return (root, query, cb) -> {
-            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-                root.fetch("account");
-            }
+  public static Specification<Customer> fetchAccount() {
+    return (root, query, cb) -> {
+      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+        root.fetch("account");
+      }
 
-            return cb.conjunction();
-        };
-    }
+      return cb.conjunction();
+    };
+  }
 
-    public static Specification<Customer> hasEmail(String email) {
-        return (root, query, cb) ->
-                cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
-    }
+  public static Specification<Customer> hasEmail(String email) {
+    return (root, query, cb) ->
+        cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
+  }
 }
 ```
 
 ## DTOs
 
-- Always Java records (immutable)
-- Validation annotations directly on record fields
-- Nested records for paginated responses
+- Request/response payloads are modelled as the use case's nested `Input` / `Output` records — see
+  **Use Case Pattern**. Don't add separate `dto/` Response classes for them.
+- A standalone `dto/` record is only for a payload shared across use cases, or a request body you
+  want to annotate independently. Always Java records (immutable), validation annotations directly
+  on
+  the fields.
 
 ```java
 public record SendCodeRequest(
-        @NotBlank @Email String email
+    @NotBlank @Email String email
 ) {
+
 }
 ```
 
@@ -210,31 +295,37 @@ method() { ...}
 - Use `@NonNull` from `org.jspecify.annotations` when overriding `@NullMarked` methods
 - Constants as `private static final` (e.g. `SecureRandom`, `Duration`)
 - Comments on non-obvious code, Javadoc on public methods
-- Always null-check return values that can be null — never assume a method returns non-null unless documented
+- Always null-check return values that can be null — never assume a method returns non-null unless
+  documented
 - Use `HttpMethod` enum (not `String`) for HTTP method references
 - Prefer streams and functional style over imperative loops when it improves readability
 - Avoid duplicated overloaded methods — find a generic approach instead
-- Use `"text %s".formatted(var)` instead of string concatenation (`+`) for building strings with variables
+- Use `"text %s".formatted(var)` instead of string concatenation (`+`) for building strings with
+  variables
 
 ## Spring Boot 4 / Spring Security 7 / Java 25
 
 ### Removed APIs (do NOT use)
 
 - ❌ `AntPathRequestMatcher` — removed in Spring Security 7
-- ✅ Use `PathPatternRequestMatcher.pathPattern(HttpMethod, String)` or `PathPatternRequestMatcher.pathPattern(String)`
+- ✅ Use `PathPatternRequestMatcher.pathPattern(HttpMethod, String)` or
+  `PathPatternRequestMatcher.pathPattern(String)`
   instead
 
 ### Prefer Spring built-in infrastructure over manual reflection
 
 - ❌ Manual reflection to scan `@GetMapping`, `@PostMapping`, etc. on controller methods
-- ✅ Use `RequestMappingHandlerMapping.getHandlerMethods()` — Spring already knows all registered routes, HTTP methods,
+- ✅ Use `RequestMappingHandlerMapping.getHandlerMethods()` — Spring already knows all registered
+  routes, HTTP methods,
   and path patterns
-- ✅ Use `AnnotatedElementUtils.hasAnnotation()` for annotation detection — handles meta-annotations and works on both
+- ✅ Use `AnnotatedElementUtils.hasAnnotation()` for annotation detection — handles meta-annotations
+  and works on both
   classes and methods
 
 ### Java 25 features to use
 
-- Always prefer the modern, idiomatic Java 25 way of doing things — use the standard recommendations and best practices
+- Always prefer the modern, idiomatic Java 25 way of doing things — use the standard recommendations
+  and best practices
   for Java 25 APIs and language features
 - Unnamed variables: `_ -> false` instead of `request -> false`
 - Pattern matching for `instanceof` and `switch`
@@ -243,16 +334,20 @@ method() { ...}
 
 ### Custom annotations
 
-- When creating annotations that work like `@PreAuthorize`, always support both `ElementType.TYPE` (class-level) and
+- When creating annotations that work like `@PreAuthorize`, always support both `ElementType.TYPE` (
+  class-level) and
   `ElementType.METHOD` (method-level)
 - Check both the method and its declaring class when scanning:
   `AnnotatedElementUtils.hasAnnotation(method, ...) || AnnotatedElementUtils.hasAnnotation(beanType, ...)`
 
 ## Pagination
 
-- 1-based pages in API (`?page=1`), converted to 0-based internally (`page - 1`)
-- Response DTO includes: `content`, `totalItems`, `totalPages`, `isFirst`, `isLast`
-- Use `PageRequest.of(page, size, Sort.by("id").ascending())`
+- Query params are `page` (1-based, `?page=1`) and `size` (items per page). Never `first`.
+- Build the `Pageable` with `core/dto/PageQuery`: `new PageQuery(page, size).toPageable(sort)` — it
+  converts to the 0-based index and applies defaults (`page=1`, `size=50`, capped at `100`).
+- List endpoints return `core/dto/PaginatedResponse<Output>` built via
+  `PaginatedResponse.from(page)`.
+  Shape: `{ content, totalItems, totalPages, isFirst, isLast }`. The frontend reads `data.content`.
 
 ## Validation
 
@@ -269,14 +364,16 @@ method() { ...}
 - `UserPrincipal` record implements `UserDetails`
 - `@PreAuthorize("hasRole('ROLE')")` for role-based access on class or method level
 - `@PublicEndpoint` for public routes (no authentication required), on class or method level
-- Public routes are auto-discovered at startup by `PublicEndpointScanner` — never hardcode routes in `SecurityConfig`
+- Public routes are auto-discovered at startup by `PublicEndpointScanner` — never hardcode routes in
+  `SecurityConfig`
 - Cookie-based token delivery (`HttpOnly`, `Secure` configurable)
 
 ## Events
 
 - Event as record: `public record LoginCodeRequestedEvent(String email, String code) {}`
 - Listener with `@Async @EventListener` for non-blocking execution
-- Listener with `@EventListener` (no `@Async`) for synchronous execution within the same transaction (rollback on
+- Listener with `@EventListener` (no `@Async`) for synchronous execution within the same
+  transaction (rollback on
   failure)
 - Publish via `ApplicationEventPublisher.publishEvent(...)`
 
