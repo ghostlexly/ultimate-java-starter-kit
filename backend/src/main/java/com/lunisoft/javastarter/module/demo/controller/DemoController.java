@@ -2,6 +2,7 @@ package com.lunisoft.javastarter.module.demo.controller;
 
 import com.lunisoft.javastarter.config.CacheConfig;
 import com.lunisoft.javastarter.core.dto.MessageResponse;
+import com.lunisoft.javastarter.core.dto.PaginatedResponse;
 import com.lunisoft.javastarter.core.pdf.PdfService;
 import com.lunisoft.javastarter.core.ratelimit.RateLimit;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Validated // Validates request parameters only (countryCode and role) (note: doesn't validate body)
 @RequestMapping("/api/demo")
+@PublicEndpoint
 public class DemoController {
 
   private static final Logger log = LoggerFactory.getLogger(DemoController.class);
@@ -80,12 +82,12 @@ public class DemoController {
    * /api/demo/customers/paginated?email=john&page=1&size=5
    */
   @GetMapping("customers/paginated")
-  public ResponseEntity<PaginateCustomersUseCase.Output> paginateCustomers(
+  public ResponseEntity<PaginatedResponse<PaginateCustomersUseCase.Output>> paginateCustomers(
       @Min(1) @RequestParam(defaultValue = "1") int page,
       @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
       @RequestParam(required = false) String email) {
 
-    var input = new PaginateCustomersUseCase.Input(page - 1, size, email);
+    var input = new PaginateCustomersUseCase.Input(page, size, email);
 
     var response = this.paginateCustomersUseCase.execute(input);
 
@@ -128,14 +130,12 @@ public class DemoController {
   }
 
   @GetMapping("accessible-to-public")
-  @PublicEndpoint
   public ResponseEntity<MessageResponse> accessibleToPublic() {
     return ResponseEntity.ok(
         new MessageResponse("This endpoint is accessible to public without any authentication."));
   }
 
   @GetMapping("jobrunr-demo")
-  @PublicEndpoint
   public ResponseEntity<MessageResponse> jobrunrDemo() {
     BackgroundJob.enqueue(() -> this.demoJobRunrEnqueueJob.execute("abcdef"));
 
@@ -165,7 +165,6 @@ public class DemoController {
    * browser.
    */
   @GetMapping("preview-pdf")
-  @PublicEndpoint
   public ResponseEntity<byte[]> generatePdf() {
     var avatarUri = this.pdfService.toDataUri("templates/assets/avatar.png", "image/png");
     byte[] pdf =
@@ -187,7 +186,6 @@ public class DemoController {
    * downloadable file.
    */
   @GetMapping("download-pdf")
-  @PublicEndpoint
   public ResponseEntity<byte[]> downloadPdf() {
     var avatarUri = this.pdfService.toDataUri("templates/assets/avatar.png", "image/png");
     byte[] pdf =
@@ -205,13 +203,11 @@ public class DemoController {
   }
 
   @GetMapping("cached")
-  @PublicEndpoint
   public ResponseEntity<GetCachedTimeUseCase.Output> cached() {
     return ResponseEntity.ok(this.getCachedTimeUseCase.execute());
   }
 
   @GetMapping("evict-cache")
-  @PublicEndpoint
   @CacheEvict(value = CacheConfig.CACHED_TIME)
   public ResponseEntity<Map<String, String>> evictCache() {
     return ResponseEntity.ok(Map.of("message", "Cache cleared"));

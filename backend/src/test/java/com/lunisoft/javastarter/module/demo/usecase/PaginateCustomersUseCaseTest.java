@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+import com.lunisoft.javastarter.core.dto.PageQuery;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import java.util.List;
@@ -22,15 +23,17 @@ import org.springframework.data.jpa.domain.Specification;
 @ExtendWith(MockitoExtension.class)
 class PaginateCustomersUseCaseTest {
 
-  @Mock private DemoCustomerRepository demoCustomerRepository;
+  @Mock
+  private DemoCustomerRepository demoCustomerRepository;
 
-  @InjectMocks private PaginateCustomersUseCase paginateCustomersUseCase;
+  @InjectMocks
+  private PaginateCustomersUseCase paginateCustomersUseCase;
 
   @Test
   void execute_returns_paged_results() {
     var account = createCustomerAccount();
     var customer = account.getCustomer();
-    var pageable = PageRequest.of(0, 10, Sort.by("createdAt").ascending());
+    var pageable = new PageQuery(1, 10).toPageable(Sort.by("createdAt").ascending());
     var page = new PageImpl<>(List.of(customer), pageable, 1);
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
@@ -49,7 +52,7 @@ class PaginateCustomersUseCaseTest {
 
   @Test
   void execute_empty_results_returns_empty_page() {
-    var pageable = PageRequest.of(0, 10, Sort.by("createdAt").ascending());
+    var pageable = new PageQuery(1, 10).toPageable(Sort.by("createdAt").ascending());
     var page = new PageImpl<Customer>(List.of(), pageable, 0);
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
@@ -66,7 +69,7 @@ class PaginateCustomersUseCaseTest {
 
   @Test
   void execute_with_filters_passes_specification_to_repository() {
-    var pageable = PageRequest.of(0, 5, Sort.by("createdAt").ascending());
+    var pageable = new PageQuery(1, 5).toPageable(Sort.by("createdAt").ascending());
     var page = new PageImpl<Customer>(List.of(), pageable, 0);
 
     when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);

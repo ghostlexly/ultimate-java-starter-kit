@@ -1,11 +1,14 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
+import com.lunisoft.javastarter.core.dto.PageQuery;
+import com.lunisoft.javastarter.core.dto.PaginatedResponse;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerSpecification;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,51 +30,48 @@ public class PaginateCustomersUseCase {
 
   private final DemoCustomerRepository demoCustomerRepository;
 
-  public record Input(int page, int size, String email) {}
+  public record Input(int page, int size, String email) {
+
+  }
 
   /**
    * Paginated response containing a list of customers and pagination metadata. Example: GET
    * /api/demo/customers/paginated?page=1&size=10&email=john
    */
   public record Output(
-      List<CustomerItem> content,
-      long totalItems,
-      int totalPages,
-      boolean isFirst,
-      boolean isLast) {
+      UUID id, String email, String role
+  ) {
 
-    public record CustomerItem(UUID id, String email, String role) {}
+    static Output from(Customer customer) {
+      return new Output(
+          customer.getId(),
+          customer.getAccount() != null ? customer.getAccount().getEmail() : null,
+          customer.getAccount() != null
+              ? customer.getAccount().getRole().name()
+              : null);
+    }
+
   }
 
   @Transactional(readOnly = true)
-  public Output execute(Input input) {
+  public PaginatedResponse<Output> execute(Input input) {
     Assert.notNull(input, "Input cannot be null");
     Assert.isTrue(input.page() >= 0, "Page cannot be negative");
     Assert.isTrue(input.size() > 0, "Size cannot be zero or negative");
 
-    Pageable pageable =
-        PageRequest.of(input.page(), input.size(), Sort.by("createdAt").ascending());
+    Pageable pageable = new PageQuery(input.page(), input.size()).toPageable(
+        Sort.by("createdAt").ascending());
     Specification<Customer> specs = buildSpecs(input.email());
 
-    var page = demoCustomerRepository.findAll(specs, pageable);
+    Page<Output> page = demoCustomerRepository.findAll(specs, pageable).map(Output::from);
 
-    var content =
-        page.getContent().stream()
-            .map(
-                customer ->
-                    new Output.CustomerItem(
-                        customer.getId(),
-                        customer.getAccount() != null ? customer.getAccount().getEmail() : null,
-                        customer.getAccount() != null
-                            ? customer.getAccount().getRole().name()
-                            : null))
-            .toList();
-
-    return new Output(
-        content, page.getTotalElements(), page.getTotalPages(), page.isFirst(), page.isLast());
+    return PaginatedResponse.from(page);
   }
 
-  /** Builds the specification by chaining optional filters onto the base spec. */
+
+  /**
+   * Builds the specification by chaining optional filters onto the base spec.
+   */
   private Specification<Customer> buildSpecs(String email) {
     Specification<Customer> specs = Specification.unrestricted();
 
