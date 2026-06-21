@@ -115,6 +115,12 @@ factory on the nested record. Reads return `Output` (or `List<Output>` /
 **writes return only the id** of the affected element (e.g. `record Output(UUID id) {}`), never the
 full object.
 
+The `Input` is a **flat, role-agnostic record of domain fields** — do NOT pass a controller request
+DTO (e.g. `XxxRequest`) into the use case. Each controller validates its own `@RequestBody` request
+record and maps it into the use case `Input`. This keeps admin and customer endpoints independent:
+they can expose different request fields (e.g. admin updates more than the customer) while sharing
+the same use case.
+
 ```java
 
 @Service
