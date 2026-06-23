@@ -1,8 +1,11 @@
 package com.lunisoft.javastarter.core.storage;
 
+import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.property.StorageProperties;
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.Base64;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -54,6 +57,20 @@ public class S3Service {
     var request = GetObjectRequest.builder().bucket(storageProperties.bucket()).key(key).build();
 
     return s3Client.getObject(request);
+  }
+
+  /**
+   * Downloads a file from S3 and returns it Base64-encoded (e.g. for MangoPay KYC pages).
+   */
+  public String downloadAsBase64(String key) {
+    try (InputStream inputStream = download(key)) {
+      return Base64.getEncoder().encodeToString(inputStream.readAllBytes());
+    } catch (IOException e) {
+      throw new BusinessRuleException(
+          "Failed to download the file from storage.",
+          "STORAGE_DOWNLOAD_ERROR",
+          org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
