@@ -109,11 +109,21 @@ public class CreateProfileUseCase {
 ### Input / Output records (canonical shape)
 
 Each use case declares its own **nested `Input` and `Output` records** — do NOT create separate
-`dto/` Response classes for them. The entity → `Output` mapping is a `static Output from(Entity)`
-factory on the nested record. Reads return `Output` (or `List<Output>` /
+`dto/` Response classes for them. Reads return `Output` (or `List<Output>` /
 `PaginatedResponse<Output>`);
 **writes return only the id** of the affected element (e.g. `record Output(UUID id) {}`), never the
 full object.
+
+**Entity → `Output` mapping is ALWAYS a `private` instance method on the use case** (e.g.
+`private Output toOutput(Entity e)`), referenced with `this::toOutput` — never a `static
+from(Entity)` factory on the record. This is the single, uniform rule: the DTO records stay pure
+data carriers, and the mapper has every injected dependency (repositories, services, presigned-URL
+generation, …) available. A `static from` can only see the entity, so the day a "pure" mapping needs
+a dependency it forces a refactor; the instance method never does. Nested sub-view records map the
+same way — one `private toXxx(...)` helper per view. Only when the **same** mapping is reused by 3+
+use cases, extract a `@Component XxxMapper` (constructor-injected deps) and call it from each —
+still
+an instance method, never a static factory.
 
 The `Input` is a **flat, role-agnostic record of domain fields** — do NOT pass a controller request
 DTO (e.g. `XxxRequest`) into the use case. Each controller validates its own `@RequestBody` request
@@ -138,10 +148,6 @@ public class GetTownsUseCase {
 
   public record Output(UUID id, String inseeCode, String name, int population) {
 
-    static Output from(Town town) {
-
-      return new Output(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
-    }
   }
 
   @Transactional(readOnly = true)
@@ -149,9 +155,15 @@ public class GetTownsUseCase {
     Specification<Town> spec = buildSpec(input);
     Pageable pageable = new PageQuery(input.page(), input.size()).toPageable(SORT);
 
-    Page<Output> page = townRepository.findAll(spec, pageable).map(Output::from);
+    Page<Output> page = townRepository.findAll(spec, pageable).map(this::toOutput);
 
     return PaginatedResponse.from(page);
+  }
+
+  // Mapping lives on the use case (never a static Output.from), so injected deps are available.
+  private Output toOutput(Town town) {
+
+    return new Output(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
   }
 
   // One conditional block per filter; combine with Specification.allOf (empty list -> match all).
