@@ -108,22 +108,57 @@ public class CreateProfileUseCase {
 
 ### Input / Output records (canonical shape)
 
-Each use case declares its own **nested `Input` and `Output` records** — do NOT create separate
-`dto/` Response classes for them. Reads return `Output` (or `List<Output>` /
-`PaginatedResponse<Output>`);
-**writes return only the id** of the affected element (e.g. `record Output(UUID id) {}`), never the
-full object.
+**Layering principle:** the application layer (the use case) ALWAYS returns a type it *owns* — never
+a JPA entity. The web layer (the controller) decides how to serialize/expose it (and may map it down
+further). This is the mirror of `Input`: the use case owns the shape, the controller maps into/out
+of it. Reads return that owned type (or `List<…>` / `PaginatedResponse<…>`); **writes return only
+the
+id** of the affected element (e.g. `record Output(UUID id) {}`), never the full object.
 
-**Entity → `Output` mapping is ALWAYS a `private` instance method on the use case** (e.g.
-`private Output toOutput(Entity e)`), referenced with `this::toOutput` — never a `static
-from(Entity)` factory on the record. This is the single, uniform rule: the DTO records stay pure
-data carriers, and the mapper has every injected dependency (repositories, services, presigned-URL
-generation, …) available. A `static from` can only see the entity, so the day a "pure" mapping needs
-a dependency it forces a refactor; the instance method never does. Nested sub-view records map the
-same way — one `private toXxx(...)` helper per view. Only when the **same** mapping is reused by 3+
-use cases, extract a `@Component XxxMapper` (constructor-injected deps) and call it from each —
-still
-an instance method, never a static factory.
+The owned return type comes in two flavours, by reuse — this is the single rule:
+
+- **Used by one use case → a nested `Output` record** declared inside that use case.
+- **The same shape used by 2+ use cases → a shared `XxxView` record** (in the feature's `dto/`)
+  returned from each use case. Don't duplicate the record, and don't have one use case import
+  another's nested `Output`.
+
+**Mapping (entity → owned type) is ALWAYS an injectable instance method — never a `static
+from(Entity)` factory on the record.** The records stay pure data carriers; the mapper has every
+injected dependency (repositories, services, presigned-URL generation, …) available. A `static from`
+can only see the entity, so the day a "pure" mapping needs a dependency it forces a refactor; the
+instance method never does. Concretely:
+
+- Nested `Output` (and its nested sub-views) → `private Output toOutput(Entity e)` on the use case
+  (one `private toXxx(...)` per sub-view), referenced with `this::toOutput`.
+- Shared `XxxView` → a `@Component XxxViewMapper` with `public XxxView toView(Entity e)`, injected
+  into each use case and referenced with `xxxViewMapper::toView`.
+
+**Mapper method naming — `from` vs `to`:** use **`to<Target>(source)`** on a mapper that is neither
+the source nor the target (a use-case `private toOutput(entity)`, a `@Component` mapper's
+`toView(entity)`) — it names the target explicitly. Use **`from(source)`** only for a `static`
+factory that lives **on the target type itself** (`GetBookingsResponse.from(view)`), where the
+receiver *is* the thing being created. Never `mapper.from(...)` — a bean is neither end of the
+mapping, so `from` reads ambiguously there.
+
+**Web-layer reshaping.** When a controller endpoint needs a response shape that differs from the use
+case's `Output`/`XxxView` (a subset, renamed fields, a combination, different JSON), it declares its
+own response record in the controller's package, named after the **endpoint** — e.g.
+`GetBookingsResponse` — with a **`static GetBookingsResponse from(BookingView view)`** factory that
+converts the view into the endpoint's wire shape. (Name it after the endpoint/use case, not the
+entity: `GetBookingsResponse`, not `BookingResponse` — the shape belongs to that endpoint.) A `static
+from` **is** allowed here: this is a pure, dependency-free record→record reshape at the web
+boundary,
+so the static-context trap never applies (the no-`static from` rule targets entity→application-DTO
+mapping, which may need injected dependencies). The use case still returns its owned `Output`/
+`View`;
+the controller maps it into `GetBookingsResponse` and returns that. If the endpoint is happy with
+the
+view as-is, it just returns the view directly — no extra record.
+
+So `static from` is sanctioned only for pure record→record (or collection) adapters that need no
+dependencies: web-layer `Response.from(View)` and the generic
+`core/dto/PaginatedResponse.from(Page)`.
+Entity → application-DTO mapping is never a `static from`.
 
 The `Input` is a **flat, role-agnostic record of domain fields** — do NOT pass a controller request
 DTO (e.g. `XxxRequest`) into the use case. Each controller validates its own `@RequestBody` request
