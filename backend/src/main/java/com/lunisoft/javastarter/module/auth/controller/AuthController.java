@@ -1,5 +1,6 @@
 package com.lunisoft.javastarter.module.auth.controller;
 
+import com.lunisoft.javastarter.core.dto.MessageResponse;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
 import com.lunisoft.javastarter.core.security.UserPrincipal;
@@ -12,7 +13,6 @@ import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,10 +32,10 @@ public class AuthController {
 
   @PublicEndpoint
   @PostMapping("send-code")
-  public ResponseEntity<Map<String, String>> sendCode(@Valid @RequestBody SendCodeRequest request) {
+  public ResponseEntity<MessageResponse> sendCode(@Valid @RequestBody SendCodeRequest request) {
     this.sendCodeUseCase.execute(request.email());
 
-    return ResponseEntity.ok(Map.of("message", "Login code sent successfully."));
+    return ResponseEntity.ok(new MessageResponse("Login code sent successfully."));
   }
 
   @PublicEndpoint
@@ -76,16 +76,16 @@ public class AuthController {
   }
 
   @GetMapping("me")
-  public ResponseEntity<MeResponse> me(@AuthenticationPrincipal UserPrincipal principal) {
-    MeResponse response = this.getMeUseCase.execute(principal.accountId());
+  public ResponseEntity<GetMeUseCase.Output> me(@AuthenticationPrincipal UserPrincipal principal) {
+    GetMeUseCase.Output response = this.getMeUseCase.execute(principal.accountId());
 
     return ResponseEntity.ok(response);
   }
 
   @PostMapping("logout")
-  public ResponseEntity<Map<String, String>> logout(HttpServletResponse httpResponse) {
+  public ResponseEntity<MessageResponse> logout(HttpServletResponse httpResponse) {
     this.authCookieService.clearAuthCookies(httpResponse);
 
-    return ResponseEntity.ok(Map.of("message", "You have been successfully logged out"));
+    return ResponseEntity.ok(new MessageResponse("You have been successfully logged out."));
   }
 }
