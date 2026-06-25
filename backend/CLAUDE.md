@@ -232,7 +232,6 @@ public class GetTownsUseCase {
   params)
 - `@AuthenticationPrincipal UserPrincipal principal` for authenticated user
 - Pagination params are `page` (1-based) and `size`
-- Blank line before every `return`
 
 ```java
 
