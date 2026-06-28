@@ -94,11 +94,11 @@ app:
       requests: 100
       period-seconds: 60
   storage:
-    endpoint: ${APP_STORAGE_ENDPOINT}
-    region: ${APP_STORAGE_REGION:auto}
-    access-key: ${APP_STORAGE_ACCESS_KEY}
-    secret-key: ${APP_STORAGE_SECRET_KEY}
-    bucket: ${APP_STORAGE_BUCKET}
+    endpoint: ${APP_S3_ENDPOINT}
+    region: ${APP_S3_REGION:auto}
+    access-key: ${APP_S3_ACCESS_KEY}
+    secret-key: ${APP_S3_SECRET_KEY}
+    bucket: ${APP_S3_BUCKET}
   email:
     brevo:
       api-key: ${APP_BREVO_API_KEY}
