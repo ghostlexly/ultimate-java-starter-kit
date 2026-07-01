@@ -2,6 +2,7 @@ package com.lunisoft.javastarter.shared.service;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ public class PhoneNumberService {
   /**
    * Formats a phone number to E.164 international format.
    *
-   * @param rawPhone the raw phone input (e.g. "0781209072" or "+33781209072")
+   * @param rawPhone    the raw phone input (e.g. "0781209072" or "+33781209072")
    * @param countryCode the ISO 3166-1 alpha-2 country code (e.g. "FR", "BE", "CH")
    * @return the phone number in E.164 format (e.g. "+33781209072")
    * @throws BusinessRuleException if the phone number is invalid
@@ -38,5 +39,37 @@ public class PhoneNumberService {
       throw new BusinessRuleException(
           "Invalid phone number format.", "INVALID_PHONE_NUMBER", HttpStatus.BAD_REQUEST);
     }
+  }
+
+  public String formatToE164(String rawPhone) {
+    return formatToE164(rawPhone, "FR");
+  }
+
+  /**
+   * Formats a phone number to international format.
+   *
+   * @param rawPhone    the raw phone input (e.g. "0781209072" or "+33781209072")
+   * @param countryCode the ISO 3166-1 alpha-2 country code (e.g. "FR", "BE", "CH")
+   * @return the phone number in E.164 format with spaces (e.g. "+33 7 81 20 90 72")
+   * @throws BusinessRuleException if the phone number is invalid
+   */
+  public String formatToInternational(String rawPhone, String countryCode) {
+    try {
+      PhoneNumber parsed = phoneNumberUtil.parse(rawPhone, countryCode);
+
+      if (!phoneNumberUtil.isValidNumber(parsed)) {
+        throw new BusinessRuleException(
+            "Invalid phone number.", "INVALID_PHONE_NUMBER", HttpStatus.BAD_REQUEST);
+      }
+
+      return phoneNumberUtil.format(parsed, PhoneNumberFormat.INTERNATIONAL);
+    } catch (NumberParseException _) {
+      throw new BusinessRuleException(
+          "Invalid phone number format.", "INVALID_PHONE_NUMBER", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  public String formatToInternational(String rawPhone) {
+    return formatToInternational(rawPhone, "FR");
   }
 }
