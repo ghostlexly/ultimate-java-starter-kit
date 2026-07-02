@@ -1,5 +1,9 @@
-import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import axios from 'axios';
+import type {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
+import axios from "axios";
 
 /**
  * Wolfios - Axios instance for Client Components
@@ -22,16 +26,21 @@ import axios from 'axios';
  * ```
  */
 const wolfios = axios.create({
-  adapter: ['fetch', 'xhr', 'http'],
+  adapter: ["fetch", "xhr", "http"],
   timeout: 30000,
+  paramsSerializer: {
+    indexes: null, // arrays serialize as status=A&status=B (no brackets)
+  },
 });
 
-wolfios.interceptors.request.use(async (request: InternalAxiosRequestConfig) => {
-  // disable subsequent setting the default header by Axios
-  request.headers.set('User-Agent', false);
+wolfios.interceptors.request.use(
+  async (request: InternalAxiosRequestConfig) => {
+    // disable subsequent setting the default header by Axios
+    request.headers.set("User-Agent", false);
 
-  return request;
-});
+    return request;
+  },
+);
 
 wolfios.interceptors.response.use(
   async (response: AxiosResponse) => {
@@ -41,21 +50,21 @@ wolfios.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       error.config &&
-      !error.config.url?.includes('/auth/refresh') &&
-      !error.config.url?.includes('/auth/logout')
+      !error.config.url?.includes("/auth/refresh") &&
+      !error.config.url?.includes("/auth/logout")
     ) {
       try {
         // Refresh the JWT tokens
-        await wolfios.post('/api/auth/refresh', {});
+        await wolfios.post("/api/auth/refresh", {});
 
         // Retry the original request and return the response
         // (error.config contains the original request config (url, method, data, headers, etc.))
         return wolfios(error.config);
       } catch (refreshError) {
-        console.error('Failed to refresh JWT tokens.', refreshError);
+        console.error("Failed to refresh JWT tokens.", refreshError);
 
         // Clear cookies
-        await wolfios.post('/api/auth/logout', {}).catch();
+        await wolfios.post("/api/auth/logout", {}).catch();
 
         // Refresh the page to clear the session
         globalThis.location.reload();
