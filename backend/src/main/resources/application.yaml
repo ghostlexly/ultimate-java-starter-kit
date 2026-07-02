@@ -93,7 +93,7 @@ app:
     global:
       requests: 100
       period-seconds: 60
-  storage:
+  s3:
     endpoint: ${APP_S3_ENDPOINT}
     region: ${APP_S3_REGION:auto}
     access-key: ${APP_S3_ACCESS_KEY}

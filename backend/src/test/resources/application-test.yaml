@@ -45,7 +45,7 @@ app:
     global:
       requests: 100000
       period-seconds: 60
-  storage:
+  s3:
     endpoint: http://localhost:9000
     region: us-east-1
     access-key: test-access-key

@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.core.storage;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
-import com.lunisoft.javastarter.property.StorageProperties;
+import com.lunisoft.javastarter.property.S3Properties;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
@@ -24,7 +24,7 @@ public class S3Service {
 
   private final S3Client s3Client;
   private final S3Presigner s3Presigner;
-  private final StorageProperties storageProperties;
+  private final S3Properties s3Properties;
 
   /**
    * Uploads a file to S3 from an {@link InputStream}. The caller must provide an accurate
@@ -39,7 +39,7 @@ public class S3Service {
       StorageClass storageClass) {
     var request =
         PutObjectRequest.builder()
-            .bucket(storageProperties.bucket())
+            .bucket(s3Properties.bucket())
             .key(key)
             .contentType(contentType)
             .storageClass(storageClass)
@@ -54,7 +54,7 @@ public class S3Service {
    * for large files.
    */
   public InputStream download(String key) {
-    var request = GetObjectRequest.builder().bucket(storageProperties.bucket()).key(key).build();
+    var request = GetObjectRequest.builder().bucket(s3Properties.bucket()).key(key).build();
 
     return s3Client.getObject(request);
   }
@@ -65,7 +65,7 @@ public class S3Service {
   public String downloadAsBase64(String key) {
     try (InputStream inputStream = download(key)) {
       return Base64.getEncoder().encodeToString(inputStream.readAllBytes());
-    } catch (IOException e) {
+    } catch (IOException _) {
       throw new BusinessRuleException(
           "Failed to download the file from storage.",
           "STORAGE_DOWNLOAD_ERROR",
@@ -77,7 +77,7 @@ public class S3Service {
    * Deletes a file from S3.
    */
   public void delete(String key) {
-    var request = DeleteObjectRequest.builder().bucket(storageProperties.bucket()).key(key).build();
+    var request = DeleteObjectRequest.builder().bucket(s3Properties.bucket()).key(key).build();
 
     s3Client.deleteObject(request);
   }
@@ -89,7 +89,7 @@ public class S3Service {
     var presignRequest =
         GetObjectPresignRequest.builder()
             .signatureDuration(expiry)
-            .getObjectRequest(r -> r.bucket(storageProperties.bucket()).key(key))
+            .getObjectRequest(r -> r.bucket(s3Properties.bucket()).key(key))
             .build();
 
     return s3Presigner.presignGetObject(presignRequest).url().toString();
@@ -103,7 +103,7 @@ public class S3Service {
         PutObjectPresignRequest.builder()
             .signatureDuration(expiry)
             .putObjectRequest(
-                r -> r.bucket(storageProperties.bucket()).key(key).contentType(contentType))
+                r -> r.bucket(s3Properties.bucket()).key(key).contentType(contentType))
             .build();
 
     return s3Presigner.presignPutObject(presignRequest).url().toString();
