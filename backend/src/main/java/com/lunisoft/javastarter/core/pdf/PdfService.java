@@ -25,7 +25,7 @@ public class PdfService {
   private final Logger log = LoggerFactory.getLogger(PdfService.class);
 
   private final SpringTemplateEngine templateEngine;
-  private final Browser browser;
+  private final PlaywrightWorker playwrightWorker;
   private final PdfProperties pdfProperties;
 
   /**
@@ -51,10 +51,25 @@ public class PdfService {
   }
 
   /**
-   * Converts an HTML string to a PDF using Playwright's headless Chromium. Waits for Tailwind CSS
-   * CDN to finish rendering before generating the PDF.
+   * Converts an HTML string to a PDF using Playwright's headless Chromium. The rendering runs on
+   * the {@link PlaywrightWorker}'s dedicated thread because Playwright is not thread-safe.
    */
   private byte[] convertHtmlToPdf(String html) {
+    try {
+      return playwrightWorker.execute(browser -> renderPdf(browser, html));
+    } catch (Exception e) {
+      log.error("Failed to generate PDF: {}", e.getMessage(), e);
+
+      throw new BusinessRuleException(
+          "Failed to generate PDF", "PDF_GENERATION_FAILED", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Renders the HTML in a fresh browser context and returns the PDF bytes. Waits for Tailwind CSS
+   * CDN to finish rendering before generating the PDF. Runs on the worker thread only.
+   */
+  private byte[] renderPdf(Browser browser, String html) {
     try (var browserContext = browser.newContext();
         var page = browserContext.newPage()) {
 
@@ -73,12 +88,6 @@ public class PdfService {
           new Page.PdfOptions()
               .setFormat(pdfProperties.format())
               .setPrintBackground(pdfProperties.printBackground()));
-
-    } catch (Exception e) {
-      log.error("Failed to generate PDF: {}", e.getMessage(), e);
-
-      throw new BusinessRuleException(
-          "Failed to generate PDF", "PDF_GENERATION_FAILED", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

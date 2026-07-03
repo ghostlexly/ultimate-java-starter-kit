@@ -1,5 +1,6 @@
 package com.lunisoft.javastarter.shared;
 
+import com.lunisoft.javastarter.core.pdf.PlaywrightWorker;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.email.service.EmailService;
@@ -82,20 +83,29 @@ public abstract class AbstractIntegrationTest {
 
   // ── Mocks for adapters we don't exercise from API tests ──────────────────
 
-  @MockitoBean protected S3Client s3Client;
-  @MockitoBean protected S3Presigner s3Presigner;
-  @MockitoBean protected Playwright playwright;
-  @MockitoBean protected Browser browser;
-  @MockitoBean protected EmailService emailService;
+  @MockitoBean
+  protected S3Client s3Client;
+  @MockitoBean
+  protected S3Presigner s3Presigner;
+  @MockitoBean
+  protected PlaywrightWorker playwrightWorker;
+  @MockitoBean
+  protected EmailService emailService;
 
   // ── Common collaborators tests will need ─────────────────────────────────
 
-  @Autowired protected MockMvc mockMvc;
-  @Autowired protected JsonMapper jsonMapper;
-  @Autowired protected JwtTokenProvider jwtTokenProvider;
-  @Autowired protected IntegrationTestFixtures fixtures;
-  @Autowired private DataSource dataSource;
-  @Autowired private PlatformTransactionManager transactionManager;
+  @Autowired
+  protected MockMvc mockMvc;
+  @Autowired
+  protected JsonMapper jsonMapper;
+  @Autowired
+  protected JwtTokenProvider jwtTokenProvider;
+  @Autowired
+  protected IntegrationTestFixtures fixtures;
+  @Autowired
+  private DataSource dataSource;
+  @Autowired
+  private PlatformTransactionManager transactionManager;
 
   /**
    * Truncate every application table after each test so cases stay isolated even though the
@@ -107,16 +117,16 @@ public abstract class AbstractIntegrationTest {
     var jdbc = new JdbcTemplate(dataSource);
     jdbc.execute(
         """
-        TRUNCATE TABLE
-            verification_token,
-            session,
-            customer,
-            admin,
-            media,
-            app_config,
-            account
-        RESTART IDENTITY CASCADE
-        """);
+            TRUNCATE TABLE
+                verification_token,
+                session,
+                customer,
+                admin,
+                media,
+                app_config,
+                account
+            RESTART IDENTITY CASCADE
+            """);
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -146,14 +156,16 @@ public abstract class AbstractIntegrationTest {
   /**
    * Runs DB-state assertions inside a single read transaction so lazy associations can be traversed
    * after the request under test has already committed. Open Session In View is disabled, so
-   * without this wrapper accessing a lazy relation here would throw {@code
-   * LazyInitializationException}.
+   * without this wrapper accessing a lazy relation here would throw
+   * {@code LazyInitializationException}.
    */
   public void assertPersistedState(Runnable assertions) {
     new TransactionTemplate(transactionManager).executeWithoutResult(_ -> assertions.run());
   }
 
-  /** Builds an {@code Authorization} header value with a fresh access token for the account. */
+  /**
+   * Builds an {@code Authorization} header value with a fresh access token for the account.
+   */
   public String bearer(Account account) {
     var token =
         jwtTokenProvider.generateAccessToken(
