@@ -27,6 +27,7 @@ import org.jobrunr.scheduling.BackgroundJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -176,7 +177,8 @@ public class DemoController {
                 "avatarUri", avatarUri));
 
     return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"sample.pdf\"")
+        .header(HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.inline().filename("sample.pdf").build().toString())
         .contentType(MediaType.APPLICATION_PDF)
         .body(pdf);
   }
@@ -197,7 +199,8 @@ public class DemoController {
                 "avatarUri", avatarUri));
 
     return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"sample.pdf\"")
+        .header(HttpHeaders.CONTENT_DISPOSITION,
+            ContentDisposition.attachment().filename("sample.pdf").build().toString())
         .contentType(MediaType.APPLICATION_PDF)
         .body(pdf);
   }
