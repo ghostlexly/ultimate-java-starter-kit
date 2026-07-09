@@ -1,17 +1,17 @@
 package com.lunisoft.javastarter.module.email.dto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import org.springframework.util.StringUtils;
+
 
 /**
  * Immutable, provider-agnostic transactional email request. Use {@link Builder} to construct.
  *
  * <pre>{@code
- * var request = EmailRequest.builder()
- *         .to("client@example.com", "Jean Dupont")
- *         .templateId(42)
+ * var request = EmailRequest.builder("client@example.com", 42)
  *         .subject("Votre commande")
  *         .params(Map.of("orderNumber", "CMD-001"))
  *         .attachment("facture.pdf", base64Content)
@@ -27,89 +27,72 @@ import java.util.Objects;
 public record EmailRequest(
     String recipientEmail,
     String recipientName,
-    long templateId,
+    int templateId,
     String subject,
     Map<String, Object> params,
-    List<EmailAttachment> attachments) {
+    List<EmailAttachment> attachments
+) {
 
+  // Compact constructor = single validation point, even if someone bypasses the builder
   public EmailRequest {
-    Objects.requireNonNull(recipientEmail, "recipientEmail is required");
-    Objects.requireNonNull(subject, "subject is required");
-
-    if (recipientEmail.isBlank()) {
-      throw new IllegalArgumentException("recipientEmail cannot be blank");
+    if (!StringUtils.hasText(recipientEmail)) {
+      throw new IllegalArgumentException("recipientEmail is required");
     }
 
-    if (subject.isBlank()) {
-      throw new IllegalArgumentException("subject cannot be blank");
+    if (templateId <= 0) {
+      throw new IllegalArgumentException("templateId is required");
     }
+
+    params = params == null ? Map.of() : Map.copyOf(params);
+    attachments = attachments == null ? List.of() : List.copyOf(attachments);
   }
 
-  public static Builder builder() {
-    return new Builder();
+  public static Builder builder(String recipientEmail, int templateId) {
+    return new Builder(recipientEmail, templateId);
   }
 
-  public static class Builder {
+  public static final class Builder {
 
-    private String recipientEmail;
+    private final String recipientEmail;
+    private final int templateId;
     private String recipientName;
-    private long templateId;
     private String subject;
-    private Map<String, Object> params;
+    private final Map<String, Object> params = new HashMap<>();
     private final List<EmailAttachment> attachments = new ArrayList<>();
 
-    public Builder to(String email) {
-      this.recipientEmail = email;
-
-      return this;
-    }
-
-    public Builder to(String email, String name) {
-      this.recipientEmail = email;
-      this.recipientName = name;
-
-      return this;
-    }
-
-    public Builder templateId(long templateId) {
+    private Builder(String recipientEmail, int templateId) {
+      this.recipientEmail = recipientEmail;
       this.templateId = templateId;
+    }
 
+    public Builder recipientName(String recipientName) {
+      this.recipientName = recipientName;
       return this;
     }
 
     public Builder subject(String subject) {
       this.subject = subject;
+      return this;
+    }
 
+    public Builder param(String key, Object value) {
+      this.params.put(key, value);
       return this;
     }
 
     public Builder params(Map<String, Object> params) {
-      this.params = params;
-
-      return this;
-    }
-
-    /**
-     * Attach a file to the email.
-     *
-     * @param name filename (e.g. "facture.pdf")
-     * @param content Base64-encoded file content
-     */
-    public Builder attachment(String name, String content) {
-      this.attachments.add(new EmailAttachment(name, content));
-
+      this.params.putAll(params);
       return this;
     }
 
     public Builder attachment(EmailAttachment attachment) {
       this.attachments.add(attachment);
-
       return this;
     }
 
     public EmailRequest build() {
-      return new EmailRequest(
-          recipientEmail, recipientName, templateId, subject, params, List.copyOf(attachments));
+      return new EmailRequest(recipientEmail, recipientName, templateId,
+          subject, params, attachments);
     }
   }
 }

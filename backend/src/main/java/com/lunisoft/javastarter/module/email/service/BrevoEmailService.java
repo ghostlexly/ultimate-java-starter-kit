@@ -71,7 +71,7 @@ public class BrevoEmailService implements EmailService {
           e);
 
       throw new EmailSendException(
-          "Failed to send Brevo email — template=%d, to=%s"
+          "Failed to send Brevo email — template=%s, to=%s"
               .formatted(request.templateId(), request.recipientEmail()),
           e);
     }
@@ -108,7 +108,9 @@ public class BrevoEmailService implements EmailService {
     return body;
   }
 
-  /** Brevo expects attachments as a list of {@code {"name": ..., "content": ...}} objects. */
+  /**
+   * Brevo expects attachments as a list of {@code {"name": ..., "content": ...}} objects.
+   */
   private List<Map<String, String>> toBrevoAttachments(List<EmailAttachment> attachments) {
     return attachments.stream()
         .map(att -> Map.of("name", att.name(), "content", att.content()))
