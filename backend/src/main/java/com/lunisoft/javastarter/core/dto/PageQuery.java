@@ -12,13 +12,13 @@ import org.springframework.data.domain.Sort;
  */
 public record PageQuery(Integer page, Integer size) {
 
-  private static final int DEFAULT_SIZE = 50;
-  private static final int MAX_SIZE = 100;
+    private static final int DEFAULT_SIZE = 50;
+    private static final int MAX_SIZE = 100;
 
-  public Pageable toPageable(Sort sort) {
-    int currentPage = (page == null || page < 1) ? 1 : page;
-    int pageSize = (size == null || size < 1) ? DEFAULT_SIZE : Math.min(size, MAX_SIZE);
+    public Pageable toPageable(Sort sort) {
+        int currentPage = (page == null || page < 1) ? 1 : page;
+        int pageSize = (size == null || size < 1) ? DEFAULT_SIZE : Math.min(size, MAX_SIZE);
 
-    return PageRequest.of(currentPage - 1, pageSize, sort);
-  }
+        return PageRequest.of(currentPage - 1, pageSize, sort);
+    }
 }

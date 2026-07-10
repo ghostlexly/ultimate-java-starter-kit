@@ -1,12 +1,5 @@
 package com.lunisoft.javastarter.module.auth.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
@@ -18,8 +11,6 @@ import com.lunisoft.javastarter.module.auth.entity.VerificationType;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Instant;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,131 +18,131 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
+import java.time.Instant;
+import java.util.Optional;
+
+import static com.lunisoft.javastarter.shared.TestFactory.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class VerifyCodeUseCaseTest {
 
-  @Mock private AccountRepository accountRepository;
-  @Mock private VerificationTokenRepository verificationTokenRepository;
-  @Mock private SessionRepository sessionRepository;
-  @Mock private JwtTokenProvider jwtTokenProvider;
-  @Mock private HttpServletRequest request;
+    @Mock
+    private AccountRepository accountRepository;
 
-  @InjectMocks private VerifyCodeUseCase verifyCodeUseCase;
+    @Mock
+    private VerificationTokenRepository verificationTokenRepository;
 
-  @Test
-  void execute_when_valid_code_then_correct() {
-    Account account = createCustomerAccount();
-    var email = account.getEmail();
-    var code = "1234";
-    var token = createVerificationToken(account, code, 0);
-    var session = createSession(account);
+    @Mock
+    private SessionRepository sessionRepository;
 
-    when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
-    when(verificationTokenRepository
-            .findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
-                eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
-        .thenReturn(Optional.of(token));
-    when(sessionRepository.save(any(Session.class))).thenReturn(session);
-    when(jwtTokenProvider.generateAccessToken(
-            session.getId(), account.getId(), email, Role.CUSTOMER))
-        .thenReturn("access-token");
-    when(jwtTokenProvider.generateRefreshToken(session.getId())).thenReturn("refresh-token");
-    when(jwtTokenProvider.getRefreshTokenExpirationMinutes()).thenReturn(10080);
+    @Mock
+    private JwtTokenProvider jwtTokenProvider;
 
-    var output = verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, code, request));
+    @Mock
+    private HttpServletRequest request;
 
-    assertThat(output.role()).isEqualTo("CUSTOMER");
-    assertThat(output.accessToken()).isEqualTo("access-token");
-    assertThat(output.refreshToken()).isEqualTo("refresh-token");
-    verify(verificationTokenRepository).delete(token);
-    assertThat(account.isEmailVerified()).isTrue();
-  }
+    @InjectMocks
+    private VerifyCodeUseCase verifyCodeUseCase;
 
-  @Test
-  void execute_when_account_not_found_then_throws_business_rule_exception() {
-    when(accountRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+    @Test
+    void execute_when_valid_code_then_correct() {
+        Account account = createCustomerAccount();
+        var email = account.getEmail();
+        var code = "1234";
+        var token = createVerificationToken(account, code, 0);
+        var session = createSession(account);
 
-    assertThatThrownBy(
-            () ->
-                verifyCodeUseCase.execute(
-                    new VerifyCodeUseCase.Input("unknown@example.com", "1234", request)))
-        .isInstanceOfSatisfying(
-            BusinessRuleException.class,
-            exception -> {
-              assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
-            });
-  }
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
+                        eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
+                .thenReturn(Optional.of(token));
+        when(sessionRepository.save(any(Session.class))).thenReturn(session);
+        when(jwtTokenProvider.generateAccessToken(session.getId(), account.getId(), email, Role.CUSTOMER))
+                .thenReturn("access-token");
+        when(jwtTokenProvider.generateRefreshToken(session.getId())).thenReturn("refresh-token");
+        when(jwtTokenProvider.getRefreshTokenExpirationMinutes()).thenReturn(10080);
 
-  @Test
-  void execute_when_no_valid_token_then_throws_business_rule_exception() {
-    var account = createCustomerAccount();
-    var email = account.getEmail();
+        var output = verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, code, request));
 
-    when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
-    when(verificationTokenRepository
-            .findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
-                eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
-        .thenReturn(Optional.empty());
+        assertThat(output.role()).isEqualTo("CUSTOMER");
+        assertThat(output.accessToken()).isEqualTo("access-token");
+        assertThat(output.refreshToken()).isEqualTo("refresh-token");
+        verify(verificationTokenRepository).delete(token);
+        assertThat(account.isEmailVerified()).isTrue();
+    }
 
-    assertThatThrownBy(
-            () -> verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, "1234", request)))
-        .isInstanceOfSatisfying(
-            BusinessRuleException.class,
-            exception -> {
-              assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
-            });
-  }
+    @Test
+    void execute_when_account_not_found_then_throws_business_rule_exception() {
+        when(accountRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
 
-  @Test
-  void execute_when_max_attempts_reached_then_throws_business_rule_exception() {
-    var account = createCustomerAccount();
-    var token = createVerificationToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
+        assertThatThrownBy(() ->
+                        verifyCodeUseCase.execute(new VerifyCodeUseCase.Input("unknown@example.com", "1234", request)))
+                .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
+                    assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
+                });
+    }
 
-    when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
-    when(verificationTokenRepository
-            .findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
-                eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
-        .thenReturn(Optional.of(token));
+    @Test
+    void execute_when_no_valid_token_then_throws_business_rule_exception() {
+        var account = createCustomerAccount();
+        var email = account.getEmail();
 
-    assertThatThrownBy(
-            () ->
-                verifyCodeUseCase.execute(
-                    new VerifyCodeUseCase.Input(account.getEmail(), "1234", request)))
-        .isInstanceOfSatisfying(
-            BusinessRuleException.class,
-            exception -> {
-              assertThat(exception.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
-              assertThat(exception.getCode()).isEqualTo("MAX_ATTEMPTS_REACHED");
-            });
-  }
+        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
+                        eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
+                .thenReturn(Optional.empty());
 
-  @Test
-  void execute_when_wrong_code_then_increments_attempts_and_throws() {
-    var account = createCustomerAccount();
-    var token = createVerificationToken(account, "1234", 0);
+        assertThatThrownBy(() -> verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(email, "1234", request)))
+                .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
+                    assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
+                });
+    }
 
-    when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
-    when(verificationTokenRepository
-            .findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
-                eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
-        .thenReturn(Optional.of(token));
+    @Test
+    void execute_when_max_attempts_reached_then_throws_business_rule_exception() {
+        var account = createCustomerAccount();
+        var token = createVerificationToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
 
-    assertThatThrownBy(
-            () ->
-                verifyCodeUseCase.execute(
-                    new VerifyCodeUseCase.Input(account.getEmail(), "9999", request)))
-        .isInstanceOfSatisfying(
-            BusinessRuleException.class,
-            exception -> {
-              assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
-            });
+        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
+                        eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
+                .thenReturn(Optional.of(token));
 
-    // Attempts should be incremented and saved
-    assertThat(token.getAttempts()).isEqualTo(1);
-    // Token should NOT be deleted
-    verify(verificationTokenRepository, never()).delete(any());
-  }
+        assertThatThrownBy(() ->
+                        verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(account.getEmail(), "1234", request)))
+                .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
+                    assertThat(exception.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+                    assertThat(exception.getCode()).isEqualTo("MAX_ATTEMPTS_REACHED");
+                });
+    }
+
+    @Test
+    void execute_when_wrong_code_then_increments_attempts_and_throws() {
+        var account = createCustomerAccount();
+        var token = createVerificationToken(account, "1234", 0);
+
+        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
+                        eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
+                .thenReturn(Optional.of(token));
+
+        assertThatThrownBy(() ->
+                        verifyCodeUseCase.execute(new VerifyCodeUseCase.Input(account.getEmail(), "9999", request)))
+                .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
+                    assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
+                });
+
+        // Attempts should be incremented and saved
+        assertThat(token.getAttempts()).isEqualTo(1);
+        // Token should NOT be deleted
+        verify(verificationTokenRepository, never()).delete(any());
+    }
 }

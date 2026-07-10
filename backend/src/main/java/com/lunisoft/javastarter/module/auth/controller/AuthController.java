@@ -4,7 +4,9 @@ import com.lunisoft.javastarter.core.dto.MessageResponse;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
 import com.lunisoft.javastarter.core.security.UserPrincipal;
-import com.lunisoft.javastarter.module.auth.dto.*;
+import com.lunisoft.javastarter.module.auth.dto.RefreshTokenRequest;
+import com.lunisoft.javastarter.module.auth.dto.SendCodeRequest;
+import com.lunisoft.javastarter.module.auth.dto.VerifyCodeRequest;
 import com.lunisoft.javastarter.module.auth.service.AuthCookieService;
 import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase;
 import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase;
@@ -24,68 +26,65 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-  private final AuthCookieService authCookieService;
-  private final SendCodeUseCase sendCodeUseCase;
-  private final VerifyCodeUseCase verifyCodeUseCase;
-  private final RefreshTokensUseCase refreshTokensUseCase;
-  private final GetMeUseCase getMeUseCase;
+    private final AuthCookieService authCookieService;
+    private final SendCodeUseCase sendCodeUseCase;
+    private final VerifyCodeUseCase verifyCodeUseCase;
+    private final RefreshTokensUseCase refreshTokensUseCase;
+    private final GetMeUseCase getMeUseCase;
 
-  @PublicEndpoint
-  @PostMapping("send-code")
-  public ResponseEntity<MessageResponse> sendCode(@Valid @RequestBody SendCodeRequest request) {
-    this.sendCodeUseCase.execute(request.email());
+    @PublicEndpoint
+    @PostMapping("send-code")
+    public ResponseEntity<MessageResponse> sendCode(@Valid @RequestBody SendCodeRequest request) {
+        this.sendCodeUseCase.execute(request.email());
 
-    return ResponseEntity.ok(new MessageResponse("Login code sent successfully."));
-  }
-
-  @PublicEndpoint
-  @PostMapping("verify-code")
-  public ResponseEntity<VerifyCodeUseCase.Output> verifyCode(
-      @Valid @RequestBody VerifyCodeRequest request,
-      HttpServletRequest httpRequest,
-      HttpServletResponse httpResponse) {
-
-    var input = new VerifyCodeUseCase.Input(request.email(), request.code(), httpRequest);
-    var output = this.verifyCodeUseCase.execute(input);
-
-    this.authCookieService.setAuthCookies(
-        httpResponse, output.accessToken(), output.refreshToken());
-
-    return ResponseEntity.ok(output);
-  }
-
-  @PublicEndpoint
-  @PostMapping("refresh")
-  public ResponseEntity<RefreshTokensUseCase.Output> refreshTokens(
-      @Valid @RequestBody(required = false) RefreshTokenRequest request,
-      HttpServletRequest httpRequest,
-      HttpServletResponse httpResponse) {
-
-    String refreshToken = this.authCookieService.resolveRefreshToken(request, httpRequest);
-
-    if (refreshToken == null) {
-      throw new BusinessRuleException(
-          "Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
+        return ResponseEntity.ok(new MessageResponse("Login code sent successfully."));
     }
 
-    var output = this.refreshTokensUseCase.execute(refreshToken);
-    this.authCookieService.setAuthCookies(
-        httpResponse, output.accessToken(), output.refreshToken());
+    @PublicEndpoint
+    @PostMapping("verify-code")
+    public ResponseEntity<VerifyCodeUseCase.Output> verifyCode(
+            @Valid @RequestBody VerifyCodeRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
 
-    return ResponseEntity.ok(output);
-  }
+        var input = new VerifyCodeUseCase.Input(request.email(), request.code(), httpRequest);
+        var output = this.verifyCodeUseCase.execute(input);
 
-  @GetMapping("me")
-  public ResponseEntity<GetMeUseCase.Output> me(@AuthenticationPrincipal UserPrincipal principal) {
-    GetMeUseCase.Output response = this.getMeUseCase.execute(principal.accountId());
+        this.authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
 
-    return ResponseEntity.ok(response);
-  }
+        return ResponseEntity.ok(output);
+    }
 
-  @PostMapping("logout")
-  public ResponseEntity<MessageResponse> logout(HttpServletResponse httpResponse) {
-    this.authCookieService.clearAuthCookies(httpResponse);
+    @PublicEndpoint
+    @PostMapping("refresh")
+    public ResponseEntity<RefreshTokensUseCase.Output> refreshTokens(
+            @Valid @RequestBody(required = false) RefreshTokenRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
 
-    return ResponseEntity.ok(new MessageResponse("You have been successfully logged out."));
-  }
+        String refreshToken = this.authCookieService.resolveRefreshToken(request, httpRequest);
+
+        if (refreshToken == null) {
+            throw new BusinessRuleException("Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
+        }
+
+        var output = this.refreshTokensUseCase.execute(refreshToken);
+        this.authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
+
+        return ResponseEntity.ok(output);
+    }
+
+    @GetMapping("me")
+    public ResponseEntity<GetMeUseCase.Output> me(@AuthenticationPrincipal UserPrincipal principal) {
+        GetMeUseCase.Output response = this.getMeUseCase.execute(principal.accountId());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("logout")
+    public ResponseEntity<MessageResponse> logout(HttpServletResponse httpResponse) {
+        this.authCookieService.clearAuthCookies(httpResponse);
+
+        return ResponseEntity.ok(new MessageResponse("You have been successfully logged out."));
+    }
 }

@@ -1,22 +1,23 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
-import java.time.Duration;
 import org.jobrunr.jobs.annotations.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+
 @Service
 public class DemoJobRunrEnqueueJob {
 
-  private static final Logger log = LoggerFactory.getLogger(DemoJobRunrEnqueueJob.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoJobRunrEnqueueJob.class);
 
-  @Job(name = "demo-job", retries = 5)
-  public void execute(String example) throws InterruptedException {
-    log.info("Job started with example: {} !", example);
+    @Job(name = "demo-job", retries = 5)
+    public void execute(String example) throws InterruptedException {
+        log.info("Job started with example: {} !", example);
 
-    Thread.sleep(Duration.ofSeconds(5).toMillis());
+        Thread.sleep(Duration.ofSeconds(5).toMillis());
 
-    log.info("Job completed !");
-  }
+        log.info("Job completed !");
+    }
 }

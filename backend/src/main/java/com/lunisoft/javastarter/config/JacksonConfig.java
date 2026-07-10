@@ -15,22 +15,22 @@ import tools.jackson.databind.module.SimpleModule;
 @Configuration
 public class JacksonConfig {
 
-  @Bean
-  public JacksonModule trimStringModule() {
-    SimpleModule module = new SimpleModule("TrimStringModule");
-    module.addDeserializer(String.class, new TrimStringDeserializer());
+    @Bean
+    public JacksonModule trimStringModule() {
+        SimpleModule module = new SimpleModule("TrimStringModule");
+        module.addDeserializer(String.class, new TrimStringDeserializer());
 
-    return module;
-  }
-
-  /** Custom String deserializer that trims whitespace and converts blank strings to null. */
-  private static class TrimStringDeserializer extends StringDeserializer {
-
-    @Override
-    public String deserialize(JsonParser p, DeserializationContext ctxt) {
-      String value = p.getString();
-
-      return value == null ? null : value.trim();
+        return module;
     }
-  }
+
+    /** Custom String deserializer that trims whitespace and converts blank strings to null. */
+    private static class TrimStringDeserializer extends StringDeserializer {
+
+        @Override
+        public String deserialize(JsonParser p, DeserializationContext ctxt) {
+            String value = p.getString();
+
+            return value == null ? null : value.trim();
+        }
+    }
 }

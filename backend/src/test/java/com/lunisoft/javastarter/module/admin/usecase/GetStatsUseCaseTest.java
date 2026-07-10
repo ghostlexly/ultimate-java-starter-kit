@@ -1,8 +1,5 @@
 package com.lunisoft.javastarter.module.admin.usecase;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import org.junit.jupiter.api.Test;
@@ -11,31 +8,38 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 class GetStatsUseCaseTest {
 
-  @Mock private AccountRepository accountRepository;
-  @Mock private SessionRepository sessionRepository;
+    @Mock
+    private AccountRepository accountRepository;
 
-  @InjectMocks private GetStatsUseCase getStatsUseCase;
+    @Mock
+    private SessionRepository sessionRepository;
 
-  @Test
-  void execute_returns_accounts_and_session_counts() {
-    when(accountRepository.count()).thenReturn(42L);
-    when(sessionRepository.count()).thenReturn(7L);
+    @InjectMocks
+    private GetStatsUseCase getStatsUseCase;
 
-    var output = getStatsUseCase.execute();
+    @Test
+    void execute_returns_accounts_and_session_counts() {
+        when(accountRepository.count()).thenReturn(42L);
+        when(sessionRepository.count()).thenReturn(7L);
 
-    assertThat(output).containsEntry("accounts", 42L).containsEntry("activeSessions", 7L);
-  }
+        var output = getStatsUseCase.execute();
 
-  @Test
-  void execute_zero_counts_returns_zeros() {
-    when(accountRepository.count()).thenReturn(0L);
-    when(sessionRepository.count()).thenReturn(0L);
+        assertThat(output).containsEntry("accounts", 42L).containsEntry("activeSessions", 7L);
+    }
 
-    var output = getStatsUseCase.execute();
+    @Test
+    void execute_zero_counts_returns_zeros() {
+        when(accountRepository.count()).thenReturn(0L);
+        when(sessionRepository.count()).thenReturn(0L);
 
-    assertThat(output).containsEntry("accounts", 0L).containsEntry("activeSessions", 0L);
-  }
+        var output = getStatsUseCase.execute();
+
+        assertThat(output).containsEntry("accounts", 0L).containsEntry("activeSessions", 0L);
+    }
 }

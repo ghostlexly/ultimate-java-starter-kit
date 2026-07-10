@@ -4,6 +4,8 @@ import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.property.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import org.springframework.stereotype.Component;
+
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -12,110 +14,106 @@ import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
-import java.util.Date;
 import java.util.UUID;
-import org.springframework.stereotype.Component;
 
 /** Handles JWT token generation and validation using RSA256. */
 @Component
 public class JwtTokenProvider {
 
-  private static final long CLOCK_SKEW_SECONDS = 60;
+    private static final long CLOCK_SKEW_SECONDS = 60;
 
-  private final PrivateKey privateKey;
-  private final PublicKey publicKey;
-  private final JwtProperties jwtProperties;
+    private final PrivateKey privateKey;
+    private final PublicKey publicKey;
+    private final JwtProperties jwtProperties;
 
-  public JwtTokenProvider(JwtProperties jwtProperties) {
-    this.jwtProperties = jwtProperties;
-    this.privateKey = decodePrivateKey(jwtProperties.privateKey());
-    this.publicKey = decodePublicKey(jwtProperties.publicKey());
-  }
-
-  /** Generates a short-lived access token containing user identity and role. */
-  public String generateAccessToken(UUID sessionId, UUID accountId, String email, Role role) {
-    Instant now = Instant.now();
-
-    return Jwts.builder()
-        .issuer(jwtProperties.issuer())
-        .audience()
-        .add(jwtProperties.audience())
-        .and()
-        .subject(accountId.toString())
-        .claim("sessionId", sessionId.toString())
-        .claim("email", email)
-        .claim("role", role.name())
-        .issuedAt(Date.from(now))
-        .expiration(
-            Date.from(now.plus(jwtProperties.accessTokenExpirationMinutes(), ChronoUnit.MINUTES)))
-        .signWith(privateKey)
-        .compact();
-  }
-
-  /** Generates a long-lived refresh token tied to a session. */
-  public String generateRefreshToken(UUID sessionId) {
-    Instant now = Instant.now();
-
-    return Jwts.builder()
-        .issuer(jwtProperties.issuer())
-        .audience()
-        .add(jwtProperties.audience())
-        .and()
-        .subject(sessionId.toString())
-        .issuedAt(Date.from(now))
-        .expiration(
-            Date.from(now.plus(jwtProperties.refreshTokenExpirationMinutes(), ChronoUnit.MINUTES)))
-        .signWith(privateKey)
-        .compact();
-  }
-
-  public int getRefreshTokenExpirationMinutes() {
-    return jwtProperties.refreshTokenExpirationMinutes();
-  }
-
-  /** Parses and validates a JWT token (signature, expiry, issuer, audience), returning its claims. */
-  public Claims parseToken(String token) {
-    return Jwts.parser()
-        .verifyWith(publicKey)
-        .requireIssuer(jwtProperties.issuer())
-        .requireAudience(jwtProperties.audience())
-        .clockSkewSeconds(CLOCK_SKEW_SECONDS)
-        .build()
-        .parseSignedClaims(token)
-        .getPayload();
-  }
-
-  private PrivateKey decodePrivateKey(String base64Key) {
-    try {
-      byte[] keyBytes = Base64.getDecoder().decode(base64Key);
-      String pem =
-          new String(keyBytes)
-              .replace("-----BEGIN PRIVATE KEY-----", "")
-              .replace("-----END PRIVATE KEY-----", "")
-              .replace("-----BEGIN RSA PRIVATE KEY-----", "")
-              .replace("-----END RSA PRIVATE KEY-----", "")
-              .replaceAll("\\s", "");
-      byte[] decoded = Base64.getDecoder().decode(pem);
-
-      return KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(decoded));
-    } catch (Exception e) {
-      throw new IllegalStateException("Failed to decode JWT private key", e);
+    public JwtTokenProvider(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+        this.privateKey = decodePrivateKey(jwtProperties.privateKey());
+        this.publicKey = decodePublicKey(jwtProperties.publicKey());
     }
-  }
 
-  private PublicKey decodePublicKey(String base64Key) {
-    try {
-      byte[] keyBytes = Base64.getDecoder().decode(base64Key);
-      String pem =
-          new String(keyBytes)
-              .replace("-----BEGIN PUBLIC KEY-----", "")
-              .replace("-----END PUBLIC KEY-----", "")
-              .replaceAll("\\s", "");
-      byte[] decoded = Base64.getDecoder().decode(pem);
+    /** Generates a short-lived access token containing user identity and role. */
+    public String generateAccessToken(UUID sessionId, UUID accountId, String email, Role role) {
+        Instant now = Instant.now();
+        Instant expiresAt = now.plus(jwtProperties.accessTokenExpirationMinutes(), ChronoUnit.MINUTES);
 
-      return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(decoded));
-    } catch (Exception e) {
-      throw new IllegalStateException("Failed to decode JWT public key", e);
+        return Jwts.builder()
+                .issuer(jwtProperties.issuer())
+                .audience()
+                .add(jwtProperties.audience())
+                .and()
+                .subject(accountId.toString())
+                .claim("sessionId", sessionId.toString())
+                .claim("email", email)
+                .claim("role", role.name())
+                .claim(Claims.ISSUED_AT, now.getEpochSecond())
+                .claim(Claims.EXPIRATION, expiresAt.getEpochSecond())
+                .signWith(privateKey)
+                .compact();
     }
-  }
+
+    /** Generates a long-lived refresh token tied to a session. */
+    public String generateRefreshToken(UUID sessionId) {
+        Instant now = Instant.now();
+        Instant expiresAt = now.plus(jwtProperties.refreshTokenExpirationMinutes(), ChronoUnit.MINUTES);
+
+        return Jwts.builder()
+                .issuer(jwtProperties.issuer())
+                .audience()
+                .add(jwtProperties.audience())
+                .and()
+                .subject(sessionId.toString())
+                .claim(Claims.ISSUED_AT, now.getEpochSecond())
+                .claim(Claims.EXPIRATION, expiresAt.getEpochSecond())
+                .signWith(privateKey)
+                .compact();
+    }
+
+    public int getRefreshTokenExpirationMinutes() {
+        return jwtProperties.refreshTokenExpirationMinutes();
+    }
+
+    /** Parses and validates a JWT token (signature, expiry, issuer, audience), returning its claims. */
+    public Claims parseToken(String token) {
+        return Jwts.parser()
+                .verifyWith(publicKey)
+                .requireIssuer(jwtProperties.issuer())
+                .requireAudience(jwtProperties.audience())
+                .clockSkewSeconds(CLOCK_SKEW_SECONDS)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    private PrivateKey decodePrivateKey(String base64Key) {
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(base64Key);
+            String pem = new String(keyBytes)
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace("-----END PRIVATE KEY-----", "")
+                    .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                    .replace("-----END RSA PRIVATE KEY-----", "")
+                    .replaceAll("\\s", "");
+            byte[] decoded = Base64.getDecoder().decode(pem);
+
+            return KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(decoded));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to decode JWT private key", e);
+        }
+    }
+
+    private PublicKey decodePublicKey(String base64Key) {
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(base64Key);
+            String pem = new String(keyBytes)
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\\s", "");
+            byte[] decoded = Base64.getDecoder().decode(pem);
+
+            return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(decoded));
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to decode JWT public key", e);
+        }
+    }
 }

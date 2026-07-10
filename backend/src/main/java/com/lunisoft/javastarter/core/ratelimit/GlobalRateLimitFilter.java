@@ -6,14 +6,15 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.time.Duration;
 
 /**
  * Global safety net protecting the whole application from abuse: limits every request to a maximum
@@ -32,37 +33,36 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class GlobalRateLimitFilter extends OncePerRequestFilter {
 
-  private final RateLimitService rateLimitService;
-  private final RateLimitProperties rateLimitProperties;
+    private final RateLimitService rateLimitService;
+    private final RateLimitProperties rateLimitProperties;
 
-  @Override
-  protected void doFilterInternal(
-      @NonNull HttpServletRequest request,
-      @NonNull HttpServletResponse response,
-      @NonNull FilterChain filterChain)
-      throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
 
-    // Trusted internal traffic (Next.js SSR) is exempt from the global per-IP limit.
-    if (rateLimitService.isTrustedInternalRequest(request)) {
-      filterChain.doFilter(request, response);
+        // Trusted internal traffic (Next.js SSR) is exempt from the global per-IP limit.
+        if (rateLimitService.isTrustedInternalRequest(request)) {
+            filterChain.doFilter(request, response);
 
-      return;
+            return;
+        }
+
+        String key = "global:ip:%s".formatted(rateLimitService.resolveIpAddress(request));
+        ConsumptionProbe probe = rateLimitService.tryConsume(
+                key,
+                rateLimitProperties.global().requests(),
+                Duration.ofSeconds(rateLimitProperties.global().periodSeconds()));
+
+        if (!probe.isConsumed()) {
+            // Short-circuit the chain — the request never reaches Spring Security or a controller.
+            rateLimitService.writeRateLimitResponse(response, probe);
+
+            return;
+        }
+
+        filterChain.doFilter(request, response);
     }
-
-    String key = "global:ip:%s".formatted(rateLimitService.resolveIpAddress(request));
-    ConsumptionProbe probe =
-        rateLimitService.tryConsume(
-            key,
-            rateLimitProperties.global().requests(),
-            Duration.ofSeconds(rateLimitProperties.global().periodSeconds()));
-
-    if (!probe.isConsumed()) {
-      // Short-circuit the chain — the request never reaches Spring Security or a controller.
-      rateLimitService.writeRateLimitResponse(response, probe);
-
-      return;
-    }
-
-    filterChain.doFilter(request, response);
-  }
 }

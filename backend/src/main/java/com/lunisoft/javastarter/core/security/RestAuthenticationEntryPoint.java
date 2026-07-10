@@ -1,10 +1,8 @@
 package com.lunisoft.javastarter.core.security;
 
-import tools.jackson.databind.ObjectMapper;
 import com.lunisoft.javastarter.core.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
@@ -12,6 +10,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 
 /**
  * Returns a 401 JSON response when an unauthenticated user hits a protected endpoint.
@@ -30,19 +31,19 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-  private static final ErrorResponse BODY =
-      new ErrorResponse("UnauthorizedException", "Authentication required", "UNAUTHORIZED", null);
+    private static final ErrorResponse BODY =
+            new ErrorResponse("UnauthorizedException", "Authentication required", "UNAUTHORIZED", null);
 
-  private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-  @Override
-  public void commence(
-      @NonNull HttpServletRequest request,
-      HttpServletResponse response,
-      @NonNull AuthenticationException authException)
-      throws IOException {
-    response.setStatus(HttpStatus.UNAUTHORIZED.value());
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    objectMapper.writeValue(response.getWriter(), BODY);
-  }
+    @Override
+    public void commence(
+            @NonNull HttpServletRequest request,
+            HttpServletResponse response,
+            @NonNull AuthenticationException authException)
+            throws IOException {
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        objectMapper.writeValue(response.getWriter(), BODY);
+    }
 }

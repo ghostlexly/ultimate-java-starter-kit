@@ -1,6 +1,5 @@
 package com.lunisoft.javastarter.core.security;
 
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,6 +12,8 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import java.util.List;
+
 /**
  * Scans all registered request mappings for {@link PublicEndpoint} (on class or method) and builds
  * a {@link RequestMatcher} that permits those routes without authentication.
@@ -20,67 +21,63 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @Component
 public class PublicEndpointScanner {
 
-  private static final Logger log = LoggerFactory.getLogger(PublicEndpointScanner.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicEndpointScanner.class);
 
-  private final RequestMatcher publicEndpointsMatcher;
+    private final RequestMatcher publicEndpointsMatcher;
 
-  public PublicEndpointScanner(
-      @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
-    List<RequestMatcher> matchers =
-        handlerMapping.getHandlerMethods().entrySet().stream()
-            .filter(entry -> isPublicEndpoint(entry.getValue()))
-            .flatMap(entry -> toMatchers(entry.getKey()).stream())
-            .toList();
+    public PublicEndpointScanner(
+            @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
+        List<RequestMatcher> matchers = handlerMapping.getHandlerMethods().entrySet().stream()
+                .filter(entry -> isPublicEndpoint(entry.getValue()))
+                .flatMap(entry -> toMatchers(entry.getKey()).stream())
+                .toList();
 
-    this.publicEndpointsMatcher = matchers.isEmpty() ? _ -> false : new OrRequestMatcher(matchers);
+        this.publicEndpointsMatcher = matchers.isEmpty() ? _ -> false : new OrRequestMatcher(matchers);
 
-    log.info("Registered {} public endpoint(s)", matchers.size());
-  }
-
-  /** Returns a RequestMatcher that matches all @PublicEndpoint routes. */
-  public RequestMatcher getRequestMatcher() {
-    return publicEndpointsMatcher;
-  }
-
-  /** Checks if the handler method or its declaring class is annotated with @PublicEndpoint. */
-  private boolean isPublicEndpoint(HandlerMethod handlerMethod) {
-    return AnnotatedElementUtils.hasAnnotation(handlerMethod.getMethod(), PublicEndpoint.class)
-        || AnnotatedElementUtils.hasAnnotation(handlerMethod.getBeanType(), PublicEndpoint.class);
-  }
-
-  /** Converts a RequestMappingInfo into PathPatternRequestMatchers (one per method + pattern). */
-  private List<RequestMatcher> toMatchers(RequestMappingInfo mappingInfo) {
-    var methods = mappingInfo.getMethodsCondition().getMethods();
-    var pathPatternsCondition = mappingInfo.getPathPatternsCondition();
-
-    if (pathPatternsCondition == null) {
-      return List.of();
+        log.info("Registered {} public endpoint(s)", matchers.size());
     }
 
-    var patterns = pathPatternsCondition.getPatterns();
+    /** Returns a RequestMatcher that matches all @PublicEndpoint routes. */
+    public RequestMatcher getRequestMatcher() {
+        return publicEndpointsMatcher;
+    }
 
-    return patterns.stream()
-        .flatMap(
-            pattern -> {
-              String path = pattern.getPatternString();
+    /** Checks if the handler method or its declaring class is annotated with @PublicEndpoint. */
+    private boolean isPublicEndpoint(HandlerMethod handlerMethod) {
+        return AnnotatedElementUtils.hasAnnotation(handlerMethod.getMethod(), PublicEndpoint.class)
+                || AnnotatedElementUtils.hasAnnotation(handlerMethod.getBeanType(), PublicEndpoint.class);
+    }
 
-              // If no HTTP method constraint, match all methods for this path
-              if (methods.isEmpty()) {
-                log.debug("Public endpoint: * {}", path);
+    /** Converts a RequestMappingInfo into PathPatternRequestMatchers (one per method + pattern). */
+    private List<RequestMatcher> toMatchers(RequestMappingInfo mappingInfo) {
+        var methods = mappingInfo.getMethodsCondition().getMethods();
+        var pathPatternsCondition = mappingInfo.getPathPatternsCondition();
 
-                return java.util.stream.Stream.of(PathPatternRequestMatcher.pathPattern(path));
-              }
+        if (pathPatternsCondition == null) {
+            return List.of();
+        }
 
-              return methods.stream()
-                  .map(
-                      method -> {
+        var patterns = pathPatternsCondition.getPatterns();
+
+        return patterns.stream()
+                .flatMap(pattern -> {
+                    String path = pattern.getPatternString();
+
+                    // If no HTTP method constraint, match all methods for this path
+                    if (methods.isEmpty()) {
+                        log.debug("Public endpoint: * {}", path);
+
+                        return java.util.stream.Stream.of(PathPatternRequestMatcher.pathPattern(path));
+                    }
+
+                    return methods.stream().map(method -> {
                         var httpMethod = org.springframework.http.HttpMethod.valueOf(method.name());
                         log.debug("Public endpoint: {} {}", httpMethod, path);
 
                         return PathPatternRequestMatcher.pathPattern(httpMethod, path);
-                      });
-            })
-        .map(RequestMatcher.class::cast)
-        .toList();
-  }
+                    });
+                })
+                .map(RequestMatcher.class::cast)
+                .toList();
+    }
 }

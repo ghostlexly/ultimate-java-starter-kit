@@ -1,10 +1,8 @@
 package com.lunisoft.javastarter.core.security;
 
-import tools.jackson.databind.ObjectMapper;
 import com.lunisoft.javastarter.core.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpStatus;
@@ -12,6 +10,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 
 /**
  * Returns a 403 JSON response when an authenticated user lacks the required permission.
@@ -30,19 +31,19 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
 
-  private static final ErrorResponse BODY =
-      new ErrorResponse("ForbiddenException", "Access denied", "FORBIDDEN", null);
+    private static final ErrorResponse BODY =
+            new ErrorResponse("ForbiddenException", "Access denied", "FORBIDDEN", null);
 
-  private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-  @Override
-  public void handle(
-      @NonNull HttpServletRequest request,
-      HttpServletResponse response,
-      @NonNull AccessDeniedException accessDeniedException)
-      throws IOException {
-    response.setStatus(HttpStatus.FORBIDDEN.value());
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    objectMapper.writeValue(response.getWriter(), BODY);
-  }
+    @Override
+    public void handle(
+            @NonNull HttpServletRequest request,
+            HttpServletResponse response,
+            @NonNull AccessDeniedException accessDeniedException)
+            throws IOException {
+        response.setStatus(HttpStatus.FORBIDDEN.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        objectMapper.writeValue(response.getWriter(), BODY);
+    }
 }

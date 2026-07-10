@@ -1,18 +1,11 @@
 package com.lunisoft.javastarter.module.customer.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
-
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.customer.event.CustomerEmailUpdatedEvent;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,86 +14,83 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.lunisoft.javastarter.shared.TestFactory.createCustomerAccount;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class UpdateCustomerEmailUseCaseTest {
 
-  @Mock private CustomerRepository customerRepository;
-  @Mock private AccountRepository accountRepository;
-  @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock
+    private CustomerRepository customerRepository;
 
-  @InjectMocks private UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
+    @Mock
+    private AccountRepository accountRepository;
 
-  @Test
-  void execute_valid_request_updates_email_and_publishes_event() {
-    Account account = createCustomerAccount();
-    var accountId = account.getId();
-    Customer customer = account.getCustomer();
-    var input = new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com");
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
-    when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
-    when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.of(customer));
+    @InjectMocks
+    private UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
 
-    var output = updateCustomerEmailUseCase.execute(input);
+    @Test
+    void execute_valid_request_updates_email_and_publishes_event() {
+        Account account = createCustomerAccount();
+        var accountId = account.getId();
+        Customer customer = account.getCustomer();
+        var input = new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com");
 
-    // Verify that the account's email was updated'
-    assertThat(output.email()).isEqualTo("new@example.com");
-    assertThat(account.getEmail()).isEqualTo("new@example.com");
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.of(customer));
 
-    // Verify that the CustomerEmailUpdated event was published
-    verify(eventPublisher)
-        .publishEvent(
-            (Object)
-                assertArg(
-                    event -> {
-                      assertThat(event)
-                          .isInstanceOfSatisfying(
-                              CustomerEmailUpdatedEvent.class,
-                              customerEmailUpdatedEvent -> {
-                                assertThat(customerEmailUpdatedEvent.customer())
-                                    .isEqualTo(customer);
-                                assertThat(customerEmailUpdatedEvent.newEmail())
-                                    .isEqualTo("new@example.com");
-                              });
-                    }));
-  }
+        var output = updateCustomerEmailUseCase.execute(input);
 
-  @Test
-  void execute_account_not_found_throws_business_rule_exception() {
-    var accountId = UUID.randomUUID();
-    when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
+        // Verify that the account's email was updated'
+        assertThat(output.email()).isEqualTo("new@example.com");
+        assertThat(account.getEmail()).isEqualTo("new@example.com");
 
-    assertThatThrownBy(
-            () ->
-                updateCustomerEmailUseCase.execute(
-                    new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
-        .isInstanceOfSatisfying(
-            BusinessRuleException.class,
-            exception -> {
-              assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-              assertThat(exception.getCode()).isEqualTo("NOT_FOUND");
+        // Verify that the CustomerEmailUpdated event was published
+        verify(eventPublisher).publishEvent((Object) assertArg(event -> {
+            assertThat(event).isInstanceOfSatisfying(CustomerEmailUpdatedEvent.class, customerEmailUpdatedEvent -> {
+                assertThat(customerEmailUpdatedEvent.customer()).isEqualTo(customer);
+                assertThat(customerEmailUpdatedEvent.newEmail()).isEqualTo("new@example.com");
             });
+        }));
+    }
 
-    verify(eventPublisher, never()).publishEvent(any());
-  }
+    @Test
+    void execute_account_not_found_throws_business_rule_exception() {
+        var accountId = UUID.randomUUID();
+        when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
-  @Test
-  void execute_customer_not_found_throws_business_rule_exception() {
-    Account account = createCustomerAccount();
-    var accountId = account.getId();
+        assertThatThrownBy(() -> updateCustomerEmailUseCase.execute(
+                        new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
+                .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
+                    assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                    assertThat(exception.getCode()).isEqualTo("NOT_FOUND");
+                });
 
-    when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
-    when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.empty());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
 
-    assertThatThrownBy(
-            () ->
-                updateCustomerEmailUseCase.execute(
-                    new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
-        .isInstanceOfSatisfying(
-            BusinessRuleException.class,
-            exception -> {
-              assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
-            });
+    @Test
+    void execute_customer_not_found_throws_business_rule_exception() {
+        Account account = createCustomerAccount();
+        var accountId = account.getId();
 
-    verify(eventPublisher, never()).publishEvent(any());
-  }
+        when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
+        when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> updateCustomerEmailUseCase.execute(
+                        new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
+                .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
+                    assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
+
+        verify(eventPublisher, never()).publishEvent(any());
+    }
 }

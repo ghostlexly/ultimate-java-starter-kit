@@ -1,54 +1,56 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
-import static com.lunisoft.javastarter.shared.TestFactory.createCustomerAccount;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
+import static com.lunisoft.javastarter.shared.TestFactory.createCustomerAccount;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 class SearchCustomersUseCaseTest {
 
-  @Mock private DemoCustomerRepository demoCustomerRepository;
+    @Mock
+    private DemoCustomerRepository demoCustomerRepository;
 
-  @InjectMocks private SearchCustomersUseCase searchCustomersUseCase;
+    @InjectMocks
+    private SearchCustomersUseCase searchCustomersUseCase;
 
-  @Test
-  void execute_with_results_returns_mapped_responses() {
-    var account1 = createCustomerAccount();
-    account1.setEmail("alice@example.com");
-    var customer1 = account1.getCustomer();
+    @Test
+    void execute_with_results_returns_mapped_responses() {
+        var account1 = createCustomerAccount();
+        account1.setEmail("alice@example.com");
+        var customer1 = account1.getCustomer();
 
-    var account2 = createCustomerAccount();
-    account2.setEmail("bob@example.com");
-    var customer2 = account2.getCustomer();
+        var account2 = createCustomerAccount();
+        account2.setEmail("bob@example.com");
+        var customer2 = account2.getCustomer();
 
-    when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER))
-        .thenReturn(List.of(customer1, customer2));
+        when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER)).thenReturn(List.of(customer1, customer2));
 
-    var input = new SearchCustomersUseCase.Input(Role.CUSTOMER);
-    var output = searchCustomersUseCase.execute(input);
+        var input = new SearchCustomersUseCase.Input(Role.CUSTOMER);
+        var output = searchCustomersUseCase.execute(input);
 
-    assertThat(output).hasSize(2);
-    assertThat(output.get(0).email()).isEqualTo("alice@example.com");
-    assertThat(output.get(0).role()).isEqualTo("CUSTOMER");
-    assertThat(output.get(1).email()).isEqualTo("bob@example.com");
-  }
+        assertThat(output).hasSize(2);
+        assertThat(output.get(0).email()).isEqualTo("alice@example.com");
+        assertThat(output.get(0).role()).isEqualTo("CUSTOMER");
+        assertThat(output.get(1).email()).isEqualTo("bob@example.com");
+    }
 
-  @Test
-  void execute_no_results_returns_empty_list() {
-    when(demoCustomerRepository.findByAccountRole(Role.ADMIN)).thenReturn(List.of());
+    @Test
+    void execute_no_results_returns_empty_list() {
+        when(demoCustomerRepository.findByAccountRole(Role.ADMIN)).thenReturn(List.of());
 
-    var input = new SearchCustomersUseCase.Input(Role.ADMIN);
-    var output = searchCustomersUseCase.execute(input);
+        var input = new SearchCustomersUseCase.Input(Role.ADMIN);
+        var output = searchCustomersUseCase.execute(input);
 
-    assertThat(output).isEmpty();
-  }
+        assertThat(output).isEmpty();
+    }
 }

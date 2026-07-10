@@ -11,83 +11,79 @@ import com.lunisoft.javastarter.module.auth.event.LoginCodeRequestedEvent;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
-import java.security.SecureRandom;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class SendCodeUseCase {
 
-  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-  private final AccountRepository accountRepository;
-  private final CustomerRepository customerRepository;
-  private final VerificationTokenRepository verificationTokenRepository;
-  private final ApplicationEventPublisher eventPublisher;
+    private final AccountRepository accountRepository;
+    private final CustomerRepository customerRepository;
+    private final VerificationTokenRepository verificationTokenRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-  /**
-   * Generates a 4-digit login code and stores it as a VerificationToken. Creates the account if it
-   * doesn't exist (defaults to CUSTOMER role).
-   */
-  @Transactional
-  public void execute(String email) {
-    // Normalize the email so lookups and storage are case insensitive
-    String normalizedEmail = email.toLowerCase();
+    /**
+     * Generates a 4-digit login code and stores it as a VerificationToken. Creates the account if it
+     * doesn't exist (defaults to CUSTOMER role).
+     */
+    @Transactional
+    public void execute(String email) {
+        // Normalize the email so lookups and storage are case insensitive
+        String normalizedEmail = email.toLowerCase();
 
-    Account account =
-        accountRepository
-            .findByEmail(normalizedEmail)
-            .orElseGet(
-                () -> {
-                  Account newAccount = new Account();
-                  newAccount.setEmail(normalizedEmail);
-                  newAccount.setRole(Role.CUSTOMER);
-                  Account savedAccount = accountRepository.save(newAccount);
+        Account account = accountRepository.findByEmail(normalizedEmail).orElseGet(() -> {
+            Account newAccount = new Account();
+            newAccount.setEmail(normalizedEmail);
+            newAccount.setRole(Role.CUSTOMER);
+            Account savedAccount = accountRepository.save(newAccount);
 
-                  Customer newCustomer = new Customer();
-                  newCustomer.setAccount(savedAccount);
-                  customerRepository.save(newCustomer);
+            Customer newCustomer = new Customer();
+            newCustomer.setAccount(savedAccount);
+            customerRepository.save(newCustomer);
 
-                  return savedAccount;
-                });
+            return savedAccount;
+        });
 
-    // Enforce cooldown between code requests
-    verificationTokenRepository
-        .findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
-            account.getId(), VerificationType.LOGIN_CODE)
-        .ifPresent(this::checkCooldown);
+        // Enforce cooldown between code requests
+        verificationTokenRepository
+                .findFirstByAccountIdAndTypeOrderByCreatedAtDesc(account.getId(), VerificationType.LOGIN_CODE)
+                .ifPresent(this::checkCooldown);
 
-    String code = "%04d".formatted(SECURE_RANDOM.nextInt(10000));
+        String code = "%04d".formatted(SECURE_RANDOM.nextInt(10000));
 
-    VerificationToken token = new VerificationToken();
-    token.setToken(UUID.randomUUID().toString());
-    token.setType(VerificationType.LOGIN_CODE);
-    token.setValue(code);
-    token.setAccount(account);
-    token.setExpiresAt(
-        Instant.now().plus(AuthConstants.LOGIN_CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES));
-    verificationTokenRepository.save(token);
+        VerificationToken token = new VerificationToken();
+        token.setToken(UUID.randomUUID().toString());
+        token.setType(VerificationType.LOGIN_CODE);
+        token.setValue(code);
+        token.setAccount(account);
+        token.setExpiresAt(Instant.now().plus(AuthConstants.LOGIN_CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES));
+        verificationTokenRepository.save(token);
 
-    eventPublisher.publishEvent(new LoginCodeRequestedEvent(normalizedEmail, code));
-  }
-
-  private void checkCooldown(VerificationToken lastToken) {
-    long secondsSince = Duration.between(lastToken.getCreatedAt(), Instant.now()).toSeconds();
-
-    if (secondsSince < AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS) {
-      long remaining = AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS - secondsSince;
-      throw new BusinessRuleException(
-          "Please wait %s seconds before requesting a new code.".formatted(remaining),
-          "LOGIN_CODE_COOLDOWN",
-          HttpStatus.TOO_MANY_REQUESTS);
+        eventPublisher.publishEvent(new LoginCodeRequestedEvent(normalizedEmail, code));
     }
-  }
+
+    private void checkCooldown(VerificationToken lastToken) {
+        long secondsSince =
+                Duration.between(lastToken.getCreatedAt(), Instant.now()).toSeconds();
+
+        if (secondsSince < AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS) {
+            long remaining = AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS - secondsSince;
+            throw new BusinessRuleException(
+                    "Please wait %s seconds before requesting a new code.".formatted(remaining),
+                    "LOGIN_CODE_COOLDOWN",
+                    HttpStatus.TOO_MANY_REQUESTS);
+        }
+    }
 }

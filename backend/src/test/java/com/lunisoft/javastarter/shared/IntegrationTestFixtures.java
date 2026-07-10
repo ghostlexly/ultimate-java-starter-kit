@@ -14,12 +14,13 @@ import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
 import com.lunisoft.javastarter.module.media.entity.Media;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.test.context.TestComponent;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.function.Consumer;
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.test.context.TestComponent;
 
 /**
  * Persisted-entity fixtures for integration tests.
@@ -44,147 +45,141 @@ import org.springframework.boot.test.context.TestComponent;
 @RequiredArgsConstructor
 public class IntegrationTestFixtures {
 
-  private final AccountRepository accountRepository;
-  private final CustomerRepository customerRepository;
-  private final AdminRepository adminRepository;
-  private final VerificationTokenRepository verificationTokenRepository;
-  private final SessionRepository sessionRepository;
-  private final MediaRepository mediaRepository;
+    private final AccountRepository accountRepository;
+    private final CustomerRepository customerRepository;
+    private final AdminRepository adminRepository;
+    private final VerificationTokenRepository verificationTokenRepository;
+    private final SessionRepository sessionRepository;
+    private final MediaRepository mediaRepository;
 
-  // ── Accounts ─────────────────────────────────────────────────────────────
+    // ── Accounts ─────────────────────────────────────────────────────────────
 
-  /**
-   * Customer account with the matching {@link Customer} row, both persisted and linked back.
-   */
-  public Account givenCustomer(String email) {
+    /**
+     * Customer account with the matching {@link Customer} row, both persisted and linked back.
+     */
+    public Account givenCustomer(String email) {
 
-    return givenCustomer(email, _ -> {
-    });
-  }
+        return givenCustomer(email, _ -> {});
+    }
 
-  /**
-   * Same as {@link #givenCustomer(String)} but lets the test mutate the {@link Account} first.
-   */
-  public Account givenCustomer(String email, Consumer<Account> customizer) {
-    var account = new Account();
-    account.setEmail(email);
-    account.setRole(Role.CUSTOMER);
-    account.setEmailVerified(true);
+    /**
+     * Same as {@link #givenCustomer(String)} but lets the test mutate the {@link Account} first.
+     */
+    public Account givenCustomer(String email, Consumer<Account> customizer) {
+        var account = new Account();
+        account.setEmail(email);
+        account.setRole(Role.CUSTOMER);
+        account.setEmailVerified(true);
 
-    var customer = new Customer();
-    customer.setAccount(account);
-    account.setCustomer(customer);
+        var customer = new Customer();
+        customer.setAccount(account);
+        account.setCustomer(customer);
 
-    customizer.accept(account);
+        customizer.accept(account);
 
-    accountRepository.save(account);
-    customerRepository.save(customer);
+        accountRepository.save(account);
+        customerRepository.save(customer);
 
-    return account;
-  }
+        return account;
+    }
 
-  /**
-   * Admin account with the matching {@link Admin} row, both persisted and linked back.
-   */
-  public Account givenAdmin(String email) {
-    return givenAdmin(email, _ -> {
-    });
-  }
+    /**
+     * Admin account with the matching {@link Admin} row, both persisted and linked back.
+     */
+    public Account givenAdmin(String email) {
+        return givenAdmin(email, _ -> {});
+    }
 
-  /**
-   * Same as {@link #givenAdmin(String)} but lets the test mutate the {@link Account} first.
-   */
-  public Account givenAdmin(String email, Consumer<Account> customizer) {
-    var account = new Account();
-    account.setEmail(email);
-    account.setRole(Role.ADMIN);
-    account.setEmailVerified(true);
+    /**
+     * Same as {@link #givenAdmin(String)} but lets the test mutate the {@link Account} first.
+     */
+    public Account givenAdmin(String email, Consumer<Account> customizer) {
+        var account = new Account();
+        account.setEmail(email);
+        account.setRole(Role.ADMIN);
+        account.setEmailVerified(true);
 
-    var admin = new Admin();
-    admin.setAccount(account);
-    account.setAdmin(admin);
+        var admin = new Admin();
+        admin.setAccount(account);
+        account.setAdmin(admin);
 
-    customizer.accept(account);
+        customizer.accept(account);
 
-    accountRepository.save(account);
-    adminRepository.save(admin);
+        accountRepository.save(account);
+        adminRepository.save(admin);
 
-    return account;
-  }
+        return account;
+    }
 
-  // ── Auth state ───────────────────────────────────────────────────────────
+    // ── Auth state ───────────────────────────────────────────────────────────
 
-  /**
-   * Login code: never tried, 15-minute expiry.
-   */
-  public VerificationToken givenLoginCode(Account account, String code) {
+    /**
+     * Login code: never tried, 15-minute expiry.
+     */
+    public VerificationToken givenLoginCode(Account account, String code) {
 
-    return givenLoginCode(account, code, _ -> {
-    });
-  }
+        return givenLoginCode(account, code, _ -> {});
+    }
 
-  /**
-   * Login code with the same defaults as {@link #givenLoginCode(Account, String)}, but lets the
-   * test override attempts / expiry / anything else before persistence.
-   */
-  public VerificationToken givenLoginCode(
-      Account account, String code, Consumer<VerificationToken> customizer) {
+    /**
+     * Login code with the same defaults as {@link #givenLoginCode(Account, String)}, but lets the
+     * test override attempts / expiry / anything else before persistence.
+     */
+    public VerificationToken givenLoginCode(Account account, String code, Consumer<VerificationToken> customizer) {
 
-    var token = new VerificationToken();
-    token.setToken(UUID.randomUUID().toString());
-    token.setType(VerificationType.LOGIN_CODE);
-    token.setValue(code);
-    token.setAccount(account);
-    token.setAttempts(0);
-    token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
-    customizer.accept(token);
+        var token = new VerificationToken();
+        token.setToken(UUID.randomUUID().toString());
+        token.setType(VerificationType.LOGIN_CODE);
+        token.setValue(code);
+        token.setAccount(account);
+        token.setAttempts(0);
+        token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
+        customizer.accept(token);
 
-    return verificationTokenRepository.save(token);
-  }
+        return verificationTokenRepository.save(token);
+    }
 
-  /**
-   * Session with a 1-day expiry — enough for refresh-flow tests.
-   */
-  public Session givenSession(Account account) {
+    /**
+     * Session with a 1-day expiry — enough for refresh-flow tests.
+     */
+    public Session givenSession(Account account) {
 
-    return givenSession(account, _ -> {
-    });
-  }
+        return givenSession(account, _ -> {});
+    }
 
-  /**
-   * Same as {@link #givenSession(Account)} but lets the test override expiry / ip / user-agent.
-   */
-  public Session givenSession(Account account, Consumer<Session> customizer) {
-    var session = new Session();
-    session.setAccount(account);
-    session.setExpiresAt(Instant.now().plus(1, ChronoUnit.DAYS));
-    customizer.accept(session);
+    /**
+     * Same as {@link #givenSession(Account)} but lets the test override expiry / ip / user-agent.
+     */
+    public Session givenSession(Account account, Consumer<Session> customizer) {
+        var session = new Session();
+        session.setAccount(account);
+        session.setExpiresAt(Instant.now().plus(1, ChronoUnit.DAYS));
+        customizer.accept(session);
 
-    return sessionRepository.save(session);
-  }
+        return sessionRepository.save(session);
+    }
 
-  // ── Media ────────────────────────────────────────────────────────────────
+    // ── Media ────────────────────────────────────────────────────────────────
 
-  /**
-   * Persisted {@link Media} row with PNG defaults — enough to stand in for an uploaded image.
-   */
-  public Media givenMedia() {
+    /**
+     * Persisted {@link Media} row with PNG defaults — enough to stand in for an uploaded image.
+     */
+    public Media givenMedia() {
 
-    return givenMedia(_ -> {
-    });
-  }
+        return givenMedia(_ -> {});
+    }
 
-  /**
-   * Same as {@link #givenMedia()} but lets the test override file name / key / mime type / size.
-   */
-  public Media givenMedia(Consumer<Media> customizer) {
-    var media = new Media();
-    media.setFileName("profile.png");
-    media.setKey("media/2026/01/01/%s.png".formatted(UUID.randomUUID()));
-    media.setMimeType("image/png");
-    media.setSize(1024);
-    customizer.accept(media);
+    /**
+     * Same as {@link #givenMedia()} but lets the test override file name / key / mime type / size.
+     */
+    public Media givenMedia(Consumer<Media> customizer) {
+        var media = new Media();
+        media.setFileName("profile.png");
+        media.setKey("media/2026/01/01/%s.png".formatted(UUID.randomUUID()));
+        media.setMimeType("image/png");
+        media.setSize(1024);
+        customizer.accept(media);
 
-    return mediaRepository.save(media);
-  }
+        return mediaRepository.save(media);
+    }
 }

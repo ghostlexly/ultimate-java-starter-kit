@@ -18,27 +18,25 @@ import org.springframework.web.bind.annotation.*;
 @PreAuthorize("hasRole('CUSTOMER')")
 public class CustomerController {
 
-  private final GetProfileUseCase getProfileUseCase;
-  private final UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
+    private final GetProfileUseCase getProfileUseCase;
+    private final UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
 
-  @GetMapping("profile")
-  public ResponseEntity<CustomerResponse> getProfile(
-      @AuthenticationPrincipal UserPrincipal principal) {
+    @GetMapping("profile")
+    public ResponseEntity<CustomerResponse> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
 
-    CustomerResponse response = this.getProfileUseCase.execute(principal.accountId());
+        CustomerResponse response = this.getProfileUseCase.execute(principal.accountId());
 
-    return ResponseEntity.ok(response);
-  }
+        return ResponseEntity.ok(response);
+    }
 
-  @PatchMapping("email")
-  public ResponseEntity<CustomerResponse> updateEmail(
-      @AuthenticationPrincipal UserPrincipal principal,
-      @Valid @RequestBody UpdateCustomerEmailRequest request) {
+    @PatchMapping("email")
+    public ResponseEntity<CustomerResponse> updateEmail(
+            @AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody UpdateCustomerEmailRequest request) {
 
-    var input = new UpdateCustomerEmailUseCase.Input(principal.accountId(), request.email());
+        var input = new UpdateCustomerEmailUseCase.Input(principal.accountId(), request.email());
 
-    CustomerResponse response = this.updateCustomerEmailUseCase.execute(input);
+        CustomerResponse response = this.updateCustomerEmailUseCase.execute(input);
 
-    return ResponseEntity.ok(response);
-  }
+        return ResponseEntity.ok(response);
+    }
 }

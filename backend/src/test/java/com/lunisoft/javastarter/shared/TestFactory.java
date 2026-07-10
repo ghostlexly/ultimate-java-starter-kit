@@ -17,66 +17,65 @@ import java.util.UUID;
  */
 public final class TestFactory {
 
-  // ── Account ──────────────────────────────────────────────
+    // ── Account ──────────────────────────────────────────────
 
-  public static Account createCustomerAccount() {
-    var account = new Account();
-    account.setId(UUID.randomUUID());
-    account.setEmail("contact+customer@lunisoft.fr");
-    account.setRole(Role.CUSTOMER);
+    public static Account createCustomerAccount() {
+        var account = new Account();
+        account.setId(UUID.randomUUID());
+        account.setEmail("contact+customer@lunisoft.fr");
+        account.setRole(Role.CUSTOMER);
 
-    var customer = createCustomer(account);
-    account.setCustomer(customer);
+        var customer = createCustomer(account);
+        account.setCustomer(customer);
 
-    return account;
-  }
+        return account;
+    }
 
-  public static Account createAdminAccount() {
-    var account = new Account();
-    account.setId(UUID.randomUUID());
-    account.setEmail("contact+admin@lunisoft.fr");
-    account.setRole(Role.ADMIN);
+    public static Account createAdminAccount() {
+        var account = new Account();
+        account.setId(UUID.randomUUID());
+        account.setEmail("contact+admin@lunisoft.fr");
+        account.setRole(Role.ADMIN);
 
-    var admin = new Admin();
-    account.setAdmin(admin);
+        var admin = new Admin();
+        account.setAdmin(admin);
 
-    return account;
-  }
+        return account;
+    }
 
-  // ── Customer ─────────────────────────────────────────────
+    // ── Customer ─────────────────────────────────────────────
 
-  public static Customer createCustomer(Account account) {
-    var customer = new Customer();
-    customer.setId(UUID.randomUUID());
-    customer.setAccount(account);
+    public static Customer createCustomer(Account account) {
+        var customer = new Customer();
+        customer.setId(UUID.randomUUID());
+        customer.setAccount(account);
 
-    return customer;
-  }
+        return customer;
+    }
 
-  // ── Session ──────────────────────────────────────────────
+    // ── Session ──────────────────────────────────────────────
 
-  public static Session createSession(Account account) {
-    var session = new Session();
-    session.setId(UUID.randomUUID());
-    session.setAccount(account);
-    session.setExpiresAt(Instant.now().plus(7, ChronoUnit.DAYS));
+    public static Session createSession(Account account) {
+        var session = new Session();
+        session.setId(UUID.randomUUID());
+        session.setAccount(account);
+        session.setExpiresAt(Instant.now().plus(7, ChronoUnit.DAYS));
 
-    return session;
-  }
+        return session;
+    }
 
-  // ── VerificationToken ────────────────────────────────────
+    // ── VerificationToken ────────────────────────────────────
 
-  public static VerificationToken createVerificationToken(
-      Account account, String code, int attempts) {
-    var token = new VerificationToken();
-    token.setId(UUID.randomUUID());
-    token.setToken(UUID.randomUUID().toString());
-    token.setType(VerificationType.LOGIN_CODE);
-    token.setValue(code);
-    token.setAccount(account);
-    token.setAttempts(attempts);
-    token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
+    public static VerificationToken createVerificationToken(Account account, String code, int attempts) {
+        var token = new VerificationToken();
+        token.setId(UUID.randomUUID());
+        token.setToken(UUID.randomUUID().toString());
+        token.setType(VerificationType.LOGIN_CODE);
+        token.setValue(code);
+        token.setAccount(account);
+        token.setAttempts(attempts);
+        token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
 
-    return token;
-  }
+        return token;
+    }
 }

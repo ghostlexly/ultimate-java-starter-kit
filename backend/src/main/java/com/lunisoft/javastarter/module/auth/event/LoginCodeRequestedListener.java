@@ -12,11 +12,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class LoginCodeRequestedListener {
-  private static final Logger log = LoggerFactory.getLogger(LoginCodeRequestedListener.class);
+    private static final Logger log = LoggerFactory.getLogger(LoginCodeRequestedListener.class);
 
-  @Async
-  @EventListener
-  public void handle(LoginCodeRequestedEvent event) {
-    log.info("Login code for {}: {}", event.email(), event.code());
-  }
+    @Async
+    @EventListener
+    public void handle(LoginCodeRequestedEvent event) {
+        log.info("Login code for {}: {}", event.email(), event.code());
+    }
 }

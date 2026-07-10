@@ -12,20 +12,20 @@ import org.springframework.stereotype.Component;
 @Component
 public class CustomerEmailUpdatedListener {
 
-  private static final Logger log = LoggerFactory.getLogger(CustomerEmailUpdatedListener.class);
+    private static final Logger log = LoggerFactory.getLogger(CustomerEmailUpdatedListener.class);
 
-  @EventListener
-  public void handle(CustomerEmailUpdatedEvent event) {
-    detectCountryFromEmail(event);
-  }
-
-  /** Auto-detects country code based on known email addresses. */
-  private void detectCountryFromEmail(CustomerEmailUpdatedEvent event) {
-    String newEmail = event.newEmail();
-
-    if ("contact@lunisoft.fr".equalsIgnoreCase(newEmail)) {
-      //      event.customer().setCountryCode("FR");
-      log.info("Auto-detected country code FR for email {}", newEmail);
+    @EventListener
+    public void handle(CustomerEmailUpdatedEvent event) {
+        detectCountryFromEmail(event);
     }
-  }
+
+    /** Auto-detects country code based on known email addresses. */
+    private void detectCountryFromEmail(CustomerEmailUpdatedEvent event) {
+        String newEmail = event.newEmail();
+
+        if ("contact@lunisoft.fr".equalsIgnoreCase(newEmail)) {
+            //      event.customer().setCountryCode("FR");
+            log.info("Auto-detected country code FR for email {}", newEmail);
+        }
+    }
 }

@@ -2,7 +2,10 @@ package com.lunisoft.javastarter.module.admin.entity;
 
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.shared.entity.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,7 +14,7 @@ import lombok.Setter;
 @Setter
 public class Admin extends BaseEntity {
 
-  @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "account_id", nullable = false, unique = true)
-  private Account account;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false, unique = true)
+    private Account account;
 }

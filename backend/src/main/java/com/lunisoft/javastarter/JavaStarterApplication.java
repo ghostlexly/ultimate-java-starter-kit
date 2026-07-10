@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableRetry
 public class JavaStarterApplication {
-  static void main(String[] args) {
-    SpringApplication.run(JavaStarterApplication.class, args);
-  }
+    static void main(String[] args) {
+        SpringApplication.run(JavaStarterApplication.class, args);
+    }
 }

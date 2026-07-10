@@ -13,12 +13,12 @@ import com.lunisoft.javastarter.module.email.dto.EmailRequest;
  */
 public interface EmailService {
 
-  /**
-   * Send a transactional email built from a logical {@link EmailRequest}. Implementations are
-   * responsible for translating the request into the provider's wire format and applying any retry
-   * / error-handling policy.
-   *
-   * @param request the email to send (recipient, template id, params, attachments, ...)
-   */
-  void send(EmailRequest request);
+    /**
+     * Send a transactional email built from a logical {@link EmailRequest}. Implementations are
+     * responsible for translating the request into the provider's wire format and applying any retry
+     * / error-handling policy.
+     *
+     * @param request the email to send (recipient, template id, params, attachments, ...)
+     */
+    void send(EmailRequest request);
 }

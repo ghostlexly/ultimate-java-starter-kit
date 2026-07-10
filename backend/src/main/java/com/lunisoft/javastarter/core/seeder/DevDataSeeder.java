@@ -28,48 +28,48 @@ import org.springframework.transaction.annotation.Transactional;
 @Order(2) // Run this DevDataSeeder after ProductionDataSeeder
 public class DevDataSeeder implements ApplicationRunner {
 
-  // For testing purposes only
-  private static final String HASHED_BCRYPT = "{bcrypt}$2a$10$vqXouglkzcu59WGAeVchzekx8a26sJ9GPUHUqNTCSCi/ira.5s1G.";
+    // For testing purposes only
+    private static final String HASHED_BCRYPT = "{bcrypt}$2a$10$vqXouglkzcu59WGAeVchzekx8a26sJ9GPUHUqNTCSCi/ira.5s1G.";
 
-  private final Logger log = LoggerFactory.getLogger(DevDataSeeder.class);
+    private final Logger log = LoggerFactory.getLogger(DevDataSeeder.class);
 
-  private final AccountRepository accountRepository;
-  private final CustomerRepository customerRepository;
-  private final PasswordEncoder passwordEncoder;
+    private final AccountRepository accountRepository;
+    private final CustomerRepository customerRepository;
+    private final PasswordEncoder passwordEncoder;
 
-  @Override
-  @Transactional
-  public void run(@NonNull ApplicationArguments args) {
-    seedCustomerAccount();
-    log.info("Dev data seeding complete.");
-  }
-
-  // ── Customer account with addresses ────────────────────────────────────────
-
-  private void seedCustomerAccount() {
-    var email = "customer@lunisoft.fr";
-
-    if (accountRepository.findByEmail(email).isPresent()) {
-      log.info("Customer account already exists, skipping.");
-
-      return;
+    @Override
+    @Transactional
+    public void run(@NonNull ApplicationArguments args) {
+        seedCustomerAccount();
+        log.info("Dev data seeding complete.");
     }
 
-    // Account
-    var account = new Account();
-    account.setEmail(email);
-    account.setPassword(HASHED_BCRYPT);
-    account.setRole(Role.CUSTOMER);
-    account.setEmailVerified(true);
-    accountRepository.save(account);
+    // ── Customer account with addresses ────────────────────────────────────────
 
-    // Customer
-    var customer = new Customer();
-    customer.setAccount(account);
-    customerRepository.save(customer);
+    private void seedCustomerAccount() {
+        var email = "customer@lunisoft.fr";
 
-    customerRepository.save(customer);
+        if (accountRepository.findByEmail(email).isPresent()) {
+            log.info("Customer account already exists, skipping.");
 
-    log.info("Seeded customer account: {}", email);
-  }
+            return;
+        }
+
+        // Account
+        var account = new Account();
+        account.setEmail(email);
+        account.setPassword(HASHED_BCRYPT);
+        account.setRole(Role.CUSTOMER);
+        account.setEmailVerified(true);
+        accountRepository.save(account);
+
+        // Customer
+        var customer = new Customer();
+        customer.setAccount(account);
+        customerRepository.save(customer);
+
+        customerRepository.save(customer);
+
+        log.info("Seeded customer account: {}", email);
+    }
 }
