@@ -13,6 +13,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ public class PaginateCustomersUseCase {
                 input.size(),
                 paginationService.resolveSort(SORTABLE_PROPERTIES, DEFAULT_SORT, input.sort(), input.order()));
 
-        Specification<Customer> specs = buildSpec(input.email());
+        Specification<Customer> specs = buildSpec(input);
 
         Page<Output> page = demoCustomerRepository.findAll(specs, pageable).map(this::toOutput);
 
@@ -76,11 +77,11 @@ public class PaginateCustomersUseCase {
     /**
      * Builds the specification by chaining optional filters onto the base spec.
      */
-    private Specification<Customer> buildSpec(String email) {
+    private Specification<Customer> buildSpec(Input input) {
         List<Specification<Customer>> specs = new ArrayList<>();
 
-        if (email != null) {
-            specs.add(DemoCustomerSpecification.emailContaining(email));
+        if (StringUtils.hasText(input.email())) {
+            specs.add(DemoCustomerSpecification.emailContaining(input.email()));
         }
 
         return Specification.allOf(specs);
