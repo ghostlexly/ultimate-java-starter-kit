@@ -21,8 +21,9 @@ module/
     dto/           # Only for payloads shared across use cases / standalone request bodies
     event/         # Domain events + listeners
 core/
-  dto/             # Shared DTOs (ErrorResponse, Violation, PaginatedResponse, PageQuery)
+  dto/             # Shared DTOs (ErrorResponse, Violation, PaginatedResponse)
   exception/       # BusinessRuleException, GlobalExceptionHandler
+  pagination/      # PaginationService (Pageable building + sort key whitelist resolution)
   security/        # JWT filter, provider, UserPrincipal, @PublicEndpoint + scanner
   ratelimit/       # @RateLimit annotation + interceptor
 config/            # SecurityConfig, JpaConfig, WebConfig, JwtProperties
@@ -87,15 +88,15 @@ shared/
 @Service
 public class CreateProfileUseCase {
 
-  private final CustomerRepository customerRepository;
-  private final AccountRepository accountRepository;
+    private final CustomerRepository customerRepository;
+    private final AccountRepository accountRepository;
 
-  public CreateProfileUseCase(
-      CustomerRepository customerRepository,
-      AccountRepository accountRepository) {
-    this.customerRepository = customerRepository;
-    this.accountRepository = accountRepository;
-  }
+    public CreateProfileUseCase(
+            CustomerRepository customerRepository,
+            AccountRepository accountRepository) {
+        this.customerRepository = customerRepository;
+        this.accountRepository = accountRepository;
+    }
 }
 ```
 
@@ -172,49 +173,50 @@ the same use case.
 @RequiredArgsConstructor
 public class GetTownsUseCase {
 
-  private static final Sort SORT = Sort.by(Sort.Direction.DESC, "population");
+    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "population");
 
-  private final TownRepository townRepository;
+    private final TownRepository townRepository;
+    private final PaginationService paginationService;
 
-  public record Input(
-      String id, String postalCode, String city, String search, Integer page, Integer size) {
+    public record Input(
+            String id, String postalCode, String city, String search, Integer page, Integer size) {
 
-  }
-
-  public record Output(UUID id, String inseeCode, String name, int population) {
-
-  }
-
-  @Transactional(readOnly = true)
-  public PaginatedResponse<Output> execute(Input input) {
-    Specification<Town> spec = buildSpec(input);
-    Pageable pageable = new PageQuery(input.page(), input.size()).toPageable(SORT);
-
-    Page<Output> page = townRepository.findAll(spec, pageable).map(this::toOutput);
-
-    return PaginatedResponse.from(page);
-  }
-
-  // Mapping lives on the use case (never a static Output.from), so injected deps are available.
-  private Output toOutput(Town town) {
-
-    return new Output(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
-  }
-
-  // One conditional block per filter; combine with Specification.allOf (empty list -> match all).
-  private Specification<Town> buildSpec(Input input) {
-    List<Specification<Town>> specs = new ArrayList<>();
-
-    if (StringUtils.hasText(input.id())) {
-      specs.add(TownSpecification.hasId(input.id()));
     }
 
-    if (StringUtils.hasText(input.search())) {
-      specs.add(TownSpecification.matchesSearch(input.search()));
+    public record Output(UUID id, String inseeCode, String name, int population) {
+
     }
 
-    return Specification.allOf(specs);
-  }
+    @Transactional(readOnly = true)
+    public PaginatedResponse<Output> execute(Input input) {
+        Specification<Town> spec = buildSpec(input);
+        Pageable pageable = paginationService.toPageable(input.page(), input.size(), DEFAULT_SORT);
+
+        Page<Output> page = townRepository.findAll(spec, pageable).map(this::toOutput);
+
+        return PaginatedResponse.from(page);
+    }
+
+    // Mapping lives on the use case (never a static Output.from), so injected deps are available.
+    private Output toOutput(Town town) {
+
+        return new Output(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
+    }
+
+    // One conditional block per filter; combine with Specification.allOf (empty list -> match all).
+    private Specification<Town> buildSpec(Input input) {
+        List<Specification<Town>> specs = new ArrayList<>();
+
+        if (StringUtils.hasText(input.id())) {
+            specs.add(TownSpecification.hasId(input.id()));
+        }
+
+        if (StringUtils.hasText(input.search())) {
+            specs.add(TownSpecification.matchesSearch(input.search()));
+        }
+
+        return Specification.allOf(specs);
+    }
 }
 ```
 
@@ -242,20 +244,20 @@ public class GetTownsUseCase {
 @RequestMapping("/api/towns")
 public class TownController {
 
-  private final GetTownsUseCase getTownsUseCase;
+    private final GetTownsUseCase getTownsUseCase;
 
-  @GetMapping
-  public ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>> getTowns(
-      @RequestParam(required = false) @Size(max = 191) String search,
-      @RequestParam(required = false) Integer page,
-      @RequestParam(required = false) Integer size) {
+    @GetMapping
+    public ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>> getTowns(
+            @RequestParam(required = false) @Size(max = 191) String search,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
 
-    var input = new GetTownsUseCase.Input(null, null, null, search, page, size);
+        var input = new GetTownsUseCase.Input(null, null, null, search, page, size);
 
-    PaginatedResponse<GetTownsUseCase.Output> response = getTownsUseCase.execute(input);
+        PaginatedResponse<GetTownsUseCase.Output> response = getTownsUseCase.execute(input);
 
-    return ResponseEntity.ok(response);
-  }
+        return ResponseEntity.ok(response);
+    }
 }
 ```
 
@@ -279,23 +281,23 @@ public class TownController {
 ```java
 public final class CustomerSpecification {
 
-  private CustomerSpecification() {
-  }
+    private CustomerSpecification() {
+    }
 
-  public static Specification<Customer> fetchAccount() {
-    return (root, query, cb) -> {
-      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-        root.fetch("account");
-      }
+    public static Specification<Customer> fetchAccount() {
+        return (root, query, cb) -> {
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                root.fetch("account");
+            }
 
-      return cb.conjunction();
-    };
-  }
+            return cb.conjunction();
+        };
+    }
 
-  public static Specification<Customer> hasEmail(String email) {
-    return (root, query, cb) ->
-        cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
-  }
+    public static Specification<Customer> hasEmail(String email) {
+        return (root, query, cb) ->
+                cb.like(cb.lower(root.join("account").get("email")), "%" + email.toLowerCase() + "%");
+    }
 }
 ```
 
@@ -310,7 +312,7 @@ public final class CustomerSpecification {
 
 ```java
 public record SendCodeRequest(
-    @NotBlank @Email String email
+        @NotBlank @Email String email
 ) {
 
 }
@@ -395,8 +397,14 @@ method() { ...}
 ## Pagination
 
 - Query params are `page` (1-based, `?page=1`) and `size` (items per page). Never `first`.
-- Build the `Pageable` with `core/dto/PageQuery`: `new PageQuery(page, size).toPageable(sort)` — it
-  converts to the 0-based index and applies defaults (`page=1`, `size=50`, capped at `100`).
+  Optional sorting params are `sort` (a whitelisted key) and `order` (`asc`/`desc`).
+- Build the `Pageable` with the injected `core/pagination/PaginationService`:
+  `paginationService.toPageable(page, size, sort)` — it converts to the 0-based index and applies
+  defaults (`page=1`, `size=50`, capped at `100`).
+- For client-controlled sorting, declare a `SORTABLE_PROPERTIES` whitelist
+  (`Map<String, List<String>>` of API sort key → entity property paths) on the use case and resolve
+  it with `paginationService.resolveSort(SORTABLE_PROPERTIES, DEFAULT_SORT, sort, order)` — unknown
+  keys fall back to the default sort, so clients can never sort on arbitrary columns.
 - List endpoints return `core/dto/PaginatedResponse<Output>` built via
   `PaginatedResponse.from(page)`.
   Shape: `{ content, totalItems, totalPages, isFirst, isLast }`. The frontend reads `data.content`.

@@ -18,6 +18,8 @@ import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.jobrunr.scheduling.BackgroundJob;
 import org.slf4j.Logger;
@@ -86,9 +88,11 @@ public class DemoController {
     public ResponseEntity<PaginatedResponse<PaginateCustomersUseCase.Output>> paginateCustomers(
             @Min(1) @RequestParam(defaultValue = "1") int page,
             @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) @Pattern(regexp = "asc|desc") String order,
             @RequestParam(required = false) String email) {
 
-        var input = new PaginateCustomersUseCase.Input(page, size, email);
+        var input = new PaginateCustomersUseCase.Input(page, size, sort, order, email);
 
         var response = this.paginateCustomersUseCase.execute(input);
 

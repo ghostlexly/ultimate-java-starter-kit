@@ -3,6 +3,7 @@ package com.lunisoft.javastarter.module.media.usecase;
 import com.lunisoft.javastarter.core.storage.S3Service;
 import com.lunisoft.javastarter.module.media.entity.Media;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
+import com.lunisoft.javastarter.module.media.service.MediaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +21,10 @@ public class UploadMediaUseCase {
 
     private static final StorageClass STORAGE_CLASS = StorageClass.STANDARD;
     private static final String STORAGE_PATH = "media";
-    private static final DateTimeFormatter DATE_FOLDER_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     private final S3Service s3Service;
     private final MediaRepository mediaRepository;
+    private final MediaService mediaService;
 
     public record Input(InputStream inputStream, String fileName, String contentType, long size) {}
 
@@ -34,7 +35,7 @@ public class UploadMediaUseCase {
      */
     @Transactional
     public Media execute(Input input) {
-        var key = buildKey(input.fileName());
+        var key = mediaService.buildKey(STORAGE_PATH, input.fileName());
 
         var media = new Media();
         media.setFileName(input.fileName());
@@ -46,20 +47,5 @@ public class UploadMediaUseCase {
         s3Service.upload(key, input.inputStream(), input.size(), input.contentType(), STORAGE_CLASS);
 
         return media;
-    }
-
-    private String buildKey(String fileName) {
-        var now = Instant.now().atOffset(ZoneOffset.UTC);
-
-        return "%s/%s/%s.%s"
-                .formatted(STORAGE_PATH, now.format(DATE_FOLDER_FORMAT), UUID.randomUUID(), extractExtension(fileName));
-    }
-
-    private String extractExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            return "bin";
-        }
-
-        return fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
     }
 }

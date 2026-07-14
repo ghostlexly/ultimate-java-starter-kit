@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
-import com.lunisoft.javastarter.core.dto.PageQuery;
 import com.lunisoft.javastarter.core.dto.PaginatedResponse;
+import com.lunisoft.javastarter.core.pagination.PaginationService;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerSpecification;
@@ -16,6 +16,7 @@ import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -36,20 +37,34 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PaginateCustomersUseCase {
 
-    private final DemoCustomerRepository demoCustomerRepository;
+    private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
 
-    public record Input(int page, int size, String email) {}
+    // Whitelist of API sort keys mapped to entity property paths — anything else falls
+    // back to the default sort, so clients can never sort on arbitrary columns.
+    private static final Map<String, List<String>> SORTABLE_PROPERTIES = Map.of(
+            "createdAt", List.of("createdAt"),
+            "name", List.of("lastName", "firstName"),
+            "email", List.of("account.email"),
+            "role", List.of("account.role"),
+            "isActive", List.of("isActive"));
+
+    private final DemoCustomerRepository demoCustomerRepository;
+    private final PaginationService paginationService;
+
+    public record Input(int page, int size, String sort, String order, String email) {}
 
     public record Output(UUID id, String email, String role) {}
 
     @Transactional(readOnly = true)
     public PaginatedResponse<Output> execute(Input input) {
         Assert.notNull(input, "Input cannot be null");
-        Assert.isTrue(input.page() >= 0, "Page cannot be negative");
+        Assert.isTrue(input.page() >= 1, "Page cannot be below 1");
         Assert.isTrue(input.size() > 0, "Size cannot be zero or negative");
 
-        Pageable pageable = new PageQuery(input.page(), input.size())
-                .toPageable(Sort.by("createdAt").ascending());
+        Pageable pageable = paginationService.toPageable(
+                input.page(),
+                input.size(),
+                paginationService.resolveSort(SORTABLE_PROPERTIES, DEFAULT_SORT, input.sort(), input.order()));
 
         Specification<Customer> specs = buildSpec(input.email());
 
