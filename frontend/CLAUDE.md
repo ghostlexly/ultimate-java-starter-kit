@@ -5,6 +5,19 @@
 - Never use optimistic updates in React Query mutations. Always wait for the server response before updating the cache.
 - Never use nested ternaries. Extract them into early returns, if/else blocks, or dedicated functions.
 
+## Code organization
+
+- **Shared types live in `src/types`** (imported as `@/types/...`), one file per domain (e.g. `property.ts`,
+  `staff.ts`).
+  Any type that describes data coming from the API / an endpoint (entity, response payload) must be declared there —
+  never inline in the file that calls the endpoint. If two files need the same shape, it belongs in `src/types`.
+- **Custom hooks live in `src/hooks`**, one hook per `use-*.ts` file. Never declare a reusable hook inside a page or
+  component file. (This does not override the container/presenter rule below: form mutations stay inline in the
+  presenter and must not be extracted into hooks.)
+- **Components shared between two or more pages live in `src/components/shared`.** A component used by a single page
+  stays next to that page; promote it to `components/shared` the moment a second page needs it. `src/components/ui` is
+  reserved for shadcn/design-system primitives.
+
 ## Styling
 
 - Use Tailwind classes only. Do not add custom utility classes to `app/globals.css` — if a style is reused, build a
