@@ -17,15 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.Duration;
 
 @PublicEndpoint
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/media")
 public class MediaController {
-
-    private static final Duration PRESIGNED_URL_EXPIRY = Duration.ofHours(1);
 
     private final UploadMediaUseCase uploadMediaUseCase;
     private final MediaSecurityService mediaSecurityService;
@@ -43,7 +40,7 @@ public class MediaController {
 
             var output = this.uploadMediaUseCase.execute(input);
 
-            var url = this.s3Service.generatePresignedGetUrl(output.getKey(), PRESIGNED_URL_EXPIRY);
+            var url = this.s3Service.generatePresignedGetUrl(output.getKey());
 
             return ResponseEntity.ok(new UploadMediaResponse(output.getId(), url));
         } catch (IOException ex) {

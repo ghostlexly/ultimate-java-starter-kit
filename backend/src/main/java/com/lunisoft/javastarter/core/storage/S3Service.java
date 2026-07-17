@@ -1,8 +1,10 @@
 package com.lunisoft.javastarter.core.storage;
 
+import com.lunisoft.javastarter.config.CacheConfig;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.property.S3Properties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -87,9 +89,10 @@ public class S3Service {
     /**
      * Generates a presigned URL to preview/download a file.
      */
-    public String generatePresignedGetUrl(String key, Duration expiry) {
+    @Cacheable(value = CacheConfig.S3_PRESIGNED_GET_URL, key = "#key")
+    public String generatePresignedGetUrl(String key) {
         var presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(expiry)
+                .signatureDuration(Duration.ofHours(5))
                 .getObjectRequest(r -> r.bucket(s3Properties.bucket()).key(key))
                 .build();
 

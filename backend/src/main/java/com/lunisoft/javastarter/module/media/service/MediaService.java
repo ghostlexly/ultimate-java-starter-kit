@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -22,19 +21,9 @@ public class MediaService {
     private final S3Service s3Service;
 
     private static final DateTimeFormatter DATE_FOLDER_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-    private static final Duration PRESIGNED_URL_EXPIRATION = Duration.ofHours(4);
-
-    @Transactional(readOnly = true)
-    public String getPresignedUrl(UUID mediaId, Duration presignedUrlExpiration) {
-        return generatePresignedUrl(mediaId, presignedUrlExpiration);
-    }
 
     @Transactional(readOnly = true)
     public String getPresignedUrl(UUID mediaId) {
-        return generatePresignedUrl(mediaId, PRESIGNED_URL_EXPIRATION);
-    }
-
-    private String generatePresignedUrl(UUID mediaId, Duration presignedUrlExpiration) {
         var media = mediaRepository
                 .findById(mediaId)
                 .orElseThrow(() -> new BusinessRuleException(
@@ -42,7 +31,7 @@ public class MediaService {
                         "PRESIGNED_MEDIA_NOT_FOUND",
                         HttpStatus.BAD_REQUEST));
 
-        return s3Service.generatePresignedGetUrl(media.getKey(), presignedUrlExpiration);
+        return s3Service.generatePresignedGetUrl(media.getKey());
     }
 
     /** Deletes a media: removes the DB row first, then the S3 object (rolls back the row on failure). */

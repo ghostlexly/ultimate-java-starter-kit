@@ -5,8 +5,6 @@ import com.lunisoft.javastarter.module.media.entity.Media;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-
 @Component
 @RequiredArgsConstructor
 public class MediaSummaryMapper {
@@ -14,7 +12,7 @@ public class MediaSummaryMapper {
     private final S3Service s3Service;
 
     public MediaSummaryView toView(Media media) {
-        String previewUrl = s3Service.generatePresignedGetUrl(media.getKey(), Duration.ofHours(1));
+        String previewUrl = s3Service.generatePresignedGetUrl(media.getKey());
 
         return new MediaSummaryView(
                 media.getId(), media.getFileName(), media.getKey(), media.getMimeType(), previewUrl);

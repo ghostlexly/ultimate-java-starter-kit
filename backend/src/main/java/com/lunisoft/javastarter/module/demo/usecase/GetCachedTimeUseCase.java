@@ -14,7 +14,7 @@ public class GetCachedTimeUseCase {
 
     public record Output(OffsetDateTime now, String formattedTime) {}
 
-    @Cacheable(value = CacheConfig.CACHED_TIME)
+    @Cacheable(value = CacheConfig.DEMO_CACHED_TIME)
     public Output execute() {
         OffsetDateTime now = Instant.now().atOffset(ZoneOffset.UTC);
         DateTimeFormatter customFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

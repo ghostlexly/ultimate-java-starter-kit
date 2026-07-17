@@ -32,7 +32,6 @@ import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -153,7 +152,7 @@ public class DemoController {
                         media.getFileName(),
                         media.getKey(),
                         media.getMimeType(),
-                        s3Service.generatePresignedGetUrl(media.getKey(), Duration.ofHours(1))))
+                        s3Service.generatePresignedGetUrl(media.getKey())))
                 .toList();
 
         return ResponseEntity.ok(previewUrls);
@@ -215,7 +214,7 @@ public class DemoController {
     }
 
     @GetMapping("evict-cache")
-    @CacheEvict(value = CacheConfig.CACHED_TIME)
+    @CacheEvict(value = CacheConfig.DEMO_CACHED_TIME)
     public ResponseEntity<Map<String, String>> evictCache() {
         return ResponseEntity.ok(Map.of("message", "Cache cleared"));
     }

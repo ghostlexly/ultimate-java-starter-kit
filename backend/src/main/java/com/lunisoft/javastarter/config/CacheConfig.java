@@ -23,7 +23,8 @@ import java.util.Map;
 @EnableCaching
 public class CacheConfig implements CachingConfigurer {
 
-    public static final String CACHED_TIME = "CACHED_TIME";
+    public static final String DEMO_CACHED_TIME = "DEMO_CACHED_TIME";
+    public static final String S3_PRESIGNED_GET_URL = "S3_PRESIGNED_GET_URL";
 
     /**
      * Fallback TTL for caches not registered in {@link #cacheConfigurations()}.
@@ -43,7 +44,11 @@ public class CacheConfig implements CachingConfigurer {
      * gets an explicit TTL and a typed serializer (no type metadata stored in Redis).
      */
     private Map<String, RedisCacheConfiguration> cacheConfigurations() {
-        return Map.of(CACHED_TIME, cacheConfiguration(GetCachedTimeUseCase.Output.class, Duration.ofSeconds(10)));
+        return Map.of(
+                DEMO_CACHED_TIME,
+                cacheConfiguration(GetCachedTimeUseCase.Output.class, Duration.ofSeconds(10)),
+                S3_PRESIGNED_GET_URL,
+                cacheConfiguration(String.class, Duration.ofHours(4)));
     }
 
     /**
