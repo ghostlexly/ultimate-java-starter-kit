@@ -48,7 +48,7 @@ public class CacheConfig implements CachingConfigurer {
                 DEMO_CACHED_TIME,
                 cacheConfiguration(GetCachedTimeUseCase.Output.class, Duration.ofSeconds(10)),
                 S3_PRESIGNED_GET_URL,
-                cacheConfiguration(String.class, Duration.ofHours(4)));
+                cacheConfiguration(String.class, Duration.ofHours(24)));
     }
 
     /**

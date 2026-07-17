@@ -92,7 +92,7 @@ public class S3Service {
     @Cacheable(value = CacheConfig.S3_PRESIGNED_GET_URL, key = "#key")
     public String generatePresignedGetUrl(String key) {
         var presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofHours(5))
+                .signatureDuration(Duration.ofHours(25))
                 .getObjectRequest(r -> r.bucket(s3Properties.bucket()).key(key))
                 .build();
 
