@@ -20,8 +20,8 @@ RUN ./mvnw package -DskipTests -B
 # -- RUNNER
 FROM eclipse-temurin:25-jre-noble AS runner
 WORKDIR /app
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 # Shared browsers location so the non-root runtime user can read what root installed
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
@@ -38,8 +38,11 @@ RUN ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.arg
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Run as a dedicated non-root user (Chromium also needs a writable home directory)
-RUN useradd --system --create-home --shell /usr/sbin/nologin spring \
+RUN \
+    # Pre-create the logs mount point so the named volume inherits spring's ownership
+    mkdir -p /app/logs \
+    # Run as a dedicated non-root user
+    && useradd --system --create-home --shell /usr/sbin/nologin spring \
     && chown -R spring:spring /app
 
 USER spring
