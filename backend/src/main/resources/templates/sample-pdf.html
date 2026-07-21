@@ -3,7 +3,10 @@
 <head>
     <title>Sample PDF</title>
     <meta charset="UTF-8"/>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Local Tailwind build injected by PdfService as a data URI (no network access needed) -->
+    <script th:src="${tailwindJsUri}"
+            integrity="sha384-2ql948lIdLcGEE0/qxNiudyTjgauA3RDJERu5xW75kFCvSl5a9odyQYCb6tEjnmB"
+            crossorigin="anonymous"></script>
 </head>
 <body class="p-8 font-sans bg-white">
 

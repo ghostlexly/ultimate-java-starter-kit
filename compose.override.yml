@@ -3,7 +3,7 @@ services:
     build: ./caddy
     environment:
       # Point API routes to host machine (where your IDE runs the backend)
-      BACKEND_UPSTREAM: host.docker.internal:3000
+      BACKEND_UPSTREAM: ${BACKEND_UPSTREAM:-host.docker.internal:3000}
     ports:
       - "80:80"
       - "443:443"
@@ -27,7 +27,7 @@ services:
     environment:
       NODE_ENV: development
       # In dev the backend runs on the host machine (IDE), not in Docker.
-      BACKEND_BASE_URL: http://host.docker.internal:3000
+      BACKEND_BASE_URL: http://${BACKEND_UPSTREAM:-host.docker.internal:3000}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

@@ -8,6 +8,7 @@ start: ## Start the containers
 
 start-prod: ## Start the production environment (ignores compose.override.yml)
 	docker compose -f compose.yml up -d --renew-anon-volumes
+	BACKEND_UPSTREAM=java-starter-backend:3000 docker compose up caddy -d
 
 stop: ## Stop the containers (ignores compose.override.yml)
 	docker compose down

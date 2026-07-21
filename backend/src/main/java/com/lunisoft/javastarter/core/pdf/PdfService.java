@@ -9,7 +9,7 @@ import com.microsoft.playwright.options.WaitUntilState;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
@@ -28,6 +28,10 @@ public class PdfService {
     private final SpringTemplateEngine templateEngine;
     private final PlaywrightWorker playwrightWorker;
     private final PdfProperties pdfProperties;
+    private final ResourceLoader resourceLoader;
+
+    /** Cached data URI of the local Tailwind CSS browser build (loaded once, reused across renders). */
+    private volatile String tailwindJsUri;
 
     /**
      * Renders an HTML template with the given data and converts it to a PDF.
@@ -48,7 +52,19 @@ public class PdfService {
         var context = new Context();
         context.setVariables(data);
 
+        // Expose the local Tailwind build to every template
+        context.setVariable("tailwindJsUri", getTailwindJsUri());
+
         return templateEngine.process(templateName, context);
+    }
+
+    /** Returns the local Tailwind CSS browser build as a data URI, cached after the first load. */
+    private String getTailwindJsUri() {
+        if (tailwindJsUri == null) {
+            tailwindJsUri = toDataUri("classpath:templates/assets/tailwind.js", "text/javascript");
+        }
+
+        return tailwindJsUri;
     }
 
     /**
@@ -92,25 +108,25 @@ public class PdfService {
     }
 
     /**
-     * Converts a classpath resource (e.g. "static/avatar.png") to a base64 data URI that can be used
+     * Converts a resource (e.g. "static/avatar.png") to a base64 data URI that can be used
      * as an img src in HTML templates rendered by Playwright.
      *
-     * @param classpathPath the path relative to resources/ (e.g. "static/avatar.png")
+     * @param filePath the path relative to the file
      * @param mimeType the MIME type (e.g. "image/png")
      * @return the data URI string (e.g. "data:image/png;base64,...")
      */
-    public String toDataUri(String classpathPath, String mimeType) {
+    public String toDataUri(String filePath, String mimeType) {
         try {
-            var resource = new ClassPathResource(classpathPath);
+            var resource = resourceLoader.getResource(filePath);
             var bytes = resource.getContentAsByteArray();
             var base64 = Base64.getEncoder().encodeToString(bytes);
 
             return "data:%s;base64,%s".formatted(mimeType, base64);
         } catch (IOException e) {
-            log.error("Failed to load classpath resource '{}': {}", classpathPath, e.getMessage(), e);
+            log.error("Failed to load resource '{}': {}", filePath, e.getMessage(), e);
 
             throw new BusinessRuleException(
-                    "Failed to load resource: %s".formatted(classpathPath),
+                    "Failed to load resource: %s".formatted(filePath),
                     "RESOURCE_NOT_FOUND",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }

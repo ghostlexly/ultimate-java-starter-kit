@@ -164,7 +164,7 @@ public class DemoController {
      */
     @GetMapping("preview-pdf")
     public ResponseEntity<byte[]> generatePdf() {
-        var avatarUri = this.pdfService.toDataUri("templates/assets/avatar.png", "image/png");
+        var avatarUri = this.pdfService.toDataUri("classpath:templates/assets/avatar.png", "image/png");
         byte[] pdf = this.pdfService.generate(
                 "sample-pdf",
                 Map.of(
@@ -189,7 +189,7 @@ public class DemoController {
      */
     @GetMapping("download-pdf")
     public ResponseEntity<byte[]> downloadPdf() {
-        var avatarUri = this.pdfService.toDataUri("templates/assets/avatar.png", "image/png");
+        var avatarUri = this.pdfService.toDataUri("classpath:templates/assets/avatar.png", "image/png");
         byte[] pdf = this.pdfService.generate(
                 "sample-pdf",
                 Map.of(
