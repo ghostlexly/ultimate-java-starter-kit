@@ -12,5 +12,5 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
 
     boolean existsByIdAndExpiresAtAfter(UUID id, Instant now);
 
-    void deleteByExpiresAtBefore(Instant now);
+    long deleteAllByExpiresAtBefore(Instant now);
 }

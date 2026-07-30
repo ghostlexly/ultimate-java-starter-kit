@@ -15,5 +15,5 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
     Optional<VerificationToken> findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
             UUID accountId, VerificationType type, Instant now);
 
-    void deleteByExpiresAtBefore(Instant now);
+    long deleteAllByExpiresAtBefore(Instant now);
 }
