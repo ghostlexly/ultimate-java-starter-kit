@@ -139,7 +139,9 @@ public class DemoController {
 
     @GetMapping("jobrunr-demo")
     public ResponseEntity<MessageResponse> jobrunrDemo() {
-        BackgroundJob.enqueue(() -> this.demoJobRunrEnqueueJob.execute("abcdef"));
+        // For better JobRunr performance, extract the ID into a variable
+        var extractedId = "abcdef";
+        BackgroundJob.enqueue(() -> this.demoJobRunrEnqueueJob.execute(extractedId));
 
         return ResponseEntity.ok(new MessageResponse("The new job has been scheduled."));
     }
