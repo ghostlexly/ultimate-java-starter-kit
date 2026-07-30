@@ -69,6 +69,7 @@ services:
       APP_BREVO_API_KEY: ${APP_BREVO_API_KEY}
     expose:
       - "3000"
+      - "8000"
     volumes:
       # Persist application logs (Spring writes to /app/logs, see logging.file in application.yaml)
       - backend-logs:/app/logs
