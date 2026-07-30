@@ -69,6 +69,7 @@ jobrunr:
     enabled: true
   dashboard:
     enabled: true
+    port: 8080
     username: lunisoft
     password: ${APP_JOBRUNR_DASHBOARD_PASSWORD}
 
