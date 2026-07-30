@@ -40,7 +40,7 @@ localhost, http://tunnel.lunisoft.fr {
     # - Dev: host.docker.internal:3000 (IDE on host machine)
     # - Prod: backend:3000 (Docker container)
     handle /api/* {
-        reverse_proxy {$BACKEND_UPSTREAM:java-starter-backend:3000}
+        reverse_proxy host.docker.internal:3000
     }
 
     # All other routes -> Frontend
@@ -60,6 +60,6 @@ localhost, http://tunnel.lunisoft.fr {
 # JobRunr Dashboard
 localhost:8000 {
     handle {
-        reverse_proxy java-starter-backend:8000
+        reverse_proxy host.docker.internal:8000
     }
 }
