@@ -94,4 +94,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             # Prune untagged images & containers & anonymous volumes
-            docker system prune --all --force --volumes
+            sudo docker system prune --all --force --volumes
