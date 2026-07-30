@@ -67,7 +67,7 @@ public class PaginateCustomersUseCase {
                 input.size(),
                 paginationService.resolveSort(SORTABLE_PROPERTIES, DEFAULT_SORT, input.sort(), input.order()));
 
-        Specification<Customer> specs = buildSpec(input);
+        Specification<Customer> specs = buildSpecs(input);
 
         Page<Output> page = demoCustomerRepository.findAll(specs, pageable).map(this::toOutput);
 
@@ -77,7 +77,7 @@ public class PaginateCustomersUseCase {
     /**
      * Builds the specification by chaining optional filters onto the base spec.
      */
-    private Specification<Customer> buildSpec(Input input) {
+    private Specification<Customer> buildSpecs(Input input) {
         List<Specification<Customer>> specs = new ArrayList<>();
 
         if (StringUtils.hasText(input.email())) {
