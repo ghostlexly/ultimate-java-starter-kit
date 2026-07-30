@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class MediaSummaryMapper {
+public class MediaSummaryViewMapper {
 
     private final S3Service s3Service;
 
