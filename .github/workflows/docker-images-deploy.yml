@@ -93,5 +93,5 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Prune untagged images
-            sudo docker image prune -f
+            # Prune untagged images & containers & anonymous volumes
+            docker system prune --all --force --volumes
