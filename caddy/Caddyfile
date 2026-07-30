@@ -58,8 +58,8 @@ localhost, http://tunnel.lunisoft.fr {
 }
 
 # JobRunr Dashboard
-localhost:8080 {
+localhost:8000 {
     handle {
-        reverse_proxy host.docker.internal:8080
+        reverse_proxy host.docker.internal:8000
     }
 }
