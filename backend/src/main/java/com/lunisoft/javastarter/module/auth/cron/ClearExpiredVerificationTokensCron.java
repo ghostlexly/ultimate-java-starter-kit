@@ -24,17 +24,16 @@ public class ClearExpiredVerificationTokensCron {
     @Scheduled(fixedDelayString = "PT1H") // every hour
     @Transactional
     public void execute() {
-        var className = ClearExpiredVerificationTokensCron.class.getName();
-        log.info("[⏰ CRON] [{}] Started ✅", className);
+        log.info("[⏰ CRON] Started ✅");
 
         try {
             long clearedVerificationTokensCount = verificationTokenRepository.deleteAllByExpiresAtBefore(Instant.now());
 
-            log.info("[⏰ CRON] [{}] Removed {} verification tokens", className, clearedVerificationTokensCount);
+            log.info("[⏰ CRON] Removed {} verification tokens", clearedVerificationTokensCount);
         } catch (RuntimeException e) {
-            log.error("[⏰ CRON] [{}] Error ❌ : {}", className, e.getMessage(), e);
+            log.error("[⏰ CRON] Error ❌ : {}", e.getMessage(), e);
         } finally {
-            log.info("[⏰ CRON] [{}] Finished ✅", className);
+            log.info("[⏰ CRON] Finished ✅");
         }
     }
 }

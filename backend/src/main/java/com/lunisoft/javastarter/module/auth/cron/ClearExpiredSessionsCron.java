@@ -24,17 +24,16 @@ public class ClearExpiredSessionsCron {
     @Scheduled(fixedDelayString = "PT1H") // every hour
     @Transactional
     public void execute() {
-        var className = ClearExpiredSessionsCron.class.getName();
-        log.info("[⏰ CRON] [{}] Started ✅", className);
+        log.info("[⏰ CRON] Started ✅");
 
         try {
             long clearedSessionsCount = sessionRepository.deleteAllByExpiresAtBefore(Instant.now());
 
-            log.info("[⏰ CRON] [{}] Removed {} sessions", className, clearedSessionsCount);
+            log.info("[⏰ CRON] Removed {} sessions", clearedSessionsCount);
         } catch (RuntimeException e) {
-            log.error("[⏰ CRON] [{}] Error ❌ : {}", className, e.getMessage(), e);
+            log.error("[⏰ CRON] Error ❌ : {}", e.getMessage(), e);
         } finally {
-            log.info("[⏰ CRON] [{}] Finished ✅", className);
+            log.info("[⏰ CRON] Finished ✅");
         }
     }
 }
