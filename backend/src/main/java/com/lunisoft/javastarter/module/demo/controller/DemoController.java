@@ -3,6 +3,7 @@ package com.lunisoft.javastarter.module.demo.controller;
 import com.lunisoft.javastarter.config.CacheConfig;
 import com.lunisoft.javastarter.core.dto.MessageResponse;
 import com.lunisoft.javastarter.core.dto.PaginatedResponse;
+import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.pdf.PdfService;
 import com.lunisoft.javastarter.core.ratelimit.RateLimit;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
@@ -21,20 +22,17 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.jobrunr.scheduling.BackgroundJob;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.integration.redis.util.RedisLockRegistry;
+import org.springframework.http.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,7 +47,7 @@ public class DemoController {
     private final MediaRepository mediaRepository;
     private final S3Service s3Service;
     private final PdfService pdfService;
-    private final RedisLockRegistry lockRegistry;
+    private final RedissonClient redissonClient;
     private final DemoJobRunrEnqueueJob demoJobRunrEnqueueJob;
     private final GetCachedTimeUseCase getCachedTimeUseCase;
 
@@ -109,8 +107,22 @@ public class DemoController {
 
     @GetMapping("lock")
     public ResponseEntity<MessageResponse> lockTest() throws InterruptedException {
-        Lock lock = this.lockRegistry.obtain("test-lock");
-        lock.lock();
+        var locker = redissonClient.getLock("test-lock");
+
+        try {
+            if (!locker.tryLock(10, TimeUnit.SECONDS)) {
+                throw new BusinessRuleException(
+                        "Nous n'avons pas pu analyser ce code barre dans les temps, veuillez réessayer.",
+                        "LOCK_TIMEOUT",
+                        HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (InterruptedException _) {
+            Thread.currentThread().interrupt();
+            throw new BusinessRuleException(
+                    "Une erreur est survenue lors de l'acquisition du verrou. Veuillez réessayer.",
+                    "LOCK_ACQUISITION_ERROR",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         log.info("Lock acquired !");
 
@@ -118,7 +130,7 @@ public class DemoController {
             // wait for 5 seconds to simulate doing something
             Thread.sleep(5_000);
         } finally {
-            lock.unlock();
+            locker.unlock();
         }
 
         return ResponseEntity.ok(new MessageResponse("Lock acquired"));

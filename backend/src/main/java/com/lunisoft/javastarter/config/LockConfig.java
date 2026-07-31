@@ -1,26 +1,48 @@
 package com.lunisoft.javastarter.config;
 
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.springframework.boot.data.redis.autoconfigure.DataRedisConnectionDetails;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.integration.redis.util.RedisLockRegistry;
-import org.springframework.scheduling.TaskScheduler;
+import org.springframework.util.StringUtils;
 
-import java.time.Duration;
-
+/**
+ * Redisson client backing the distributed locks (and semaphores) of the analysis flows. Locks
+ * acquired WITHOUT an explicit lease benefit from the Redisson watchdog: the lease is renewed
+ * automatically while the holder is alive, and expires if its JVM dies (crash safety net).
+ */
 @Configuration
 public class LockConfig {
 
-    @Bean
-    public RedisLockRegistry lockRegistry(RedisConnectionFactory connectionFactory, TaskScheduler taskScheduler) {
-        // RegistryKey "locks" = préfixe des clés Redis
-        // 10 minutes = expiration du verrou en ms (safety net si le process crash)
-        RedisLockRegistry registry = new RedisLockRegistry(
-                connectionFactory, "locks", Duration.ofMinutes(10).toMillis());
+    /**
+     * Built from Spring Boot's connection details so it points at the same Redis as Spring Data —
+     * including the Testcontainers instance during integration tests (@ServiceConnection).
+     */
+    @Bean(destroyMethod = "shutdown")
+    public RedissonClient redissonClient(DataRedisConnectionDetails connectionDetails) {
+        var standalone = connectionDetails.getStandalone();
 
-        // Automatically renew locks to prevent expiration until the lock.unlock() is called
-        registry.setRenewalTaskScheduler(taskScheduler);
+        // getStandalone() is null when Redis is configured as sentinel/cluster — unsupported here
+        if (standalone == null) {
+            throw new IllegalStateException(
+                    "Redis must be configured in standalone mode for the Redisson lock client.");
+        }
 
-        return registry;
+        var config = new Config();
+        var serverConfig = config.useSingleServer()
+                .setAddress("redis://%s:%d".formatted(standalone.getHost(), standalone.getPort()))
+                .setDatabase(standalone.getDatabase());
+
+        if (StringUtils.hasText(connectionDetails.getUsername())) {
+            serverConfig.setUsername(connectionDetails.getUsername());
+        }
+
+        if (StringUtils.hasText(connectionDetails.getPassword())) {
+            serverConfig.setPassword(connectionDetails.getPassword());
+        }
+
+        return Redisson.create(config);
     }
 }
