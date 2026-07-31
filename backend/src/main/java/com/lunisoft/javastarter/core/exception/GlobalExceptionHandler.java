@@ -3,6 +3,7 @@ package com.lunisoft.javastarter.core.exception;
 import com.lunisoft.javastarter.core.dto.ErrorResponse;
 import com.lunisoft.javastarter.core.dto.Violation;
 import jakarta.validation.ConstraintViolationException;
+import org.apache.catalina.connector.ClientAbortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import tools.jackson.databind.exc.InvalidFormatException;
 
+import java.io.EOFException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,9 +55,36 @@ public class GlobalExceptionHandler {
         log.warn("Upload rejected: file too large", ex);
 
         ErrorResponse response =
-                new ErrorResponse("PayloadTooLargeException", "The file is too large.", "PAYLOAD_TOO_LARGE", null);
+                new ErrorResponse("PayloadTooLargeException", "The file is too large.", "CONTENT_TOO_LARGE", null);
 
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(response);
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(response);
+    }
+
+    /**
+     * Handles a multipart request that could not be parsed. The usual case is a client that
+     * disconnects mid-upload (user leaving the screen, mobile network drop, request larger than the
+     * reverse proxy limit): nothing is wrong server-side and the response goes nowhere since the
+     * connection is already closed, so it is logged as a one-line warning rather than an ERROR with
+     * a full stack trace. A genuinely malformed multipart request is still logged with its stack.
+     *
+     * <p>Note: {@link MaxUploadSizeExceededException} extends {@link MultipartException} but is
+     * handled by its own, more specific handler above.
+     */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipart(MultipartException ex) {
+        boolean isClientDisconnected =
+                findCause(ex, ClientAbortException.class) != null || findCause(ex, EOFException.class) != null;
+
+        if (isClientDisconnected) {
+            log.warn("Upload aborted: the client closed the connection before sending the whole request body");
+        } else {
+            log.error("Failed to parse multipart request", ex);
+        }
+
+        ErrorResponse response = new ErrorResponse(
+                "MultipartException", "The file upload could not be completed.", "UPLOAD_INCOMPLETE", null);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
@@ -144,7 +174,7 @@ public class GlobalExceptionHandler {
                     "VALIDATION_ERROR",
                     List.of(new Violation("InvalidFormat", message, field)));
 
-            return ResponseEntity.badRequest().body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
 
         ErrorResponse response = new ErrorResponse(
@@ -153,23 +183,7 @@ public class GlobalExceptionHandler {
                 "MESSAGE_NOT_READABLE",
                 null);
 
-        return ResponseEntity.badRequest().body(response);
-    }
-
-    /**
-     * Walks the cause chain of {@code ex} and returns the first one matching {@code type}, or null.
-     */
-    @SuppressWarnings("unchecked")
-    private <T extends Throwable> T findCause(Throwable ex, Class<T> type) {
-        Throwable current = ex;
-        while (current != null) {
-            if (type.isInstance(current)) {
-                return (T) current;
-            }
-            current = current.getCause() == current ? null : current.getCause();
-        }
-
-        return null;
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
@@ -187,7 +201,7 @@ public class GlobalExceptionHandler {
                 : violations.getFirst().message();
         ErrorResponse response = new ErrorResponse("ValidationException", message, "VALIDATION_ERROR", violations);
 
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
@@ -212,7 +226,7 @@ public class GlobalExceptionHandler {
                 : violations.getFirst().message();
         ErrorResponse response = new ErrorResponse("ValidationException", message, "VALIDATION_ERROR", violations);
 
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
@@ -227,7 +241,7 @@ public class GlobalExceptionHandler {
                 "MISSING_PARAMETER",
                 null);
 
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
@@ -254,7 +268,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse response = new ErrorResponse("ValidationException", message, "INVALID_PARAMETER", null);
 
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**
@@ -268,6 +282,22 @@ public class GlobalExceptionHandler {
         ErrorResponse response =
                 new ErrorResponse("InternalServerError", "Internal server error", "INTERNAL_ERROR", null);
 
-        return ResponseEntity.internalServerError().body(response);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    /**
+     * Walks the cause chain of {@code ex} and returns the first one matching {@code type}, or null.
+     */
+    @SuppressWarnings("unchecked")
+    private <T extends Throwable> T findCause(Throwable ex, Class<T> type) {
+        Throwable current = ex;
+        while (current != null) {
+            if (type.isInstance(current)) {
+                return (T) current;
+            }
+            current = current.getCause() == current ? null : current.getCause();
+        }
+
+        return null;
     }
 }
