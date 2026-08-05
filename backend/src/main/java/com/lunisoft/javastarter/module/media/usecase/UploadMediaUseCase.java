@@ -5,12 +5,10 @@ import com.lunisoft.javastarter.module.media.entity.Media;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import com.lunisoft.javastarter.module.media.service.MediaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.StorageClass;
-
-import java.io.InputStream;
-
 
 @Service
 @RequiredArgsConstructor
@@ -23,12 +21,13 @@ public class UploadMediaUseCase {
     private final MediaRepository mediaRepository;
     private final MediaService mediaService;
 
-    public record Input(InputStream inputStream, String fileName, String contentType, long size) {}
+    public record Input(Resource resource, String fileName, String contentType, long size) {}
 
     /**
      * Stores the provided file in S3 and persists its metadata. Generic on purpose: callers from any
-     * module can supply a stream from any source (multipart upload, in-memory bytes, another S3
-     * object, ...). Validation (mime type, size, ...) is the caller's responsibility.
+     * module can supply a resource from any source (multipart upload via
+     * {@code MultipartFile#getResource()}, in-memory bytes via {@code ByteArrayResource},
+     * classpath asset, ...). Validation (mime type, size, ...) is the caller's responsibility.
      */
     @Transactional
     public Media execute(Input input) {
@@ -41,7 +40,7 @@ public class UploadMediaUseCase {
         media.setSize(input.size());
         mediaRepository.save(media);
 
-        s3Service.upload(key, input.inputStream(), input.size(), input.contentType(), STORAGE_CLASS);
+        s3Service.upload(key, input.resource(), input.size(), input.contentType(), STORAGE_CLASS);
 
         return media;
     }

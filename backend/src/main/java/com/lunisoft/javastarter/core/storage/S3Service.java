@@ -7,9 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.http.ContentStreamProvider;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -34,12 +36,13 @@ public class S3Service {
     private final S3Properties s3Properties;
 
     /**
-     * Uploads a file to S3 from an {@link InputStream}. The caller must provide an accurate
-     * {@code contentLength} (S3 requires it for streamed uploads). The stream is consumed by the SDK;
-     * the caller remains responsible for closing it.
+     * Uploads a file to S3. The content is given as a Spring {@link Resource} (and not as a plain
+     * {@link InputStream}) because the SDK reads the payload several times — signing, checksum,
+     * retries — and therefore needs to be able to reopen it. The caller must provide an accurate
+     * {@code contentLength}, S3 requires it for streamed uploads.
      */
     public void upload(
-            String key, InputStream inputStream, long contentLength, String contentType, StorageClass storageClass) {
+            String key, Resource resource, long contentLength, String contentType, StorageClass storageClass) {
         var request = PutObjectRequest.builder()
                 .bucket(s3Properties.bucket())
                 .key(key)
@@ -47,7 +50,28 @@ public class S3Service {
                 .storageClass(storageClass)
                 .build();
 
-        s3Client.putObject(request, RequestBody.fromInputStream(inputStream, contentLength));
+        var contentStreamProvider = toContentStreamProvider(resource, key);
+
+        s3Client.putObject(request, RequestBody.fromContentProvider(contentStreamProvider, contentLength, contentType));
+    }
+
+    /**
+     * Adapts a Spring {@link Resource} to the SDK provider, which cannot throw a checked exception
+     * when a new stream is requested.
+     */
+    private ContentStreamProvider toContentStreamProvider(Resource resource, String key) {
+        return () -> {
+            try {
+                return resource.getInputStream();
+            } catch (IOException e) {
+                log.error("Failed to open the file {} to upload it to storage.", key, e);
+
+                throw new BusinessRuleException(
+                        "Failed to upload the file to storage.",
+                        "STORAGE_UPLOAD_ERROR",
+                        HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        };
     }
 
     /**
@@ -64,14 +88,13 @@ public class S3Service {
         return s3Client.getObject(request);
     }
 
+    /**
+     * Downloads a file from S3 fully in memory. Only for small files — prefer {@link #download} and
+     * stream the content when the size is not bounded.
+     */
     public byte[] downloadAsBytes(String key) {
-        try {
-            var request = GetObjectRequest.builder()
-                    .bucket(s3Properties.bucket())
-                    .key(key)
-                    .build();
-
-            return s3Client.getObject(request).readAllBytes();
+        try (InputStream inputStream = download(key)) {
+            return inputStream.readAllBytes();
         } catch (Exception e) {
             log.error("Failed to download the file {} from storage.", key, e);
 
@@ -86,14 +109,7 @@ public class S3Service {
      * Downloads a file from S3 and returns it Base64-encoded (e.g. for MangoPay KYC pages).
      */
     public String downloadAsBase64(String key) {
-        try (InputStream inputStream = download(key)) {
-            return Base64.getEncoder().encodeToString(inputStream.readAllBytes());
-        } catch (IOException _) {
-            throw new BusinessRuleException(
-                    "Failed to download the file from storage.",
-                    "STORAGE_DOWNLOAD_ERROR",
-                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return Base64.getEncoder().encodeToString(downloadAsBytes(key));
     }
 
     /**

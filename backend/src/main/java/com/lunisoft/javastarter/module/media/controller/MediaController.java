@@ -36,7 +36,7 @@ public class MediaController {
             this.mediaSecurityService.validateImageMedia(contentType, file.getSize());
 
             var input = new UploadMediaUseCase.Input(
-                    file.getInputStream(), file.getOriginalFilename(), contentType, file.getSize());
+                    file.getResource(), file.getOriginalFilename(), contentType, file.getSize());
 
             var output = this.uploadMediaUseCase.execute(input);
 
