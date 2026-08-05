@@ -4,7 +4,10 @@ import com.lunisoft.javastarter.config.CacheConfig;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.property.S3Properties;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -25,6 +28,7 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class S3Service {
 
+    private static final Logger log = LoggerFactory.getLogger(S3Service.class);
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
@@ -58,6 +62,24 @@ public class S3Service {
                 .build();
 
         return s3Client.getObject(request);
+    }
+
+    public byte[] downloadAsBytes(String key) {
+        try {
+            var request = GetObjectRequest.builder()
+                    .bucket(s3Properties.bucket())
+                    .key(key)
+                    .build();
+
+            return s3Client.getObject(request).readAllBytes();
+        } catch (Exception e) {
+            log.error("Failed to download the file {} from storage.", key, e);
+
+            throw new BusinessRuleException(
+                    "Failed to download the file from storage.",
+                    "STORAGE_DOWNLOAD_ERROR",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
