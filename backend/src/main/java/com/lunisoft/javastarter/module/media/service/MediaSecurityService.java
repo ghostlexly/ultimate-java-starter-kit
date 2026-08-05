@@ -4,10 +4,10 @@ import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.tika.Tika;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
 import java.util.Set;
 
 @Service
@@ -16,9 +16,9 @@ public class MediaSecurityService {
     private final MediaRepository mediaRepository;
     private final Tika tika = new Tika();
 
-    public String getContentType(InputStream inputStream) {
-        try {
-            return tika.detect(inputStream);
+    public String getContentType(Resource resource) {
+        try (var stream = resource.getInputStream()) {
+            return tika.detect(stream);
         } catch (Exception ex) {
             throw new BusinessRuleException(
                     "Failed to detect content type: %s".formatted(ex.getMessage()),
