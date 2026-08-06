@@ -8,15 +8,17 @@
 ## Code organization
 
 - **Shared types live in `src/types`** (imported as `@/types/...`), one file per domain (e.g. `property.ts`,
-  `staff.ts`).
-  Any type that describes data coming from the API / an endpoint (entity, response payload) must be declared there —
-  never inline in the file that calls the endpoint. If two files need the same shape, it belongs in `src/types`.
+  `staff.ts`). Any type that describes data coming from the API / an endpoint (entity, response payload) must be
+  declared there — never inline in the file that calls the endpoint. If two files need the same shape, it belongs in
+  `src/types`.
 - **Custom hooks live in `src/hooks`**, one hook per `use-*.ts` file. Never declare a reusable hook inside a page or
   component file. (This does not override the container/presenter rule below: form mutations stay inline in the
   presenter and must not be extracted into hooks.)
 - **Components shared between two or more pages live in `src/components/shared`.** A component used by a single page
   stays next to that page; promote it to `components/shared` the moment a second page needs it. `src/components/ui` is
   reserved for shadcn/design-system primitives.
+- **Never wrap a `useQuery` in a dedicated hook.** Declare it inline in the page or component that consumes it, in the
+  same file — exactly like `useMutation`. `src/hooks` is for genuine reusable logic, not for one query per file.
 
 ## Styling
 
@@ -66,8 +68,8 @@ More examples are available here : https://ui.shadcn.com/docs/components/radix/f
 - Let the `Input` / `Textarea` default styles handle the invalid state. Do not re-declare
   `aria-invalid:border-destructive …` classes on every input.
 - To attach an icon (or any leading/trailing element) to an input, always use `InputGroup` +
-  `InputGroupInput` / `InputGroupTextarea` + `InputGroupAddon` from `@/components/ui/input-group`.
-  Never build it manually with a `relative` wrapper and an `absolute`-positioned icon.
+  `InputGroupInput` / `InputGroupTextarea` + `InputGroupAddon` from `@/components/ui/input-group`. Never build it
+  manually with a `relative` wrapper and an `absolute`-positioned icon.
   ```tsx
   <InputGroup className="h-14">
     <InputGroupInput {...field} />
@@ -76,19 +78,19 @@ More examples are available here : https://ui.shadcn.com/docs/components/radix/f
     </InputGroupAddon>
   </InputGroup>
   ```
-  For a textarea, use `align="inline-start"` on the addon (and `self-start pt-*` if the icon
-  should stick to the top) so it doesn't vertically center on a multi-line field.
+  For a textarea, use `align="inline-start"` on the addon (and `self-start pt-*` if the icon should stick to the top) so
+  it doesn't vertically center on a multi-line field.
 
 ### Container / presenter pattern for forms backed by API data
 
 Whenever a form's `defaultValues` come from an API call, **never** use `useEffect` + `form.reset(...)`
-to backfill them once the data arrives. Split the page into a **container** (data fetching + render
-gating) and a **presenter** (pure form, `useForm` initialised from props that are already populated).
+to backfill them once the data arrives. Split the page into a **container** (data fetching + render gating) and a
+**presenter** (pure form, `useForm` initialised from props that are already populated).
 
 - The container owns: route params, the data query, loading skeleton, "not found" empty state.
-- The presenter receives the loaded entity as a prop and is only rendered once that entity exists.
-  Because the entity is in scope at mount time, `useForm({ defaultValues: ... })` works on the
-  first render — no async patching needed, no flash of empty inputs, no re-sync bugs.
+- The presenter receives the loaded entity as a prop and is only rendered once that entity exists. Because the entity is
+  in scope at mount time, `useForm({ defaultValues: ... })` works on the first render — no async patching needed, no
+  flash of empty inputs, no re-sync bugs.
 - Mutations are declared inline with `useMutation` in the presenter, in the same file as the
   `handleSubmit` they belong to — never extracted into a separate custom hook.
 - Apply this pattern to **every** edit page.
