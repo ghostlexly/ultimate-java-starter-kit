@@ -108,3 +108,5 @@ app:
     render-timeout-ms: 10000
     format: A4
     print-background: true
+  telegram:
+    token: ${APP_TELEGRAM_TOKEN}

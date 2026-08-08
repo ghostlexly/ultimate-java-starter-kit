@@ -2,13 +2,17 @@ package com.lunisoft.javastarter.core.exception;
 
 import com.lunisoft.javastarter.core.dto.ErrorResponse;
 import com.lunisoft.javastarter.core.dto.Violation;
+import com.lunisoft.javastarter.module.telegram.service.TelegramService;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import org.apache.catalina.connector.ClientAbortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
@@ -33,9 +38,14 @@ import java.util.List;
  * Global exception handler that produces consistent JSON error responses.
  */
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
     private final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final TelegramService telegramService;
+
+    @Value("${spring.application.name}")
+    private String applicationName;
 
     /**
      * Handles custom business rule violations thrown from services/use cases.
@@ -187,6 +197,35 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles a response body that could not be written. The usual case is a client that closed the
+     * connection before the whole body was sent (user navigating away or reloading, front-end
+     * aborting the request, reverse proxy timeout): the request itself succeeded and nothing can be
+     * returned since the socket is already gone, so it is logged as a one-line warning rather than
+     * an ERROR with a full stack trace. Returning null tells Spring there is no response to write.
+     *
+     * <p>A genuine serialization failure (a getter that throws, an unmappable type) is still logged
+     * with its stack and answered with a 500.
+     */
+    @ExceptionHandler({HttpMessageNotWritableException.class, AsyncRequestNotUsableException.class})
+    public ResponseEntity<ErrorResponse> handleMessageNotWritable(Exception ex) {
+        boolean isClientDisconnected = findCause(ex, ClientAbortException.class) != null
+                || findCause(ex, AsyncRequestNotUsableException.class) != null;
+
+        if (isClientDisconnected) {
+            log.warn("Response aborted: the client closed the connection before the body was fully written");
+
+            return null;
+        }
+
+        log.error("Failed to serialize the response body", ex);
+
+        ErrorResponse response =
+                new ErrorResponse("InternalServerError", "Internal server error", "INTERNAL_ERROR", null);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    /**
      * Handles @Valid/@RequestBody validation failures (Bean Validation on DTOs). Example: POST
      * /api/auth/send-code with { "email": "" } triggers @NotBlank on SendCodeRequest.email
      */
@@ -278,6 +317,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
+
+        telegramService.sendMessage("[%s] Unhandled exception: %s".formatted(applicationName, ex.getMessage()));
 
         ErrorResponse response =
                 new ErrorResponse("InternalServerError", "Internal server error", "INTERNAL_ERROR", null);

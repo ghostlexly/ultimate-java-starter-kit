@@ -65,6 +65,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Outgoing HTTP calls (RestClient) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-restclient</artifactId>
+        </dependency>
+
         <!-- AspectJ/AOP — required by @Aspect (RateLimitAspect) and @Retryable -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
