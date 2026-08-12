@@ -1,17 +1,25 @@
 package com.lunisoft.javastarter.module.auth.service;
 
 import com.lunisoft.javastarter.module.auth.dto.RefreshTokenRequest;
+import com.lunisoft.javastarter.property.JwtProperties;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import static com.lunisoft.javastarter.module.auth.AuthConstants.*;
+import java.time.Duration;
+
+import static com.lunisoft.javastarter.module.auth.AuthConstants.ACCESS_TOKEN_COOKIE;
+import static com.lunisoft.javastarter.module.auth.AuthConstants.REFRESH_TOKEN_COOKIE;
 
 /** Manages authentication cookies (access and refresh tokens). */
 @Service
+@RequiredArgsConstructor
 public class AuthCookieService {
+
+    private final JwtProperties jwtProperties;
 
     @Value("${app.cookie.secure:false}")
     private boolean secureCookies;
@@ -37,8 +45,17 @@ public class AuthCookieService {
 
     /** Sets the access and refresh token cookies on the response. */
     public void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken) {
-        addCookie(response, ACCESS_TOKEN_COOKIE, accessToken, ACCESS_TOKEN_MAX_AGE);
-        addCookie(response, REFRESH_TOKEN_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE);
+        // Cookies live exactly as long as the tokens they carry (app.jwt.* expiration minutes).
+        long accessTokenExpSeconds =
+                Duration.ofMinutes(jwtProperties.accessTokenExpirationMinutes()).toSeconds();
+        int accessTokenMaxAge = Math.toIntExact(accessTokenExpSeconds);
+
+        long refreshTokenExpSeconds = Duration.ofMinutes(jwtProperties.refreshTokenExpirationMinutes())
+                .toSeconds();
+        int refreshTokenMaxAge = Math.toIntExact(refreshTokenExpSeconds);
+
+        addCookie(response, ACCESS_TOKEN_COOKIE, accessToken, accessTokenMaxAge);
+        addCookie(response, REFRESH_TOKEN_COOKIE, refreshToken, refreshTokenMaxAge);
     }
 
     /** Clears the access and refresh token cookies. */
