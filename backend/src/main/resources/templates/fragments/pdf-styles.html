@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Styles d'impression PDF</title>
+</head>
+<body>
+
+<!--
+  Shared print rules for every template rendered to PDF by PdfService (headless Chromium).
+  Include it in the <head> of a template with:
+      <th:block th:replace="~{fragments/pdf-styles :: printStyles}"></th:block>
+
+  Note: the rules are intentionally NOT wrapped in @media print — Playwright renders with the
+  print media type — and they are unlayered, so they win over Tailwind's @layer utilities.
+-->
+<style th:fragment="printStyles">
+    /*
+     * Page geometry. Margins must live here and not on <body>: body padding only pads the very
+     * top of page 1 and the very bottom of the last page, which is why pages 2+ used to start
+     * flush against the paper edge.
+     */
+    @page {
+        size: A4;
+        margin: 12mm 10mm;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    /*
+     * Chromium clips the content of an `overflow: hidden` box when that box is split over two
+     * pages: the last visible row of a long table ends up cut in half at the page break. Long
+     * tables therefore carry their own border instead of sitting in an `overflow-hidden` wrapper,
+     * and any remaining clipping box is neutralised here.
+     */
+    .overflow-hidden {
+        overflow: visible;
+    }
+
+    /* The header row rounds its own top corners, since nothing clips it anymore. */
+    table thead tr > :first-child {
+        border-top-left-radius: 0.5rem;
+    }
+
+    table thead tr > :last-child {
+        border-top-right-radius: 0.5rem;
+    }
+
+    /* Repeat the table header on every page and never split a row across two pages. */
+    thead {
+        display: table-header-group;
+    }
+
+    tfoot {
+        display: table-footer-group;
+    }
+
+    tr,
+    th,
+    td,
+    img {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* Blocks that must stay in one piece (cards, totals, RIB, legal notices, …). */
+    .no-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    /* A title is never left alone at the bottom of a page, detached from its content. */
+    .no-break-after {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+</style>
+
+</body>
+</html>
