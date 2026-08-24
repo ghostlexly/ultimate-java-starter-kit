@@ -5,6 +5,7 @@ WORKDIR /app
 # Copy project files
 COPY ./.mvn ./.mvn
 COPY ./mvnw ./mvnw
+COPY ./lombok.config ./lombok.config
 COPY ./pom.xml ./pom.xml
 COPY ./src ./src
 
