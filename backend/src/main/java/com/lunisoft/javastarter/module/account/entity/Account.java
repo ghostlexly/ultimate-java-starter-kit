@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -34,7 +35,7 @@ public class Account extends BaseEntity {
     private boolean emailVerified = false;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Session> sessions;
+    private List<Session> sessions = new ArrayList<>();
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private Customer customer;
@@ -43,5 +44,5 @@ public class Account extends BaseEntity {
     private Admin admin;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<VerificationToken> verificationTokens;
+    private List<VerificationToken> verificationTokens = new ArrayList<>();
 }
