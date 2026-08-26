@@ -86,9 +86,6 @@ public class VerifyCodeUseCase {
                 Instant.now().plus(jwtTokenProvider.getRefreshTokenExpirationMinutes(), ChronoUnit.MINUTES));
         session.setAccount(account);
 
-        var savedSession = sessionRepository.save(session);
-        account.getSessions().add(savedSession);
-
-        return savedSession;
+        return sessionRepository.save(session);
     }
 }

@@ -6,6 +6,7 @@ import com.lunisoft.javastarter.module.auth.entity.VerificationToken;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.shared.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -34,7 +35,9 @@ public class Account extends BaseEntity {
     @Column(nullable = false)
     private boolean emailVerified = false;
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, orphanRemoval = true)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private List<Session> sessions = new ArrayList<>();
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -43,6 +46,8 @@ public class Account extends BaseEntity {
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private Admin admin;
 
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, orphanRemoval = true)
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
     private List<VerificationToken> verificationTokens = new ArrayList<>();
 }
