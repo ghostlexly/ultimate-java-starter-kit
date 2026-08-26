@@ -80,11 +80,11 @@ public class VerifyCodeUseCase {
 
     private Session createSession(Account account, HttpServletRequest request) {
         Session session = new Session();
+        session.setAccount(account);
         session.setIpAddress(request.getRemoteAddr());
         session.setUserAgent(request.getHeader("User-Agent"));
         session.setExpiresAt(
                 Instant.now().plus(jwtTokenProvider.getRefreshTokenExpirationMinutes(), ChronoUnit.MINUTES));
-        session.setAccount(account);
 
         return sessionRepository.save(session);
     }
