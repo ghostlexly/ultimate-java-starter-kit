@@ -47,13 +47,13 @@ public class SendCodeUseCase {
             Account newAccount = new Account();
             newAccount.setEmail(normalizedEmail);
             newAccount.setRole(Role.CUSTOMER);
-            Account savedAccount = accountRepository.save(newAccount);
+            accountRepository.save(newAccount);
 
             Customer newCustomer = new Customer();
-            newCustomer.setAccount(savedAccount);
+            newCustomer.setAccount(newAccount);
             customerRepository.save(newCustomer);
 
-            return savedAccount;
+            return newAccount;
         });
 
         // Enforce cooldown between code requests
