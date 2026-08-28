@@ -31,19 +31,4 @@ public class VerificationToken extends BaseEntity {
 
     @Column(nullable = false)
     private Instant expiresAt;
-
-    @PreRemove
-    private void detachFromParents() {
-        if (account != null) {
-            account.getVerificationTokens().remove(this);
-            account = null;
-        }
-    }
-
-    @PrePersist
-    private void attachToParents() {
-        if (account != null) {
-            account.getVerificationTokens().add(this);
-        }
-    }
 }
