@@ -259,6 +259,48 @@ public class TownController {
 - Use `@Enumerated(EnumType.STRING)` for enums
 - Use `CascadeType.ALL` + `orphanRemoval = true` on parent collections
 
+### Bidirectional sync callbacks (MANDATORY)
+
+Every `@ManyToOne` whose parent holds an inverse collection (`@OneToMany(mappedBy = ...)`) MUST keep that collection in
+sync with `@PrePersist` / `@PreRemove` callbacks on the **child** entity. Without them the parent's collection stays
+stale inside the persistence context: a freshly persisted child is missing from it, a removed child is still in it, and
+any total/count computed from that collection is wrong.
+
+```java
+
+@Entity
+public class Booking extends BaseEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cart_id", nullable = false)
+    private Cart cart;
+
+    @PreRemove
+    private void detachFromParents() {
+        if (cart != null) {
+            cart.getBookings().remove(this);
+            cart = null;
+        }
+    }
+
+    @PrePersist
+    private void attachToParents() {
+        if (cart != null) {
+            cart.getBookings().add(this);
+        }
+    }
+}
+```
+
+- Always name them `detachFromParents()` (`@PreRemove`) and `attachToParents()` (`@PrePersist`), `private`, at the
+  bottom of the entity — these are the only methods allowed on an entity (entities stay pure data, all business logic
+  lives in use cases).
+- Handle every syncable parent inside the same pair of methods, one `if` block per relation.
+- Skip a relation when the target has **no** inverse collection (unidirectional `@ManyToOne`) — there is nothing to
+  sync. If you later add a `@OneToMany` on that parent, add the matching block in the child at the same time.
+- Beware: `parent.getXxx()` initializes the parent if it is a lazy proxy (e.g. from `getReferenceById()`), costing an
+  extra SELECT at flush time.
+
 ## Repository Pattern
 
 - Extend `JpaRepository<Entity, UUID>`

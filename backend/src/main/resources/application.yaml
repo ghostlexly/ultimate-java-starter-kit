@@ -56,6 +56,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    diskspace:
+      threshold: 5GB
 
 jobrunr:
   background-job-server:

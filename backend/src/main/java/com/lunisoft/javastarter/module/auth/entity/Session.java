@@ -23,4 +23,19 @@ public class Session extends BaseEntity {
 
     @Column(nullable = false)
     private Instant expiresAt;
+
+    @PreRemove
+    private void detachFromParents() {
+        if (account != null) {
+            account.getSessions().remove(this);
+            account = null;
+        }
+    }
+
+    @PrePersist
+    private void attachToParents() {
+        if (account != null) {
+            account.getSessions().add(this);
+        }
+    }
 }
