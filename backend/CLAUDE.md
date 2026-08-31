@@ -18,7 +18,7 @@ module/
     entity/        # JPA entities
     repository/    # Spring Data repositories + Specifications
     usecase/       # Business logic (one class = one action) — owns its Input/Output records
-    dto/           # Only for payloads shared across use cases / standalone request bodies
+    dto/           # Web-layer payloads: request bodies, endpoint response records, shared payloads
     event/         # Domain events + listeners
 core/
   dto/             # Shared DTOs (ErrorResponse, Violation, PaginatedResponse)
@@ -140,7 +140,7 @@ being created. Never `mapper.from(...)` — a bean is neither end of the mapping
 
 **Web-layer reshaping.** When a controller endpoint needs a response shape that differs from the use case's `Output`/
 `XxxView` (a subset, renamed fields, a combination, different JSON), it declares its own response record in the
-controller's package, named after the **endpoint** — e.g.
+feature's `dto/` package, named after the **endpoint** — e.g.
 `GetBookingsResponse` — with a **`static GetBookingsResponse from(BookingView view)`** factory that converts the view
 into the endpoint's wire shape. (Name it after the endpoint/use case, not the entity: `GetBookingsResponse`, not
 `BookingResponse` — the shape belongs to that endpoint.) A `static
@@ -294,10 +294,11 @@ public final class CustomerSpecification {
 
 ## DTOs
 
-- Request/response payloads are modelled as the use case's nested `Input` / `Output` records — see **Use Case Pattern**.
-  Don't add separate `dto/` Response classes for them.
-- A standalone `dto/` record is only for a payload shared across use cases, or a request body you want to annotate
-  independently. Always Java records (immutable), validation annotations directly on the fields.
+- The application layer's payloads are the use case's nested `Input` / `Output` records — see **Use Case Pattern**.
+  Don't add a `dto/` Response class that merely mirrors an `Output` the controller returns as-is.
+- `dto/` holds the web-layer records: request bodies, endpoint response records (`GetBookingsResponse` — only when the
+  wire shape differs from the use case's `Output`/`XxxView`, see **Web-layer reshaping**), and payloads shared across
+  use cases. Always Java records (immutable), validation annotations directly on the fields.
 
 ```java
 public record SendCodeRequest(
