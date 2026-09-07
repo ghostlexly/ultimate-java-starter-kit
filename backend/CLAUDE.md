@@ -333,7 +333,6 @@ method() { ...}
 
 - Never write `if` on a single line
 - Extract complex lambda logic into private methods
-- Use `Optional.ifPresent(this::methodRef)` over `if (opt.isPresent()) { opt.get()... }`
 - Use `@NonNull` from `org.jspecify.annotations` when overriding `@NullMarked` methods
 - Constants as `private static final` (e.g. `SecureRandom`, `Duration`)
 - Comments on non-obvious code, Javadoc on public methods
