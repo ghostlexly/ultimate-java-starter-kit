@@ -331,7 +331,6 @@ method() { ...}
 
 ## Code Style
 
-- Blank line before every `return` statement
 - Never write `if` on a single line
 - Extract complex lambda logic into private methods
 - Use `Optional.ifPresent(this::methodRef)` over `if (opt.isPresent()) { opt.get()... }`
