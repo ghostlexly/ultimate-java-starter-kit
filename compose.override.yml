@@ -13,13 +13,13 @@ services:
     networks:
       - lunisoft
 
-  java-starter-backend:
+  backend:
     # Don't start backend in dev — run it from your IDE instead.
     # Profiles require to be run with the argument "docker compose --profile prod up -d"
     profiles:
       - prod
 
-  java-starter-frontend:
+  frontend:
     command: npm run dev
     environment:
       NODE_ENV: development

@@ -1,5 +1,5 @@
 services:
-  java-starter-postgres:
+  postgres:
     image: postgres:17.9
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-lunisoft}
@@ -17,10 +17,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - lunisoft
+      lunisoft:
+        aliases:
+          - java-starter-postgres
     restart: unless-stopped
 
-  java-starter-redis:
+  redis:
     image: redis:8.6.2-alpine
     expose:
       - "6379"
@@ -29,10 +31,12 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - lunisoft
+      lunisoft:
+        aliases:
+          - java-starter-redis
     restart: unless-stopped
 
-  java-starter-frontend:
+  frontend:
     image: lunisoft/java-starter:frontend
     build: ./frontend
     environment:
@@ -47,10 +51,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - lunisoft
+      lunisoft:
+        aliases:
+          - java-starter-frontend
     restart: unless-stopped
 
-  java-starter-backend:
+  backend:
     image: lunisoft/java-starter:backend
     build: ./backend
     environment:
@@ -79,7 +85,9 @@ services:
       java-starter-redis:
         condition: service_started
     networks:
-      - lunisoft
+      lunisoft:
+        aliases:
+          - java-starter-backend
     restart: unless-stopped
 
 volumes:

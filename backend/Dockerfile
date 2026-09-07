@@ -48,4 +48,4 @@ RUN \
 
 USER spring
 
-CMD ["java", "-jar", "app.jar"]
+CMD ["bash", "-c",  "java -jar app.jar"]
