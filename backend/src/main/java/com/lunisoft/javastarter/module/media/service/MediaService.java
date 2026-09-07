@@ -9,8 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -47,17 +47,17 @@ public class MediaService {
     }
 
     public String buildKey(String storagePath, String fileName) {
-        var now = Instant.now().atOffset(ZoneOffset.UTC);
+        String safeName = (fileName == null || fileName.isBlank()) ? "file" : fileName;
 
-        return "%s/%s/%s.%s"
-                .formatted(storagePath, now.format(DATE_FOLDER_FORMAT), UUID.randomUUID(), extractExtension(fileName));
-    }
+        int dotIndex = safeName.lastIndexOf('.');
+        String extension = dotIndex >= 0 ? safeName.substring(dotIndex).toLowerCase() : "";
+        String baseName = dotIndex >= 0 ? safeName.substring(0, dotIndex) : safeName;
 
-    private String extractExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            return "bin";
-        }
+        String normalizedFileName = "%s-%s%s".formatted(baseName, UUID.randomUUID(), extension);
+        normalizedFileName = normalizedFileName.replaceAll("[^a-zA-Z0-9.]+", "_");
 
-        return fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        var now = ZonedDateTime.now(ZoneId.of("Europe/Paris"));
+
+        return "%s/%s/%s".formatted(storagePath, now.format(DATE_FOLDER_FORMAT), normalizedFileName);
     }
 }
