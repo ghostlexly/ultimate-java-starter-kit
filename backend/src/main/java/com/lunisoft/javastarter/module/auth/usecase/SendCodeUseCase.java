@@ -61,7 +61,7 @@ public class SendCodeUseCase {
                 .findFirstByAccountIdAndTypeOrderByCreatedAtDesc(account.getId(), VerificationType.LOGIN_CODE)
                 .ifPresent(this::checkCooldown);
 
-        String code = "%04d".formatted(SECURE_RANDOM.nextInt(10000));
+        String code = "%06d".formatted(SECURE_RANDOM.nextInt(1_000_000));
 
         VerificationToken token = new VerificationToken();
         token.setToken(UUID.randomUUID().toString());
