@@ -39,11 +39,8 @@ RUN ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.arg
 
 COPY --from=build /app/target/*.jar app.jar
 
-RUN \
-    # Pre-create the logs mount point so the named volume inherits spring's ownership
-    mkdir -p /app/logs \
-    # Run as a dedicated non-root user
-    && useradd --system --create-home --shell /usr/sbin/nologin spring \
+# Create & use Spring user
+RUN useradd --system --create-home --shell /usr/sbin/nologin spring \
     && chown -R spring:spring /app
 
 USER spring

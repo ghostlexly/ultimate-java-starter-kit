@@ -78,7 +78,7 @@ services:
       - "3000"
       - "8000"
     volumes:
-      - ./backend/logs:/app/logs
+      - backend-logs:/app/logs
     depends_on:
       java-starter-postgres:
         condition: service_healthy
@@ -93,6 +93,7 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  backend-logs:
 
 networks:
   lunisoft:
