@@ -33,11 +33,7 @@ public class UploadMediaUseCase {
     public Media execute(Input input) {
         var key = mediaService.buildKey(STORAGE_PATH, input.fileName());
 
-        var media = new Media();
-        media.setFileName(input.fileName());
-        media.setKey(key);
-        media.setMimeType(input.contentType());
-        media.setSize(input.size());
+        var media = new Media(input.fileName(), key, input.contentType(), input.size());
         mediaRepository.save(media);
 
         s3Service.upload(key, input.resource(), input.size(), input.contentType(), STORAGE_CLASS);

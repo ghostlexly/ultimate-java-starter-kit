@@ -7,11 +7,19 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Objects;
 
 @Entity
 @Getter
 @Setter
 public class Session extends BaseEntity {
+
+    protected Session() {}
+
+    public Session(Account account, Instant expiresAt) {
+        this.account = Objects.requireNonNull(account);
+        this.expiresAt = Objects.requireNonNull(expiresAt);
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)

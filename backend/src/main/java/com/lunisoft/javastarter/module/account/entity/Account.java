@@ -12,12 +12,20 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Getter
 @Setter
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"provider_id", "provider_account_id", "role"})})
 public class Account extends BaseEntity {
+
+    protected Account() {}
+
+    public Account(String email, Role role) {
+        this.email = Objects.requireNonNull(email).toLowerCase();
+        this.role = Objects.requireNonNull(role);
+    }
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -35,9 +43,9 @@ public class Account extends BaseEntity {
     @Column(nullable = false)
     private boolean emailVerified = false;
 
-    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, orphanRemoval = true)
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
     private List<Session> sessions = new ArrayList<>();
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -46,8 +54,8 @@ public class Account extends BaseEntity {
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
     private Admin admin;
 
-    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY, orphanRemoval = true)
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
+    @OneToMany(mappedBy = "account", fetch = FetchType.LAZY)
     private List<VerificationToken> verificationTokens = new ArrayList<>();
 }

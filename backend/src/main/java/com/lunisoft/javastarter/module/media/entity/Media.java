@@ -6,10 +6,21 @@ import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Entity
 @Getter
 @Setter
 public class Media extends BaseEntity {
+
+    protected Media() {}
+
+    public Media(String fileName, String key, String mimeType, long size) {
+        this.fileName = Objects.requireNonNull(fileName);
+        this.key = Objects.requireNonNull(key);
+        this.mimeType = Objects.requireNonNull(mimeType);
+        this.size = size;
+    }
 
     @Column(nullable = false)
     private String fileName;

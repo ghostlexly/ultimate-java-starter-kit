@@ -9,10 +9,17 @@ import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Entity
 @Getter
 @Setter
 public class Admin extends BaseEntity {
+    protected Admin() {}
+
+    public Admin(Account account) {
+        this.account = Objects.requireNonNull(account);
+    }
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false, unique = true)

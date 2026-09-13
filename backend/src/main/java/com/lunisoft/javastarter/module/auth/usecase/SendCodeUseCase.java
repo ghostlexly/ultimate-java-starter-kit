@@ -44,13 +44,10 @@ public class SendCodeUseCase {
         String normalizedEmail = email.toLowerCase();
 
         Account account = accountRepository.findByEmail(normalizedEmail).orElseGet(() -> {
-            Account newAccount = new Account();
-            newAccount.setEmail(normalizedEmail);
-            newAccount.setRole(Role.CUSTOMER);
+            Account newAccount = new Account(normalizedEmail, Role.CUSTOMER);
             accountRepository.save(newAccount);
 
-            Customer newCustomer = new Customer();
-            newCustomer.setAccount(newAccount);
+            Customer newCustomer = new Customer(newAccount);
             customerRepository.save(newCustomer);
 
             return newAccount;
@@ -63,12 +60,11 @@ public class SendCodeUseCase {
 
         String code = "%06d".formatted(SECURE_RANDOM.nextInt(1_000_000));
 
-        VerificationToken token = new VerificationToken();
-        token.setToken(UUID.randomUUID().toString());
-        token.setType(VerificationType.LOGIN_CODE);
+        Instant expiresAt = Instant.now().plus(AuthConstants.LOGIN_CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES);
+
+        VerificationToken token =
+                new VerificationToken(UUID.randomUUID().toString(), VerificationType.LOGIN_CODE, account, expiresAt);
         token.setValue(code);
-        token.setAccount(account);
-        token.setExpiresAt(Instant.now().plus(AuthConstants.LOGIN_CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES));
         verificationTokenRepository.save(token);
 
         eventPublisher.publishEvent(new LoginCodeRequestedEvent(normalizedEmail, code));

@@ -51,15 +51,12 @@ public class DataSeeder implements ApplicationRunner {
             return;
         }
 
-        var account = new Account();
-        account.setEmail(ADMIN_EMAIL);
+        var account = new Account(ADMIN_EMAIL, Role.ADMIN);
         account.setPassword(HASHED_BCRYPT);
-        account.setRole(Role.ADMIN);
         account.setEmailVerified(true);
         accountRepository.save(account);
 
-        var admin = new Admin();
-        admin.setAccount(account);
+        var admin = new Admin(account);
         adminRepository.save(admin);
 
         log.info("Seeded admin account: {}", ADMIN_EMAIL);
