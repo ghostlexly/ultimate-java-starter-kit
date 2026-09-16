@@ -35,7 +35,8 @@ shared/
 ## Naming Conventions
 
 - **Packages**: singular lowercase (`usecase`, `repository`, `controller`)
-- **Use cases**: `[Verb][Entity]UseCase` with single `execute()` method
+- **Use cases**: `[Verb][Entity]UseCase` with single `execute(Input input)` method — `Input` is a nested record,
+  always, even with 0 or 1 parameter
 - **Controllers**: `[Entity]Controller`
 - **Repositories**: `[Entity]Repository`
 - **Specifications**: `[Entity]Specification` (static methods, private constructor)
@@ -104,6 +105,11 @@ public class CreateProfileUseCase {
 
 - One class per business action, `@Service @RequiredArgsConstructor`
 - Single public method: `execute(Input input)`
+- **`Input` is mandatory in every use case, even with 0 or 1 parameter.** Never `execute(UUID id)`,
+  `execute(String token)` or `execute()`. One parameter → `public record Input(UUID barcodeAnalysisId) {}`;
+  no parameter → `public record Input() {}`. Reasons: uniform call sites (`execute(new XxxUseCase.Input(...))`),
+  same-typed arguments (`UUID accountId, UUID barcodeAnalysisId`) are named instead of positional, and adding a field
+  later never changes the method signature.
 - `@Transactional` on writes, `@Transactional(readOnly = true)` on reads
 - Extract helper logic into private methods (e.g. `checkCooldown`, `buildSpec`)
 
