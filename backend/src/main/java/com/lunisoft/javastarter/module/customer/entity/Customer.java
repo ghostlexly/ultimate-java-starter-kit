@@ -8,12 +8,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
 @Entity
 @Getter
 @Setter
+@NullMarked
 public class Customer extends BaseEntity {
 
     protected Customer() {}

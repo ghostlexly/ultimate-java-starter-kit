@@ -5,12 +5,14 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.Setter;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Objects;
 
 @Entity
 @Getter
 @Setter
+@NullMarked
 public class Media extends BaseEntity {
 
     protected Media() {}

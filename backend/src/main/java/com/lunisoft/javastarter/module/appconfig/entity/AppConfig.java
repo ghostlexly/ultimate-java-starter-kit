@@ -5,12 +5,15 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.Getter;
 import lombok.Setter;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
 @Entity
 @Getter
 @Setter
+@NullMarked
 public class AppConfig extends BaseEntity {
     protected AppConfig() {}
 
@@ -21,5 +24,7 @@ public class AppConfig extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String key;
 
+    @Column(nullable = true)
+    @Nullable
     private String value;
 }

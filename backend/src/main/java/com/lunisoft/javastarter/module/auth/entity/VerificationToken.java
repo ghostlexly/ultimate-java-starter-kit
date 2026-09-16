@@ -5,6 +5,8 @@ import com.lunisoft.javastarter.shared.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -12,6 +14,7 @@ import java.util.Objects;
 @Entity
 @Getter
 @Setter
+@NullMarked
 public class VerificationToken extends BaseEntity {
 
     protected VerificationToken() {}
@@ -30,6 +33,8 @@ public class VerificationToken extends BaseEntity {
     @Column(nullable = false)
     private VerificationType type;
 
+    @Column(nullable = true)
+    @Nullable
     private String value;
 
     @Column(nullable = false)
