@@ -63,6 +63,8 @@ management:
 jobrunr:
   background-job-server:
     enabled: true
+    thread-type: virtualthreads
+    poll-interval-in-seconds: 5
   dashboard:
     enabled: true
     username: lunisoft

@@ -22,7 +22,7 @@
         <playwright.version>1.59.0</playwright.version>
         <libphonenumber.version>9.0.30</libphonenumber.version>
         <retry.version>2.0.12</retry.version>
-        <jobrunr.version>8.5.2</jobrunr.version>
+        <jobrunr.version>8.8.2</jobrunr.version>
         <tika.version>3.3.0</tika.version>
     </properties>
 
