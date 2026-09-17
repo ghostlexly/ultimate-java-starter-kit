@@ -23,7 +23,7 @@ module/
 core/
   dto/             # Shared DTOs (ErrorResponse, Violation, PaginatedResponse)
   exception/       # BusinessRuleException, GlobalExceptionHandler
-  pagination/      # PaginationService (Pageable building + sort key whitelist resolution)
+  pagination/      # SortWhitelist (static helper: sort key whitelist resolution for web Pageables)
   security/        # JWT filter, provider, UserPrincipal, @PublicEndpoint + scanner
   ratelimit/       # @RateLimit annotation + interceptor
 config/            # SecurityConfig, JpaConfig, WebConfig, JwtProperties
@@ -173,11 +173,12 @@ public class GetTownsUseCase {
 
     private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "population");
 
-    private final TownRepository townRepository;
-    private final PaginationService paginationService;
+    // API sort key -> entity property paths. Anything else falls back to DEFAULT_SORT.
+    private static final Map<String, List<String>> SORTABLE_PROPERTIES = Map.of("population", List.of("population"));
 
-    public record Input(
-            String id, String postalCode, String city, String search, Integer page, Integer size) {
+    private final TownRepository townRepository;
+
+    public record Input(Pageable pageable, String id, String postalCode, String city, String search) {
 
     }
 
@@ -188,7 +189,7 @@ public class GetTownsUseCase {
     @Transactional(readOnly = true)
     public PaginatedResponse<Output> execute(Input input) {
         Specification<Town> spec = buildSpecs(input);
-        Pageable pageable = paginationService.toPageable(input.page(), input.size(), DEFAULT_SORT);
+        Pageable pageable = SortWhitelist.apply(input.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
 
         Page<Output> page = townRepository.findAll(spec, pageable).map(this::toOutput);
 
@@ -230,7 +231,8 @@ public class GetTownsUseCase {
 - `@Valid @RequestBody` for body validation
 - `@Validated` on class for `@RequestParam` / `@PathVariable` validation (add `@Size`/etc. to params)
 - `@AuthenticationPrincipal UserPrincipal principal` for authenticated user
-- Pagination params are `page` (1-based) and `size`
+- Pagination params are `page` (1-based), `size` and `sort`, received as a single `@PageableDefault(size = …) Pageable
+  pageable` argument and passed as-is into the use case `Input` — see **Pagination**
 
 ```java
 
@@ -245,11 +247,10 @@ public class TownController {
 
     @GetMapping
     public ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>> getTowns(
-            @RequestParam(required = false) @Size(max = 191) String search,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
+            @PageableDefault(size = 10) Pageable pageable,
+            @RequestParam(required = false) @Size(max = 191) String search) {
 
-        var input = new GetTownsUseCase.Input(null, null, null, search, page, size);
+        var input = new GetTownsUseCase.Input(pageable, null, null, null, search);
 
         PaginatedResponse<GetTownsUseCase.Output> response = getTownsUseCase.execute(input);
 
@@ -383,15 +384,19 @@ method() { ...}
 
 ## Pagination
 
-- Query params are `page` (1-based, `?page=1`) and `size` (items per page). Never `first`. Optional sorting params are
-  `sort` (a whitelisted key) and `order` (`asc`/`desc`).
-- Build the `Pageable` with the injected `core/pagination/PaginationService`:
-  `paginationService.toPageable(page, size, sort)` — it converts to the 0-based index and applies defaults (`page=1`,
-  `size=50`, capped at `100`).
-- For client-controlled sorting, declare a `SORTABLE_PROPERTIES` whitelist (`Map<String, List<String>>` of API sort
-  key → entity property paths) on the use case and resolve it with
-  `paginationService.resolveSort(SORTABLE_PROPERTIES, DEFAULT_SORT, sort, order)` — unknown keys fall back to the
-  default sort, so clients can never sort on arbitrary columns.
+- Query params are `page` (1-based, `?page=1`), `size` (items per page) and the optional `sort`, in Spring's
+  format: `?sort=<key>,<asc|desc>` (repeatable). Never `first`, never a separate `order` param.
+- Controllers receive them as a web-resolved `Pageable`: `@PageableDefault(size = 10) Pageable pageable`, passed as-is
+  into the use case `Input` (`Pageable pageable` is its first field). Do not declare `page`/`size`/`sort`
+  `@RequestParam`s by hand. The 1-based index and the `100` items cap come from `spring.data.web.pageable.*` in
+  `application.yaml`. Don't put a `sort` in `@PageableDefault` — the default sort belongs to the use case.
+- **Never pass the received `Pageable` to a repository as-is**: its sort is client-controlled. Declare a
+  `SORTABLE_PROPERTIES` whitelist (`Map<String, List<String>>` of API sort key → entity property paths) and a
+  `DEFAULT_SORT` on the use case, then build the final pageable with the static `core/pagination/SortWhitelist`:
+  `SortWhitelist.apply(input.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT)` — unknown keys fall back to the default
+  sort, so clients can never sort on arbitrary columns. When the sort must be decided conditionally (e.g. unsorted
+  for a relevance-ordered search), use `SortWhitelist.resolve(requestedSort, SORTABLE_PROPERTIES, DEFAULT_SORT)` and
+  rebuild the `PageRequest` yourself (see `PaginateAnalysesUseCase.resolvePageable`).
 - List endpoints return `core/dto/PaginatedResponse<Output>` built via
   `PaginatedResponse.from(page)`. Shape: `{ content, totalItems, totalPages, isFirst, isLast }`. The frontend reads
   `data.content`.

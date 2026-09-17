@@ -21,9 +21,11 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static com.lunisoft.javastarter.shared.TestFactory.createCustomerAccount;
+import static com.lunisoft.javastarter.shared.TestFactory.createVerificationToken;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,9 +66,10 @@ class SendCodeUseCaseTest {
     void execute_new_account_creates_account_and_customer_then_sends_code() {
         Account account = createCustomerAccount();
         when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.empty());
-        when(accountRepository.save(any(Account.class))).thenReturn(account);
+        // The use case builds the Account itself: without JPA its id is never generated here, so
+        // the cooldown lookup cannot be matched on account.getId().
         when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
-                        account.getId(), VerificationType.LOGIN_CODE))
+                        any(), eq(VerificationType.LOGIN_CODE)))
                 .thenReturn(Optional.empty());
 
         sendCodeUseCase.execute(account.getEmail());
@@ -92,7 +95,7 @@ class SendCodeUseCaseTest {
         when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
 
         // Last token was created 10 seconds ago (within 60s cooldown)
-        var recentToken = new VerificationToken();
+        var recentToken = createVerificationToken(account, "123456", 0);
         recentToken.setCreatedAt(Instant.now().minusSeconds(10));
         when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
                         account.getId(), VerificationType.LOGIN_CODE))
@@ -113,7 +116,7 @@ class SendCodeUseCaseTest {
         when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
 
         // Last token was created 61 seconds ago (past 60s cooldown)
-        var oldToken = new VerificationToken();
+        var oldToken = createVerificationToken(account, "123456", 0);
         oldToken.setCreatedAt(Instant.now().minusSeconds(AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS + 1));
 
         when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
@@ -140,7 +143,7 @@ class SendCodeUseCaseTest {
             assertThat(token.getAccount()).isEqualTo(account);
             assertThat(token.getType()).isEqualTo(VerificationType.LOGIN_CODE);
             assertThat(token.getToken()).isNotNull();
-            assertThat(token.getValue()).hasSize(4);
+            assertThat(token.getValue()).hasSize(6);
             assertThat(token.getAttempts()).isZero();
             assertThat(token.getExpiresAt()).isAfter(Instant.now());
         }));

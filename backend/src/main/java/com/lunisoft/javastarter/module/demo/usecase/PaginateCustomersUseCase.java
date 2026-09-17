@@ -1,7 +1,7 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
 import com.lunisoft.javastarter.core.dto.PaginatedResponse;
-import com.lunisoft.javastarter.core.pagination.PaginationService;
+import com.lunisoft.javastarter.core.pagination.SortWhitelist;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerSpecification;
@@ -50,22 +50,17 @@ public class PaginateCustomersUseCase {
             "isActive", List.of("isActive"));
 
     private final DemoCustomerRepository demoCustomerRepository;
-    private final PaginationService paginationService;
 
-    public record Input(int page, int size, String sort, String order, String email) {}
+    public record Input(Pageable pageable, String email) {}
 
     public record Output(UUID id, String email, String role) {}
 
     @Transactional(readOnly = true)
     public PaginatedResponse<Output> execute(Input input) {
         Assert.notNull(input, "Input cannot be null");
-        Assert.isTrue(input.page() >= 1, "Page cannot be below 1");
-        Assert.isTrue(input.size() > 0, "Size cannot be zero or negative");
+        Assert.notNull(input.pageable(), "Pageable cannot be null");
 
-        Pageable pageable = paginationService.toPageable(
-                input.page(),
-                input.size(),
-                paginationService.resolveSort(SORTABLE_PROPERTIES, DEFAULT_SORT, input.sort(), input.order()));
+        Pageable pageable = SortWhitelist.apply(input.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
 
         Specification<Customer> specs = buildSpecs(input);
 

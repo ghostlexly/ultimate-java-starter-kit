@@ -20,10 +20,8 @@ public final class TestFactory {
     // ── Account ──────────────────────────────────────────────
 
     public static Account createCustomerAccount() {
-        var account = new Account();
+        var account = new Account("contact+customer@lunisoft.fr", Role.CUSTOMER);
         account.setId(UUID.randomUUID());
-        account.setEmail("contact+customer@lunisoft.fr");
-        account.setRole(Role.CUSTOMER);
 
         var customer = createCustomer(account);
         account.setCustomer(customer);
@@ -32,12 +30,10 @@ public final class TestFactory {
     }
 
     public static Account createAdminAccount() {
-        var account = new Account();
+        var account = new Account("contact+admin@lunisoft.fr", Role.ADMIN);
         account.setId(UUID.randomUUID());
-        account.setEmail("contact+admin@lunisoft.fr");
-        account.setRole(Role.ADMIN);
 
-        var admin = new Admin();
+        var admin = new Admin(account);
         account.setAdmin(admin);
 
         return account;
@@ -46,9 +42,8 @@ public final class TestFactory {
     // ── Customer ─────────────────────────────────────────────
 
     public static Customer createCustomer(Account account) {
-        var customer = new Customer();
+        var customer = new Customer(account);
         customer.setId(UUID.randomUUID());
-        customer.setAccount(account);
 
         return customer;
     }
@@ -56,10 +51,8 @@ public final class TestFactory {
     // ── Session ──────────────────────────────────────────────
 
     public static Session createSession(Account account) {
-        var session = new Session();
+        var session = new Session(account, Instant.now().plus(7, ChronoUnit.DAYS));
         session.setId(UUID.randomUUID());
-        session.setAccount(account);
-        session.setExpiresAt(Instant.now().plus(7, ChronoUnit.DAYS));
 
         return session;
     }
@@ -67,14 +60,14 @@ public final class TestFactory {
     // ── VerificationToken ────────────────────────────────────
 
     public static VerificationToken createVerificationToken(Account account, String code, int attempts) {
-        var token = new VerificationToken();
+        var token = new VerificationToken(
+                UUID.randomUUID().toString(),
+                VerificationType.LOGIN_CODE,
+                account,
+                Instant.now().plus(15, ChronoUnit.MINUTES));
         token.setId(UUID.randomUUID());
-        token.setToken(UUID.randomUUID().toString());
-        token.setType(VerificationType.LOGIN_CODE);
         token.setValue(code);
-        token.setAccount(account);
         token.setAttempts(attempts);
-        token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
 
         return token;
     }

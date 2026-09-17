@@ -17,15 +17,14 @@ import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase;
 import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.jobrunr.scheduling.BackgroundJob;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -82,13 +81,9 @@ public class DemoController {
      */
     @GetMapping("customers/paginated")
     public ResponseEntity<PaginatedResponse<PaginateCustomersUseCase.Output>> paginateCustomers(
-            @Min(1) @RequestParam(defaultValue = "1") int page,
-            @Min(1) @Max(100) @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) @Pattern(regexp = "asc|desc") String order,
-            @RequestParam(required = false) String email) {
+            @PageableDefault(size = 20) Pageable pageable, @RequestParam(required = false) String email) {
 
-        var input = new PaginateCustomersUseCase.Input(page, size, sort, order, email);
+        var input = new PaginateCustomersUseCase.Input(pageable, email);
 
         var response = this.paginateCustomersUseCase.execute(input);
 

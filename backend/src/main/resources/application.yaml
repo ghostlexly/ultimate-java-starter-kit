@@ -12,6 +12,12 @@ spring:
     redis:
       host: ${APP_REDIS_HOST}
       port: ${APP_REDIS_PORT:6379}
+    web:
+      pageable:
+        # Web-resolved Pageable params follow the API convention: ?page=1 is the first page,
+        # and a page never exceeds 100 items.
+        one-indexed-parameters: true
+        max-page-size: 100
   jpa:
     hibernate:
       ddl-auto: validate

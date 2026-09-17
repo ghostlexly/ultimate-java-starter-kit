@@ -58,7 +58,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
             var token = verificationTokenRepository
                     .findFirstByAccountIdAndTypeOrderByCreatedAtDesc(account.getId(), VerificationType.LOGIN_CODE)
                     .orElseThrow();
-            assertThat(token.getValue()).hasSize(4).containsOnlyDigits();
+            assertThat(token.getValue()).hasSize(6).containsOnlyDigits();
         }
 
         @Test

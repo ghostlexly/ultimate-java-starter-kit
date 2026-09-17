@@ -7,6 +7,11 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
+        max-page-size: 100
 
 logging:
   level:

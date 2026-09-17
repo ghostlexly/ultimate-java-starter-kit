@@ -1,13 +1,11 @@
 package com.lunisoft.javastarter.module.demo.usecase;
 
-import com.lunisoft.javastarter.core.pagination.PaginationService;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -30,11 +28,6 @@ class PaginateCustomersUseCaseTest {
     @Mock
     private DemoCustomerRepository demoCustomerRepository;
 
-    // Real instance: PaginationService is pure logic with no dependencies, so we
-    // exercise the actual page/sort resolution instead of stubbing it.
-    @Spy
-    private PaginationService paginationService;
-
     @InjectMocks
     private PaginateCustomersUseCase paginateCustomersUseCase;
 
@@ -48,7 +41,7 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(1, 10, null, null, null);
+        var input = new PaginateCustomersUseCase.Input(PageRequest.of(0, 10), null);
         var output = paginateCustomersUseCase.execute(input);
 
         assertThat(output.content()).hasSize(1);
@@ -68,7 +61,7 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(1, 10, null, null, null);
+        var input = new PaginateCustomersUseCase.Input(PageRequest.of(0, 10), null);
         var output = paginateCustomersUseCase.execute(input);
 
         assertThat(output.content()).isEmpty();
@@ -86,10 +79,29 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(1, 5, null, null, "test@example.com");
+        var input = new PaginateCustomersUseCase.Input(PageRequest.of(0, 5), "test@example.com");
         var output = paginateCustomersUseCase.execute(input);
 
         assertThat(output.content()).isEmpty();
+    }
+
+    @Test
+    void execute_keeps_requested_page_and_size() {
+        // Third page of 5 items: the requested page/size reach the repository untouched,
+        // only the sort is resolved (here: unsorted -> default sort).
+        var pageable = PageRequest.of(2, 5, DEFAULT_SORT);
+        var page = new PageImpl<Customer>(List.of(), pageable, 11);
+
+        when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
+                .thenReturn(page);
+
+        var input = new PaginateCustomersUseCase.Input(PageRequest.of(2, 5), null);
+        var output = paginateCustomersUseCase.execute(input);
+
+        assertThat(output.totalItems()).isEqualTo(11);
+        assertThat(output.totalPages()).isEqualTo(3);
+        assertThat(output.isFirst()).isFalse();
+        assertThat(output.isLast()).isTrue();
     }
 
     @Test
@@ -102,7 +114,8 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(1, 10, "name", "desc", null);
+        var requestedPageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "name"));
+        var input = new PaginateCustomersUseCase.Input(requestedPageable, null);
         var output = paginateCustomersUseCase.execute(input);
 
         assertThat(output.content()).isEmpty();
@@ -116,7 +129,8 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(1, 10, "notAWhitelistedKey", "asc", null);
+        var requestedPageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "notAWhitelistedKey"));
+        var input = new PaginateCustomersUseCase.Input(requestedPageable, null);
         var output = paginateCustomersUseCase.execute(input);
 
         assertThat(output.content()).isEmpty();
