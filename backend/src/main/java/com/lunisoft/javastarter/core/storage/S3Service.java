@@ -4,14 +4,11 @@ import com.lunisoft.javastarter.config.CacheConfig;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.property.S3Properties;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.http.ContentStreamProvider;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -21,7 +18,6 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Base64;
@@ -30,19 +26,20 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class S3Service {
 
-    private static final Logger log = LoggerFactory.getLogger(S3Service.class);
     private final S3Client s3Client;
+    private final S3AsyncClient s3AsyncClient;
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
 
     /**
-     * Uploads a file to S3. The content is given as a Spring {@link Resource} (and not as a plain
-     * {@link InputStream}) because the SDK reads the payload several times — signing, checksum,
-     * retries — and therefore needs to be able to reopen it. The caller must provide an accurate
-     * {@code contentLength}, S3 requires it for streamed uploads.
+     * Uploads a file of any size to S3 from an {@link InputStream}, without knowing its length.
+     *
+     * <p>The upload goes through the SDK's multipart async client, which streams the content in
+     * parts (8 MB by default, i.e. up to ~80 GB with the S3 limit of 10 000 parts) without loading
+     * the whole file in memory. The call blocks until the upload is complete. The caller remains
+     * responsible for closing the stream.
      */
-    public void upload(
-            String key, Resource resource, long contentLength, String contentType, StorageClass storageClass) {
+    public void upload(String key, InputStream inputStream, String contentType, StorageClass storageClass) {
         var request = PutObjectRequest.builder()
                 .bucket(s3Properties.bucket())
                 .key(key)
@@ -50,28 +47,12 @@ public class S3Service {
                 .storageClass(storageClass)
                 .build();
 
-        var contentStreamProvider = toContentStreamProvider(resource, key);
+        // A null content length means "unknown": the SDK splits the stream into parts on the fly
+        var body = AsyncRequestBody.forBlockingInputStream(null);
+        var upload = s3AsyncClient.putObject(request, body);
 
-        s3Client.putObject(request, RequestBody.fromContentProvider(contentStreamProvider, contentLength, contentType));
-    }
-
-    /**
-     * Adapts a Spring {@link Resource} to the SDK provider, which cannot throw a checked exception
-     * when a new stream is requested.
-     */
-    private ContentStreamProvider toContentStreamProvider(Resource resource, String key) {
-        return () -> {
-            try {
-                return resource.getInputStream();
-            } catch (IOException e) {
-                log.error("Failed to open the file {} to upload it to storage.", key, e);
-
-                throw new BusinessRuleException(
-                        "Failed to upload the file to storage.",
-                        "STORAGE_UPLOAD_ERROR",
-                        HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        };
+        body.writeInputStream(inputStream);
+        upload.join();
     }
 
     /**
@@ -95,12 +76,10 @@ public class S3Service {
     public byte[] downloadAsBytes(String key) {
         try (InputStream inputStream = download(key)) {
             return inputStream.readAllBytes();
-        } catch (Exception e) {
-            log.error("Failed to download the file {} from storage.", key, e);
-
+        } catch (Exception _) {
             throw new BusinessRuleException(
                     "Failed to download the file from storage.",
-                    "STORAGE_DOWNLOAD_ERROR",
+                    "STORAGE_DOWNLOAD_AS_BYTES_ERROR",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

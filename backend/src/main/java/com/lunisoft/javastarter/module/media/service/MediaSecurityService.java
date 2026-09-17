@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.util.Set;
 
 @Service
@@ -16,9 +17,13 @@ public class MediaSecurityService {
     private final MediaRepository mediaRepository;
     private final Tika tika = new Tika();
 
+    /**
+     * Detects the content type from the first bytes of the resource. The detection opens (and
+     * closes) its own stream, so the caller's later reads of the resource start from a fresh stream.
+     */
     public String getContentType(Resource resource) {
-        try (var stream = resource.getInputStream()) {
-            return tika.detect(stream);
+        try (InputStream inputStream = resource.getInputStream()) {
+            return tika.detect(inputStream);
         } catch (Exception ex) {
             throw new BusinessRuleException(
                     "Failed to detect content type: %s".formatted(ex.getMessage()),

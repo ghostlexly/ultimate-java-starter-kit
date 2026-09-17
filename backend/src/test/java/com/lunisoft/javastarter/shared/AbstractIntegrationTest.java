@@ -21,6 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import tools.jackson.databind.json.JsonMapper;
@@ -83,6 +84,9 @@ public abstract class AbstractIntegrationTest {
 
     @MockitoBean
     protected S3Client s3Client;
+
+    @MockitoBean
+    protected S3AsyncClient s3AsyncClient;
 
     @MockitoBean
     protected S3Presigner s3Presigner;

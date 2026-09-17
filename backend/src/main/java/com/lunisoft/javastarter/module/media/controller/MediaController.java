@@ -6,6 +6,7 @@ import com.lunisoft.javastarter.module.media.dto.UploadMediaResponse;
 import com.lunisoft.javastarter.module.media.service.MediaSecurityService;
 import com.lunisoft.javastarter.module.media.usecase.UploadMediaUseCase;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,12 +27,12 @@ public class MediaController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadMediaResponse> upload(@RequestParam("file") MultipartFile file) {
-        String contentType = this.mediaSecurityService.getContentType(file.getResource());
+        Resource resource = file.getResource();
+        String contentType = this.mediaSecurityService.getContentType(resource);
 
         this.mediaSecurityService.validateImageMedia(contentType, file.getSize());
 
-        var input = new UploadMediaUseCase.Input(
-                file.getResource(), file.getOriginalFilename(), contentType, file.getSize());
+        var input = new UploadMediaUseCase.Input(resource, file.getOriginalFilename(), contentType, file.getSize());
 
         var output = this.uploadMediaUseCase.execute(input);
 
