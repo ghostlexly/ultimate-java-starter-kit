@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AccountRepository extends JpaRepository<Account, UUID> {
-    Optional<Account> findByEmail(String email);
+    Optional<Account> findByEmailIgnoreCase(String email);
 }

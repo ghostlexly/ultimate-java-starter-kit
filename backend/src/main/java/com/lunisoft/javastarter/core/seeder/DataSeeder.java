@@ -45,7 +45,7 @@ public class DataSeeder implements ApplicationRunner {
     // ── Admin account ──────────────────────────────────────────────────────────
 
     private void seedAdminAccount() {
-        if (accountRepository.findByEmail(ADMIN_EMAIL).isPresent()) {
+        if (accountRepository.findByEmailIgnoreCase(ADMIN_EMAIL).isPresent()) {
             log.info("Admin account already exists, skipping.");
 
             return;

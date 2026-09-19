@@ -49,7 +49,7 @@ class SendCodeUseCaseTest {
     @Test
     void execute_existing_account_sends_code() {
         Account account = createCustomerAccount();
-        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
         when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
                         account.getId(), VerificationType.LOGIN_CODE))
                 .thenReturn(Optional.empty());
@@ -65,7 +65,7 @@ class SendCodeUseCaseTest {
     @Test
     void execute_new_account_creates_account_and_customer_then_sends_code() {
         Account account = createCustomerAccount();
-        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.empty());
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.empty());
         // The use case builds the Account itself: without JPA its id is never generated here, so
         // the cooldown lookup cannot be matched on account.getId().
         when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
@@ -92,7 +92,7 @@ class SendCodeUseCaseTest {
     void execute_cooldown_not_expired_throws_business_rule_exception() {
         Account account = createCustomerAccount();
         String email = account.getEmail();
-        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(account));
 
         // Last token was created 10 seconds ago (within 60s cooldown)
         var recentToken = createVerificationToken(account, "123456", 0);
@@ -113,7 +113,7 @@ class SendCodeUseCaseTest {
     @Test
     void execute_cooldown_expired_sends_code_successfully() {
         Account account = createCustomerAccount();
-        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
 
         // Last token was created 61 seconds ago (past 60s cooldown)
         var oldToken = createVerificationToken(account, "123456", 0);
@@ -132,7 +132,7 @@ class SendCodeUseCaseTest {
     @Test
     void execute_saves_token_with_correct_fields() {
         Account account = createCustomerAccount();
-        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
         when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
                         account.getId(), VerificationType.LOGIN_CODE))
                 .thenReturn(Optional.empty());

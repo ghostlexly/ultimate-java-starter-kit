@@ -49,7 +49,7 @@ public class DevDataSeeder implements ApplicationRunner {
     private void seedCustomerAccount() {
         var email = "customer@lunisoft.fr";
 
-        if (accountRepository.findByEmail(email).isPresent()) {
+        if (accountRepository.findByEmailIgnoreCase(email).isPresent()) {
             log.info("Customer account already exists, skipping.");
 
             return;

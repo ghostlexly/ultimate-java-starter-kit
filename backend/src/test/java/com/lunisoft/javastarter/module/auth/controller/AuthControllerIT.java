@@ -51,7 +51,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.message").value("Login code sent successfully."));
 
-            var account = accountRepository.findByEmail(email).orElseThrow();
+            var account = accountRepository.findByEmailIgnoreCase(email).orElseThrow();
             assertThat(account.getRole()).isEqualTo(Role.CUSTOMER);
             assertThat(customerRepository.findByAccountId(account.getId())).isPresent();
 

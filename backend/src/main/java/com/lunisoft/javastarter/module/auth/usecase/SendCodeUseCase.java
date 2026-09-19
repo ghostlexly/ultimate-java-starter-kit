@@ -43,15 +43,17 @@ public class SendCodeUseCase {
         // Normalize the email so lookups and storage are case insensitive
         String normalizedEmail = email.toLowerCase();
 
-        Account account = accountRepository.findByEmail(normalizedEmail).orElseGet(() -> {
-            Account newAccount = new Account(normalizedEmail, Role.CUSTOMER);
-            accountRepository.save(newAccount);
+        Account account = accountRepository
+                .findByEmailIgnoreCase(normalizedEmail)
+                .orElseGet(() -> {
+                    Account newAccount = new Account(normalizedEmail, Role.CUSTOMER);
+                    accountRepository.save(newAccount);
 
-            Customer newCustomer = new Customer(newAccount);
-            customerRepository.save(newCustomer);
+                    Customer newCustomer = new Customer(newAccount);
+                    customerRepository.save(newCustomer);
 
-            return newAccount;
-        });
+                    return newAccount;
+                });
 
         // Enforce cooldown between code requests
         verificationTokenRepository

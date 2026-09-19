@@ -38,10 +38,8 @@ public class VerifyCodeUseCase {
 
     @Transactional(noRollbackFor = BusinessRuleException.class)
     public Output execute(Input input) {
-        String normalizedEmail = input.email.toLowerCase();
-
         Account account = accountRepository
-                .findByEmail(normalizedEmail)
+                .findByEmailIgnoreCase(input.email())
                 .orElseThrow(() ->
                         new BusinessRuleException("Invalid email or code.", "INVALID_CODE", HttpStatus.BAD_REQUEST));
 

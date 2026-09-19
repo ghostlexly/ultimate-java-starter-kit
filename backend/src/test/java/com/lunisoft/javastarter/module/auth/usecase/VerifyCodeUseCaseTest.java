@@ -57,7 +57,7 @@ class VerifyCodeUseCaseTest {
         var token = createVerificationToken(account, code, 0);
         var session = createSession(account);
 
-        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(account));
         when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
                         eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
                 .thenReturn(Optional.of(token));
@@ -78,7 +78,7 @@ class VerifyCodeUseCaseTest {
 
     @Test
     void execute_when_account_not_found_then_throws_business_rule_exception() {
-        when(accountRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+        when(accountRepository.findByEmailIgnoreCase("unknown@example.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
                         verifyCodeUseCase.execute(new VerifyCodeUseCase.Input("unknown@example.com", "1234", request)))
@@ -93,7 +93,7 @@ class VerifyCodeUseCaseTest {
         var account = createCustomerAccount();
         var email = account.getEmail();
 
-        when(accountRepository.findByEmail(email)).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(account));
         when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
                         eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
                 .thenReturn(Optional.empty());
@@ -110,7 +110,7 @@ class VerifyCodeUseCaseTest {
         var account = createCustomerAccount();
         var token = createVerificationToken(account, "1234", AuthConstants.LOGIN_CODE_MAX_ATTEMPTS);
 
-        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
         when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
                         eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
                 .thenReturn(Optional.of(token));
@@ -128,7 +128,7 @@ class VerifyCodeUseCaseTest {
         var account = createCustomerAccount();
         var token = createVerificationToken(account, "1234", 0);
 
-        when(accountRepository.findByEmail(account.getEmail())).thenReturn(Optional.of(account));
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
         when(verificationTokenRepository.findFirstByAccountIdAndTypeAndExpiresAtAfterOrderByCreatedAtDesc(
                         eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
                 .thenReturn(Optional.of(token));
