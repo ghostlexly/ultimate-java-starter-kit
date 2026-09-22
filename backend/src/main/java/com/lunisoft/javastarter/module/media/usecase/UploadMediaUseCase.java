@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 
 import java.io.IOException;
@@ -33,16 +32,14 @@ public class UploadMediaUseCase {
      * module can supply a resource from any source (multipart upload, in-memory bytes, a file, ...).
      * Validation (mime type, size, ...) is the caller's responsibility.
      */
-    @Transactional
     public Media execute(Input input) {
         var key = mediaService.buildKey(STORAGE_PATH, input.fileName());
 
-        var media = new Media(input.fileName(), key, input.contentType(), input.size());
-        mediaRepository.save(media);
-
         uploadToStorage(key, input);
 
-        return media;
+        var media = new Media(input.fileName(), key, input.contentType(), input.size());
+
+        return mediaRepository.save(media);
     }
 
     /**
