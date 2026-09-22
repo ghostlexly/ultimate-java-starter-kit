@@ -39,8 +39,12 @@ RUN ./mvnw exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.arg
 
 COPY --from=build /app/target/*.jar app.jar
 
-# Create & use Spring user
+# Create & use Spring user.
+# /app/logs must exist in the image before the chown: compose mounts a named volume there,
+# and Docker copies the mount point's ownership from the image only if the directory exists.
+# Without it the volume is created root-owned and Logback cannot write application.log.
 RUN useradd --system --create-home --shell /usr/sbin/nologin spring \
+    && mkdir -p /app/logs \
     && chown -R spring:spring /app
 
 USER spring
