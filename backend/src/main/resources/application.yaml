@@ -8,6 +8,8 @@ spring:
     url: ${POSTGRES_DATABASE_URL}
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+    hikari:
+      leak-detection-threshold: 1000
   data:
     redis:
       host: ${APP_REDIS_HOST}
