@@ -5,7 +5,7 @@ import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.email.service.EmailService;
 import com.redis.testcontainers.RedisContainer;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -122,7 +122,7 @@ public abstract class AbstractIntegrationTest {
      * container (and Spring context) are shared. JobRunr's own tables are left alone — wiping them
      * would break its scheduler state across the suite.
      */
-    @AfterEach
+    @BeforeEach
     void cleanDatabase() {
         var jdbc = new JdbcTemplate(dataSource);
         jdbc.execute("""
