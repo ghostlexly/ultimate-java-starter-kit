@@ -437,20 +437,33 @@ method() { ...}
 
 ## Testing
 
-Two tiers, split by the standard Maven Surefire/Failsafe convention:
+Two tiers, both run together by **Surefire** in `mvn test`. They live in separate root packages under
+`src/test/java/com/lunisoft/javastarter/`, each mirroring the `src/main` package layout:
 
-- **Unit tests** — suffix `*Test` (use cases are `[Verb][Entity]UseCaseTest`). Pure Mockito
-  (`@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`), no Spring context. Run by **Surefire** in
-  `mvn test`. Build entities with `TestFactory` (detached, no DB).
-- **Integration tests** — suffix `*IT`, run by **Failsafe** in `mvn verify` (kept out of the fast unit-test phase). Boot
-  the full context against Testcontainers Postgres + Redis by extending
-  `AbstractIntegrationTest`; drive endpoints through `MockMvc`. Persist state with the `fixtures`
-  (`givenX(...)`) helpers, not `TestFactory`.
+```
+src/test/java/com/lunisoft/javastarter/
+├── unit/                     # Pure Mockito, no Spring context
+│   ├── support/TestFactory   # Detached entity builders
+│   ├── core/...
+│   └── module/[feature]/usecase/[Verb][Entity]UseCaseTest
+└── integration/              # Full Spring context + Testcontainers
+    ├── support/              # AbstractIntegrationTest, IntegrationTestFixtures
+    └── module/[feature]/controller/[Entity]ControllerIntegrationTest
+```
+
+- **Unit tests** — package `unit.*`, suffix `*Test` (use cases are `[Verb][Entity]UseCaseTest`). Pure Mockito
+  (`@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`), no Spring context. Build entities with
+  `TestFactory` (detached, no DB).
+- **Integration tests** — package `integration.*`, suffix `*IntegrationTest`. Boot the full context against
+  Testcontainers Postgres + Redis by extending `AbstractIntegrationTest`; drive endpoints through `MockMvc`. Persist
+  state with the `fixtures` (`givenX(...)`) helpers, not `TestFactory`. Docker must be running.
+
+Run a single tier with `./mvnw test -Dtest='com.lunisoft.javastarter.unit.**'` (or `integration.**`).
 
 ### Integration test conventions
 
-- **One class per controller**, named `[Entity]ControllerIT`, in the controller's own package
-  (`module.[feature].controller`).
+- **One class per controller**, named `[Entity]ControllerIntegrationTest`, in
+  `integration.module.[feature].controller`.
 - **One `@Nested` class per endpoint**, named after the action (`SendCode`, `VerifyCode`), each with a
   `/** HTTP_METHOD /api/path */` Javadoc and a `private static final String URL` constant.
 - Shared `@Autowired` repositories live on the outer class; nested classes reference them.

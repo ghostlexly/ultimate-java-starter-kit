@@ -16,7 +16,7 @@ stop: ## Stop the containers (ignores compose.override.yml)
 dev: ## Start the development backend
 	cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
-test: ## Run unit tests
+test: ## Run unit + integration tests
 	cd backend && ./mvnw test
 
 clean: ## Maven Clean

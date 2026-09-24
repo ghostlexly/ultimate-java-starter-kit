@@ -1,0 +1,152 @@
+package com.lunisoft.javastarter.unit.module.auth.usecase;
+
+import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase ;
+import com.lunisoft.javastarter.core.exception.BusinessRuleException;
+import com.lunisoft.javastarter.module.account.entity.Account;
+import com.lunisoft.javastarter.module.account.entity.Role;
+import com.lunisoft.javastarter.module.account.repository.AccountRepository;
+import com.lunisoft.javastarter.module.auth.AuthConstants;
+import com.lunisoft.javastarter.module.auth.entity.VerificationToken;
+import com.lunisoft.javastarter.module.auth.entity.VerificationType;
+import com.lunisoft.javastarter.module.auth.event.LoginCodeRequestedEvent;
+import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
+import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+
+import java.time.Instant;
+import java.util.Optional;
+
+import static com.lunisoft.javastarter.unit.support.TestFactory.createCustomerAccount;
+import static com.lunisoft.javastarter.unit.support.TestFactory.createVerificationToken;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class SendCodeUseCaseTest {
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private CustomerRepository customerRepository;
+
+    @Mock
+    private VerificationTokenRepository verificationTokenRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @InjectMocks
+    private SendCodeUseCase sendCodeUseCase;
+
+    @Test
+    void execute_existing_account_sends_code() {
+        Account account = createCustomerAccount();
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
+                        account.getId(), VerificationType.LOGIN_CODE))
+                .thenReturn(Optional.empty());
+
+        sendCodeUseCase.execute(account.getEmail());
+
+        verify(verificationTokenRepository).save(any(VerificationToken.class));
+        verify(eventPublisher).publishEvent(any(LoginCodeRequestedEvent.class));
+        // Should not create a new account
+        verify(accountRepository, never()).save(any());
+    }
+
+    @Test
+    void execute_new_account_creates_account_and_customer_then_sends_code() {
+        Account account = createCustomerAccount();
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.empty());
+        // The use case builds the Account itself: without JPA its id is never generated here, so
+        // the cooldown lookup cannot be matched on account.getId().
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
+                        any(), eq(VerificationType.LOGIN_CODE)))
+                .thenReturn(Optional.empty());
+
+        sendCodeUseCase.execute(account.getEmail());
+
+        // Verify account created with CUSTOMER role
+        verify(accountRepository).save(assertArg(createdAccount -> {
+            assertThat(createdAccount.getRole()).isEqualTo(Role.CUSTOMER);
+            assertThat(createdAccount.getEmail()).isEqualTo(account.getEmail());
+        }));
+
+        // Verify customer created
+        verify(customerRepository).save(any());
+
+        // Verify token saved and event published
+        verify(verificationTokenRepository).save(any(VerificationToken.class));
+        verify(eventPublisher).publishEvent(any(LoginCodeRequestedEvent.class));
+    }
+
+    @Test
+    void execute_cooldown_not_expired_throws_business_rule_exception() {
+        Account account = createCustomerAccount();
+        String email = account.getEmail();
+        when(accountRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.of(account));
+
+        // Last token was created 10 seconds ago (within 60s cooldown)
+        var recentToken = createVerificationToken(account, "123456", 0);
+        recentToken.setCreatedAt(Instant.now().minusSeconds(10));
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
+                        account.getId(), VerificationType.LOGIN_CODE))
+                .thenReturn(Optional.of(recentToken));
+
+        assertThatThrownBy(() -> sendCodeUseCase.execute(email))
+                .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
+                    assertThat(exception.getCode()).isEqualTo("LOGIN_CODE_COOLDOWN");
+                });
+
+        verify(verificationTokenRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void execute_cooldown_expired_sends_code_successfully() {
+        Account account = createCustomerAccount();
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
+
+        // Last token was created 61 seconds ago (past 60s cooldown)
+        var oldToken = createVerificationToken(account, "123456", 0);
+        oldToken.setCreatedAt(Instant.now().minusSeconds(AuthConstants.LOGIN_CODE_COOLDOWN_SECONDS + 1));
+
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
+                        account.getId(), VerificationType.LOGIN_CODE))
+                .thenReturn(Optional.of(oldToken));
+
+        sendCodeUseCase.execute(account.getEmail());
+
+        verify(verificationTokenRepository).save(any(VerificationToken.class));
+        verify(eventPublisher).publishEvent(any(LoginCodeRequestedEvent.class));
+    }
+
+    @Test
+    void execute_saves_token_with_correct_fields() {
+        Account account = createCustomerAccount();
+        when(accountRepository.findByEmailIgnoreCase(account.getEmail())).thenReturn(Optional.of(account));
+        when(verificationTokenRepository.findFirstByAccountIdAndTypeOrderByCreatedAtDesc(
+                        account.getId(), VerificationType.LOGIN_CODE))
+                .thenReturn(Optional.empty());
+
+        sendCodeUseCase.execute(account.getEmail());
+
+        verify(verificationTokenRepository).save(assertArg(token -> {
+            assertThat(token.getAccount()).isEqualTo(account);
+            assertThat(token.getType()).isEqualTo(VerificationType.LOGIN_CODE);
+            assertThat(token.getToken()).isNotNull();
+            assertThat(token.getValue()).hasSize(6);
+            assertThat(token.getAttempts()).isZero();
+            assertThat(token.getExpiresAt()).isAfter(Instant.now());
+        }));
+    }
+}

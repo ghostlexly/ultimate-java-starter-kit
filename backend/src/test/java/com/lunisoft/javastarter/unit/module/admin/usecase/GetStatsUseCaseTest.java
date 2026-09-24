@@ -1,0 +1,46 @@
+package com.lunisoft.javastarter.unit.module.admin.usecase;
+
+import com.lunisoft.javastarter.module.admin.usecase.GetStatsUseCase ;
+import com.lunisoft.javastarter.module.account.repository.AccountRepository;
+import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class GetStatsUseCaseTest {
+
+    @Mock
+    private AccountRepository accountRepository;
+
+    @Mock
+    private SessionRepository sessionRepository;
+
+    @InjectMocks
+    private GetStatsUseCase getStatsUseCase;
+
+    @Test
+    void execute_returns_accounts_and_session_counts() {
+        when(accountRepository.count()).thenReturn(42L);
+        when(sessionRepository.count()).thenReturn(7L);
+
+        var output = getStatsUseCase.execute();
+
+        assertThat(output).containsEntry("accounts", 42L).containsEntry("activeSessions", 7L);
+    }
+
+    @Test
+    void execute_zero_counts_returns_zeros() {
+        when(accountRepository.count()).thenReturn(0L);
+        when(sessionRepository.count()).thenReturn(0L);
+
+        var output = getStatsUseCase.execute();
+
+        assertThat(output).containsEntry("accounts", 0L).containsEntry("activeSessions", 0L);
+    }
+}
