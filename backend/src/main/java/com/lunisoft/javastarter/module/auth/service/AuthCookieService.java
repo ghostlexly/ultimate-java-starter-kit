@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -65,11 +67,14 @@ public class AuthCookieService {
     }
 
     private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        var cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(secureCookies);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
+        // SameSite=Lax is our CSRF protection: browsers won't send these cookies on cross-site POST/PUT/DELETE.
+        ResponseCookie cookie = ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(secureCookies)
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(maxAge)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }

@@ -44,6 +44,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http, JwtTokenProvider jwtTokenProvider, CorsConfigurationSource corsConfigurationSource) {
+        // CSRF disabled: auth cookies are SameSite=Lax (see AuthCookieService) and CORS is restricted.
         return http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -53,6 +54,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(ACTUATOR_ENDPOINTS)
                         .hasRole("ADMIN")
+                        .requestMatchers("/api/docs/**")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint)
