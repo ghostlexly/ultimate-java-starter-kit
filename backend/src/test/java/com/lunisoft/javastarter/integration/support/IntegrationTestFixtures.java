@@ -29,8 +29,8 @@ import java.util.function.Consumer;
  * shared Spring context from {@link AbstractIntegrationTest}, so the repos point at the same
  * Testcontainers Postgres the rest of the test sees.
  *
- * <p>Every method follows the {@code givenX(...)} convention and persists what it builds (use
- * {@link TestFactory} when you want a detached entity). Each method has two overloads:
+ * <p>Every method follows the {@code givenX(...)} convention and persists what it builds. Each
+ * method has two overloads:
  *
  * <ul>
  *   <li><strong>Plain</strong>: sensible defaults, one-line setup for the happy path — {@code
