@@ -44,7 +44,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http, JwtTokenProvider jwtTokenProvider, CorsConfigurationSource corsConfigurationSource) {
-        // CSRF disabled: auth cookies are SameSite=Lax (see AuthCookieService) and CORS is restricted.
+        // CSRF disabled: auth cookies are SameSite=Lax (see AuthCookieService), so browsers don't send them on
+        // cross-site POST/PUT/PATCH/DELETE. CORS only restricts reading responses, it does not stop requests.
+        // Caveats: SameSite is per-site (any *.lunisoft.fr subdomain counts as same-site) and Lax still sends
+        // cookies on top-level GET navigations, so GET endpoints must never mutate state.
         return http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
