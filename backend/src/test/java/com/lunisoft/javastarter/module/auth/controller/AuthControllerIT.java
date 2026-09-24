@@ -72,7 +72,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
         @Test
         void returns_429_when_requested_within_cooldown() throws Exception {
             var account = fixtures.givenCustomer("cooldown-user@example.com");
-            fixtures.givenLoginCode(account, "1234");
+            fixtures.givenLoginCode(account, "123456");
 
             var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail()));
 
@@ -91,9 +91,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
         @Test
         void returns_tokens_and_sets_cookies_on_valid_code() throws Exception {
             var account = fixtures.givenCustomer("verify-success@example.com");
-            fixtures.givenLoginCode(account, "4321");
+            fixtures.givenLoginCode(account, "654321");
 
-            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "4321"));
+            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "654321"));
 
             mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
                     .andExpect(status().isOk())
@@ -115,9 +115,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
         @Test
         void returns_400_on_wrong_code() throws Exception {
             var account = fixtures.givenCustomer("wrong-code@example.com");
-            fixtures.givenLoginCode(account, "1111");
+            fixtures.givenLoginCode(account, "111111");
 
-            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "9999"));
+            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "999999"));
 
             mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
                     .andExpect(status().isBadRequest())
@@ -133,9 +133,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
         @Test
         void returns_429_when_max_attempts_reached() throws Exception {
             var account = fixtures.givenCustomer("max-attempts@example.com");
-            fixtures.givenLoginCode(account, "1111", t -> t.setAttempts(5));
+            fixtures.givenLoginCode(account, "111111", t -> t.setAttempts(5));
 
-            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "1111"));
+            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "111111"));
 
             mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
                     .andExpect(status().isTooManyRequests())
@@ -146,9 +146,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
         void returns_400_when_code_expired() throws Exception {
             var account = fixtures.givenCustomer("expired-code@example.com");
             fixtures.givenLoginCode(
-                    account, "2222", t -> t.setExpiresAt(Instant.now().minus(1, ChronoUnit.MINUTES)));
+                    account, "222222", t -> t.setExpiresAt(Instant.now().minus(1, ChronoUnit.MINUTES)));
 
-            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "2222"));
+            var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "222222"));
 
             mockMvc.perform(post(URL).contentType(MediaType.APPLICATION_JSON).content(body))
                     .andExpect(status().isBadRequest())
