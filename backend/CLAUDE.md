@@ -455,8 +455,8 @@ src/test/java/com/lunisoft/javastarter/
   (`@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`), no Spring context. Build entities with
   `TestFactory` (detached, no DB).
 - **Integration tests** — package `integration.*`, suffix `*IntegrationTest`. Boot the full context against
-  Testcontainers Postgres + Redis by extending `AbstractIntegrationTest`; drive endpoints through `MockMvc`. Persist
-  state with the `fixtures` (`givenX(...)`) helpers, not `TestFactory`. Docker must be running.
+  Testcontainers Postgres + Redis by extending `AbstractIntegrationTest`; drive endpoints through `MockMvcTester`.
+  Persist state with the `fixtures` (`givenX(...)`) helpers, not `TestFactory`. Docker must be running.
 
 Run a single tier with `./mvnw test -Dtest='com.lunisoft.javastarter.unit.**'` (or `integration.**`).
 
@@ -466,6 +466,113 @@ Run a single tier with `./mvnw test -Dtest='com.lunisoft.javastarter.unit.**'` (
   `integration.module.[feature].controller`.
 - **One `@Nested` class per endpoint**, named after the action (`SendCode`, `VerifyCode`), each with a
   `/** HTTP_METHOD /api/path */` Javadoc and a `private static final String URL` constant.
-- Shared `@Autowired` repositories live on the outer class; nested classes reference them.
-- Assert the HTTP contract (status, JSON body, cookies) **and** the persisted DB state. Use
-  `assertPersistedState(...)` when traversing lazy associations after the request commits.
+- Shared `@Autowired` repositories and the `MockMvcTester` live on the outer class; nested classes reference them.
+- **Test names**: `returns_<status>_when_<condition>` (snake_case), declared `throws Exception`.
+- **Each endpoint covers at least** the happy path, the wrong-role case (`403`) and the unauthenticated case (`401`).
+- **Arrange**: persist state with `fixtures.givenX(...)`, then build the body by serializing the endpoint's real
+  request record: `jsonMapper.writeValueAsString(new XxxRequest(...))`. Never hand-write JSON strings.
+- **Act**: always `MockMvcTester` (AssertJ), ending with `.exchange()` into a `result` variable. Authenticate with
+  `.header(HttpHeaders.AUTHORIZATION, bearer(account))`. Do not use `mockMvc.perform(...)` / `andExpect(...)` /
+  `andReturn()` in new tests.
+- **Assert the status** with `assertThat(result).hasStatus(HttpStatus.XXX)` — the `HttpStatus` enum, not
+  `hasStatusOk()` or a raw int.
+- **Read the JSON body into an object** with
+  `assertThat(result).bodyJson().convertTo(XxxUseCase.Output.class).actual()` (the use case's `Output`/`View`, or the
+  endpoint's response record). No `getContentAsString()` + `jsonMapper.readValue(...)`.
+- **Assert the persisted DB state, always inside `assertPersistedState(() -> { ... })`** — every repository read and
+  every assertion on an entity goes in the block, even when it only reads an id or a scalar column and no lazy
+  association is traversed. Never assert on an entity outside of it. Reload the entity from its repository with the
+  id returned by the endpoint (`repository.findById(response.id()).orElseThrow()`), then assert every field the
+  request sets or the use case computes (relations by id, scalars, status).
+
+Reference: `CustomerCleaningRequestControllerIntegrationTest`. New integration tests follow this shape exactly:
+
+```java
+public class CustomerCleaningRequestControllerIntegrationTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private CleaningRequestRepository cleaningRequestRepository;
+
+    @Autowired
+    private MockMvcTester mockMvcTester;
+
+    /** POST /api/customer/cleaning-requests */
+    @Nested
+    class CreateCleaningRequest {
+
+        private static final String URL = "/api/customer/cleaning-requests";
+
+        @Test
+        void returns_200_when_creates_cleaning_request() throws Exception {
+            var customer = fixtures.givenCustomer("customer@example.com");
+            var account = customer.getAccount();
+            var housekeeperServiceType = fixtures.givenServiceType("HOUSE");
+            var interventionAddress = fixtures.givenInterventionAddress(customer);
+
+            var body = jsonMapper.writeValueAsString(new CleaningRequestCreateRequest(
+                    180.00, interventionAddress.getId(), housekeeperServiceType, "test commentaire"));
+
+            var result = mockMvcTester
+                    .post()
+                    .uri(URL)
+                    .header(HttpHeaders.AUTHORIZATION, bearer(account))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+                    .exchange();
+
+            assertThat(result).hasStatus(HttpStatus.OK);
+
+            var response = assertThat(result)
+                    .bodyJson()
+                    .convertTo(CreateCleaningRequestUseCase.Output.class)
+                    .actual();
+
+            assertPersistedState(() -> {
+                var cleaningRequest =
+                        cleaningRequestRepository.findById(response.id()).orElseThrow();
+
+                assertThat(cleaningRequest.getCustomer().getId()).isEqualTo(customer.getId());
+                assertThat(cleaningRequest.getServiceType().getKey()).isEqualTo(housekeeperServiceType.getKey());
+                assertThat(cleaningRequest.getInterventionAddress().getId()).isEqualTo(interventionAddress.getId());
+                assertThat(cleaningRequest.getDesiredDuration()).isEqualTo(180.00);
+                assertThat(cleaningRequest.getComments()).isEqualTo("test commentaire");
+                assertThat(cleaningRequest.getStatus()).isEqualTo(CleaningRequestStatus.PENDING);
+            });
+        }
+
+        @Test
+        void returns_403_when_user_role_is_not_customer() throws Exception {
+            var housekeeper = fixtures.givenHousekeeper("housekeeper@example.com");
+            var account = housekeeper.getAccount();
+            var housekeeperServiceType = fixtures.givenServiceType("HOUSE");
+            var body = jsonMapper.writeValueAsString(
+                    new CleaningRequestCreateRequest(180.00, UUID.randomUUID(), housekeeperServiceType, null));
+
+            var result = mockMvcTester
+                    .post()
+                    .uri(URL)
+                    .header(HttpHeaders.AUTHORIZATION, bearer(account))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+                    .exchange();
+
+            assertThat(result).hasStatus(HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        void returns_401_when_user_not_authenticated() throws Exception {
+            var body = jsonMapper.writeValueAsString(
+                    new CleaningRequestCreateRequest(180.00, UUID.randomUUID(), null, null));
+
+            var result = mockMvcTester
+                    .post()
+                    .uri(URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+                    .exchange();
+
+            assertThat(result).hasStatus(HttpStatus.UNAUTHORIZED);
+        }
+    }
+}
+```
