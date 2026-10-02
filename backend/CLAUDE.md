@@ -17,7 +17,7 @@ module/
     controller/    # REST endpoints
     entity/        # JPA entities
     repository/    # Spring Data repositories + Specifications
-    usecase/       # Business logic (one class = one action) — owns its Input/Output records
+    usecase/       # Business logic (one class = one action) — declares its Query/Command/Result records
     dto/           # Web-layer payloads: request bodies, endpoint response records, shared payloads
     event/         # Domain events + listeners
 core/
@@ -35,8 +35,8 @@ shared/
 ## Naming Conventions
 
 - **Packages**: singular lowercase (`usecase`, `repository`, `controller`)
-- **Use cases**: `[Verb][Entity]UseCase` with single `execute(Input input)` method — `Input` is a nested record,
-  always, even with 0 or 1 parameter
+- **Use cases**: `[Verb][Entity]UseCase`, declaring its `[Verb][Entity]Query` (read) or `[Verb][Entity]Command`
+  (write) parameter record and its `[Verb][Entity]Result` return record — see **Use Case Pattern**
 - **Controllers**: `[Entity]Controller`
 - **Repositories**: `[Entity]Repository`
 - **Specifications**: `[Entity]Specification` (static methods, private constructor)
@@ -103,70 +103,28 @@ public class CreateProfileUseCase {
 
 ## Use Case Pattern
 
-- One class per business action, `@Service @RequiredArgsConstructor`
-- Single public method: `execute(Input input)`
-- **`Input` is mandatory in every use case, even with 0 or 1 parameter.** Never `execute(UUID id)`,
-  `execute(String token)` or `execute()`. One parameter → `public record Input(UUID barcodeAnalysisId) {}`;
-  no parameter → `public record Input() {}`. Reasons: uniform call sites (`execute(new XxxUseCase.Input(...))`),
-  same-typed arguments (`UUID accountId, UUID barcodeAnalysisId`) are named instead of positional, and adding a field
-  later never changes the method signature.
-- `@Transactional` on writes, `@Transactional(readOnly = true)` on reads
-- Extract helper logic into private methods (e.g. `checkCooldown`, `buildSpec`)
+- One class per business action, `@Service @RequiredArgsConstructor`, single public method `execute(...)`
+- **CQRS naming**: each use case declares its own records **inside its class**, prefixed with the use case name
+  (`GetBookingQuery`, not `Query`). No separate record files, never `Input` / `Output`. Callers import the record
+  (`import ….GetBookingUseCase.GetBookingQuery;`) and write `new GetBookingQuery(...)`.
 
-### Input / Output records (canonical shape)
+  | Kind                    | Parameter (`query` / `command`) | Returns                                                         | Transaction                       |
+  |-------------------------|---------------------------------|-----------------------------------------------------------------|-----------------------------------|
+  | Query — reads only      | `GetBookingQuery`               | `GetBookingResult` (or `List<…>` / `PaginatedResponse<…>` of it) | `@Transactional(readOnly = true)` |
+  | Command — changes state | `CancelBookingCommand`          | `CancelBookingResult`, or `void`                                | `@Transactional`                  |
 
-**Layering principle:** the application layer (the use case) ALWAYS returns a type it *owns* — never a JPA entity. The
-web layer (the controller) decides how to serialize/expose it (and may map it down further). This is the mirror of
-`Input`: the use case owns the shape, the controller maps into/out of it. Reads return that owned type (or `List<…>` /
-`PaginatedResponse<…>`); **writes return only the id** of the affected element (e.g. `record Output(UUID id) {}`), never
-the full object.
-
-The owned return type comes in two flavours, by reuse — this is the single rule:
-
-- **Used by one use case → a nested `Output` record** declared inside that use case.
-- **The same shape used by 2+ use cases → a shared `XxxView` record** (in the feature's `dto/`)
-  returned from each use case. Don't duplicate the record, and don't have one use case import another's nested `Output`.
-
-**Mapping (entity → owned type) is ALWAYS an injectable instance method — never a `static
-from(Entity)` factory on the record.** The records stay pure data carriers; the mapper has every injected dependency
-(repositories, services, presigned-URL generation, …) available. A `static from`
-can only see the entity, so the day a "pure" mapping needs a dependency it forces a refactor; the instance method never
-does. Concretely:
-
-- Nested `Output` (and its nested sub-views) → `private Output toOutput(Entity e)` on the use case (one
-  `private toXxx(...)` per sub-view), referenced with `this::toOutput`.
-- Shared `XxxView` → a `@Component XxxViewMapper` with `public XxxView toView(Entity e)`, injected into each use case
-  and referenced with `xxxViewMapper::toView`.
-
-**Mapper method naming — `from` vs `to`:** use **`to<Target>(source)`** on a mapper that is neither the source nor the
-target (a use-case `private toOutput(entity)`, a `@Component` mapper's
-`toView(entity)`) — it names the target explicitly. Use **`from(source)`** only for a `static`
-factory that lives **on the target type itself** (`GetBookingsResponse.from(view)`), where the receiver *is* the thing
-being created. Never `mapper.from(...)` — a bean is neither end of the mapping, so `from` reads ambiguously there.
-
-**Web-layer reshaping.** When a controller endpoint needs a response shape that differs from the use case's `Output`/
-`XxxView` (a subset, renamed fields, a combination, different JSON), it declares its own response record in the
-feature's `dto/` package, named after the **endpoint** — e.g.
-`GetBookingsResponse` — with a **`static GetBookingsResponse from(BookingView view)`** factory that converts the view
-into the endpoint's wire shape. (Name it after the endpoint/use case, not the entity: `GetBookingsResponse`, not
-`BookingResponse` — the shape belongs to that endpoint.) A `static
-from` **is** allowed here: this is a pure, dependency-free record→record reshape at the web boundary, so the
-static-context trap never applies (the no-`static from` rule targets entity→application-DTO mapping, which may need
-injected dependencies). The use case still returns its owned `Output`/
-`View`; the controller maps it into `GetBookingsResponse` and returns that. If the endpoint is happy with the view
-as-is, it just returns the view directly — no extra record.
-
-So `static from` is sanctioned only for pure record→record (or collection) adapters that need no dependencies: web-layer
-`Response.from(View)` and the generic
-`core/dto/PaginatedResponse.from(Page)`. Entity → application-DTO mapping is never a `static from`.
-
-The `Input` is a **flat, role-agnostic record of domain fields** — do NOT pass a controller request DTO (e.g.
-`XxxRequest`) into the use case. Each controller validates its own `@RequestBody` request record and maps it into the
-use case `Input`. This keeps admin and customer endpoints independent:
-they can expose different request fields (e.g. admin updates more than the customer) while sharing the same use case.
+- **The `Query` / `Command` is mandatory, even with 0 or 1 parameter** (`record GetStatsQuery() {}`). Never
+  `execute(UUID id)` or `execute()`: call sites stay uniform, arguments are named, and adding a field never changes
+  the signature.
+- It is a flat record of domain fields. Never pass a controller `XxxRequest` into a use case: the controller maps it,
+  so admin and customer endpoints can share one use case.
+- **Never return a JPA entity**, always a `Result` the use case owns.
+- **Simple writes (insert / update / delete) return only the id**: `record UpdateBookingResult(UUID id) {}`. Return
+  more only when the action itself produces data the caller needs (e.g. tokens).
+- The same shape returned by 2+ use cases → one shared `XxxView` record in `dto/`, not duplicated `Result`s.
+- Extract helper logic into private methods (e.g. `checkCooldown`, `buildSpecs`)
 
 ```java
-
 @Service
 @RequiredArgsConstructor
 public class GetTownsUseCase {
@@ -178,40 +136,31 @@ public class GetTownsUseCase {
 
     private final TownRepository townRepository;
 
-    public record Input(Pageable pageable, String id, String postalCode, String city, String search) {
+    public record GetTownsQuery(Pageable pageable, String id, String search) {}
 
-    }
-
-    public record Output(UUID id, String inseeCode, String name, int population) {
-
-    }
+    public record GetTownsResult(UUID id, String inseeCode, String name, int population) {}
 
     @Transactional(readOnly = true)
-    public PaginatedResponse<Output> execute(Input input) {
-        Specification<Town> spec = buildSpecs(input);
-        Pageable pageable = SortWhitelist.apply(input.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
+    public PaginatedResponse<GetTownsResult> execute(GetTownsQuery query) {
+        Specification<Town> spec = buildSpecs(query);
+        Pageable pageable = SortWhitelist.apply(query.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
 
-        Page<Output> page = townRepository.findAll(spec, pageable).map(this::toOutput);
+        Page<GetTownsResult> page = townRepository.findAll(spec, pageable).map(this::toResult);
 
         return PaginatedResponse.from(page);
     }
 
-    // Mapping lives on the use case (never a static Output.from), so injected deps are available.
-    private Output toOutput(Town town) {
+    private GetTownsResult toResult(Town town) {
 
-        return new Output(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
+        return new GetTownsResult(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
     }
 
-    // One conditional block per filter; combine with Specification.allOf (empty list -> match all).
-    private Specification<Town> buildSpecs(Input input) {
+    // One guarded block per filter; Specification.allOf (empty list -> match all).
+    private Specification<Town> buildSpecs(GetTownsQuery query) {
         List<Specification<Town>> specs = new ArrayList<>();
 
-        if (StringUtils.hasText(input.id())) {
-            specs.add(TownSpecification.hasId(input.id()));
-        }
-
-        if (StringUtils.hasText(input.search())) {
-            specs.add(TownSpecification.matchesSearch(input.search()));
+        if (StringUtils.hasText(query.search())) {
+            specs.add(TownSpecification.matchesSearch(query.search()));
         }
 
         return Specification.allOf(specs);
@@ -219,20 +168,30 @@ public class GetTownsUseCase {
 }
 ```
 
-- Filtering: build a `List<Specification<T>>` in `buildSpec`, guarding each with
-  `StringUtils.hasText(...)`, then `Specification.allOf(specs)`.
+### Mapping
+
+- Entity → `Result` / `XxxView` mapping is **always an injectable instance method, never a `static from(Entity)`** on
+  the record: a static can't reach injected dependencies (repositories, presigned URLs, …).
+    - `Result` → `private XxxResult toResult(Entity e)` on the use case, referenced with `this::toResult`
+    - shared `XxxView` → a `@Component XxxViewMapper` with `toView(Entity e)`, injected into each use case
+- Naming: `to<Target>(source)` on a mapper; `from(source)` only for a `static` factory on the target type itself.
+  Never `mapper.from(...)`.
+- **Web-layer reshaping**: when an endpoint needs a wire shape different from the `Result` / `XxxView`, declare a
+  record in `dto/` named after the endpoint (`GetBookingsResponse`, not `BookingResponse`) with a
+  `static from(result)` factory. A `static from` is allowed there (and in `PaginatedResponse.from(Page)`): it is a
+  pure record → record reshape. Otherwise the controller returns the `Result` as-is.
 
 ## Controller Pattern
 
-- Return `ResponseEntity<T>` always, typed with the use case's nested record:
-  `ResponseEntity<GetTownsUseCase.Output>`,
-  `ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>>`.
-- Controller builds the `Input` and calls `execute(input)`; it holds no business logic.
+- Return `ResponseEntity<T>` always, typed with the use case's result: `ResponseEntity<GetTownsResult>`,
+  `ResponseEntity<PaginatedResponse<GetTownsResult>>`.
+- Controller builds the `Query` / `Command` and calls `execute(...)`; it holds no business logic. Locals are named
+  `query` / `command` and `result`.
 - `@Valid @RequestBody` for body validation
 - `@Validated` on class for `@RequestParam` / `@PathVariable` validation (add `@Size`/etc. to params)
 - `@AuthenticationPrincipal UserPrincipal principal` for authenticated user
 - Pagination params are `page` (1-based), `size` and `sort`, received as a single `@PageableDefault(size = …) Pageable
-  pageable` argument and passed as-is into the use case `Input` — see **Pagination**
+  pageable` argument and passed as-is into the use case `Query` — see **Pagination**
 
 ```java
 
@@ -246,15 +205,14 @@ public class TownController {
     private final GetTownsUseCase getTownsUseCase;
 
     @GetMapping
-    public ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>> getTowns(
+    public ResponseEntity<PaginatedResponse<GetTownsResult>> getTowns(
             @PageableDefault(size = 10) Pageable pageable,
             @RequestParam(required = false) @Size(max = 191) String search) {
 
-        var input = new GetTownsUseCase.Input(pageable, null, null, null, search);
+        var query = new GetTownsQuery(pageable, null, search);
+        var result = getTownsUseCase.execute(query);
 
-        PaginatedResponse<GetTownsUseCase.Output> response = getTownsUseCase.execute(input);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(result);
     }
 }
 ```
@@ -301,11 +259,10 @@ public final class CustomerSpecification {
 
 ## DTOs
 
-- The application layer's payloads are the use case's nested `Input` / `Output` records — see **Use Case Pattern**.
-  Don't add a `dto/` Response class that merely mirrors an `Output` the controller returns as-is.
-- `dto/` holds the web-layer records: request bodies, endpoint response records (`GetBookingsResponse` — only when the
-  wire shape differs from the use case's `Output`/`XxxView`, see **Web-layer reshaping**), and payloads shared across
-  use cases. Always Java records (immutable), validation annotations directly on the fields.
+- `dto/` holds the web-layer records: request bodies, endpoint response records (only when the wire shape differs
+  from the use case's `Result`, see **Mapping**) and shared `XxxView`s. Never a Response class that merely mirrors a
+  `Result`.
+- Always Java records (immutable), validation annotations directly on the fields.
 
 ```java
 public record SendCodeRequest(
@@ -387,17 +344,17 @@ method() { ...}
 - Query params are `page` (1-based, `?page=1`), `size` (items per page) and the optional `sort`, in Spring's
   format: `?sort=<key>,<asc|desc>` (repeatable). Never `first`, never a separate `order` param.
 - Controllers receive them as a web-resolved `Pageable`: `@PageableDefault(size = 10) Pageable pageable`, passed as-is
-  into the use case `Input` (`Pageable pageable` is its first field). Do not declare `page`/`size`/`sort`
+  into the use case `Query` (`Pageable pageable` is its first field). Do not declare `page`/`size`/`sort`
   `@RequestParam`s by hand. The 1-based index and the `100` items cap come from `spring.data.web.pageable.*` in
   `application.yaml`. Don't put a `sort` in `@PageableDefault` — the default sort belongs to the use case.
 - **Never pass the received `Pageable` to a repository as-is**: its sort is client-controlled. Declare a
   `SORTABLE_PROPERTIES` whitelist (`Map<String, List<String>>` of API sort key → entity property paths) and a
   `DEFAULT_SORT` on the use case, then build the final pageable with the static `core/pagination/SortWhitelist`:
-  `SortWhitelist.apply(input.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT)` — unknown keys fall back to the default
+  `SortWhitelist.apply(query.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT)` — unknown keys fall back to the default
   sort, so clients can never sort on arbitrary columns. When the sort must be decided conditionally (e.g. unsorted
   for a relevance-ordered search), use `SortWhitelist.resolve(requestedSort, SORTABLE_PROPERTIES, DEFAULT_SORT)` and
   rebuild the `PageRequest` yourself (see `PaginateAnalysesUseCase.resolvePageable`).
-- List endpoints return `core/dto/PaginatedResponse<Output>` built via
+- List endpoints return `core/dto/PaginatedResponse<XxxResult>` built via
   `PaginatedResponse.from(page)`. Shape: `{ content, totalItems, totalPages, isFirst, isLast }`. The frontend reads
   `data.content`.
 
@@ -477,7 +434,7 @@ Run a single tier with `./mvnw test -Dtest='com.lunisoft.javastarter.unit.**'` (
 - **Assert the status** with `assertThat(result).hasStatus(HttpStatus.XXX)` — the `HttpStatus` enum, not
   `hasStatusOk()` or a raw int.
 - **Read the JSON body into an object** with
-  `assertThat(result).bodyJson().convertTo(XxxUseCase.Output.class).actual()` (the use case's `Output`/`View`, or the
+  `assertThat(result).bodyJson().convertTo(XxxResult.class).actual()` (the use case's `Result`/`View`, or the
   endpoint's response record). No `getContentAsString()` + `jsonMapper.readValue(...)`.
 - **Assert the persisted DB state, always inside `assertPersistedState(() -> { ... })`** — every repository read and
   every assertion on an entity goes in the block, even when it only reads an id or a scalar column and no lazy
@@ -524,7 +481,7 @@ public class CustomerCleaningRequestControllerIntegrationTest extends AbstractIn
 
             var response = assertThat(result)
                     .bodyJson()
-                    .convertTo(CreateCleaningRequestUseCase.Output.class)
+                    .convertTo(CreateCleaningRequestResult.class)
                     .actual();
 
             assertPersistedState(() -> {

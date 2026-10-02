@@ -71,8 +71,7 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(customer.getId().toString()))
-                    .andExpect(jsonPath("$.email").value("changed@example.com"));
+                    .andExpect(jsonPath("$.id").value(customer.getId().toString()));
 
             // The new email is actually committed to the database.
             var reloaded = accountRepository.findById(account.getId()).orElseThrow();

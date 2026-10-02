@@ -23,13 +23,15 @@ public class RefreshTokensUseCase {
     private final SessionRepository sessionRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public record Output(String role, String accessToken, String refreshToken) {}
+    public record RefreshTokensCommand(String refreshToken) {}
+
+    public record RefreshTokensResult(String role, String accessToken, String refreshToken) {}
 
     @Transactional
-    public Output execute(String refreshToken) {
+    public RefreshTokensResult execute(RefreshTokensCommand command) {
         Claims claims;
         try {
-            claims = jwtTokenProvider.parseToken(refreshToken);
+            claims = jwtTokenProvider.parseToken(command.refreshToken());
         } catch (Exception _) {
             throw new BusinessRuleException("Invalid refresh token.", "INVALID_TOKEN", HttpStatus.UNAUTHORIZED);
         }
@@ -51,6 +53,6 @@ public class RefreshTokensUseCase {
                 session.getId(), account.getId(), account.getEmail(), account.getRole());
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-        return new Output(account.getRole().name(), newAccessToken, newRefreshToken);
+        return new RefreshTokensResult(account.getRole().name(), newAccessToken, newRefreshToken);
     }
 }

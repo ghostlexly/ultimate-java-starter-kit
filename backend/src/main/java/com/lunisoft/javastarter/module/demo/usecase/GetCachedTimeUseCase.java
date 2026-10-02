@@ -12,13 +12,15 @@ import java.time.format.DateTimeFormatter;
 @Service
 public class GetCachedTimeUseCase {
 
-    public record Output(OffsetDateTime now, String formattedTime) {}
+    public record GetCachedTimeQuery() {}
+
+    public record GetCachedTimeResult(OffsetDateTime now, String formattedTime) {}
 
     @Cacheable(value = CacheConfig.DEMO_CACHED_TIME)
-    public Output execute() {
+    public GetCachedTimeResult execute(GetCachedTimeQuery query) {
         OffsetDateTime now = Instant.now().atOffset(ZoneOffset.UTC);
         DateTimeFormatter customFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        return new Output(now, customFormatter.format(now));
+        return new GetCachedTimeResult(now, customFormatter.format(now));
     }
 }

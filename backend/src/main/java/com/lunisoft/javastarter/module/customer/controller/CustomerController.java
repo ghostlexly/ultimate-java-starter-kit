@@ -1,10 +1,13 @@
 package com.lunisoft.javastarter.module.customer.controller;
 
 import com.lunisoft.javastarter.core.security.UserPrincipal;
-import com.lunisoft.javastarter.module.customer.dto.CustomerResponse;
 import com.lunisoft.javastarter.module.customer.dto.UpdateCustomerEmailRequest;
 import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase;
+import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase.GetProfileQuery;
+import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase.GetProfileResult;
 import com.lunisoft.javastarter.module.customer.usecase.UpdateCustomerEmailUseCase;
+import com.lunisoft.javastarter.module.customer.usecase.UpdateCustomerEmailUseCase.UpdateCustomerEmailCommand;
+import com.lunisoft.javastarter.module.customer.usecase.UpdateCustomerEmailUseCase.UpdateCustomerEmailResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,21 +25,23 @@ public class CustomerController {
     private final UpdateCustomerEmailUseCase updateCustomerEmailUseCase;
 
     @GetMapping("profile")
-    public ResponseEntity<CustomerResponse> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<GetProfileResult> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
 
-        CustomerResponse response = this.getProfileUseCase.execute(principal.accountId());
+        var query = new GetProfileQuery(principal.accountId());
 
-        return ResponseEntity.ok(response);
+        var result = this.getProfileUseCase.execute(query);
+
+        return ResponseEntity.ok(result);
     }
 
     @PatchMapping("email")
-    public ResponseEntity<CustomerResponse> updateEmail(
+    public ResponseEntity<UpdateCustomerEmailResult> updateEmail(
             @AuthenticationPrincipal UserPrincipal principal, @Valid @RequestBody UpdateCustomerEmailRequest request) {
 
-        var input = new UpdateCustomerEmailUseCase.Input(principal.accountId(), request.email());
+        var command = new UpdateCustomerEmailCommand(principal.accountId(), request.email());
 
-        CustomerResponse response = this.updateCustomerEmailUseCase.execute(input);
+        var result = this.updateCustomerEmailUseCase.execute(command);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(result);
     }
 }

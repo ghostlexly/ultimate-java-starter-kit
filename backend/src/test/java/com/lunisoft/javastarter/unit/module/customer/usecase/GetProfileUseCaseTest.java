@@ -1,6 +1,7 @@
 package com.lunisoft.javastarter.unit.module.customer.usecase;
 
 import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase ;
+import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase.GetProfileQuery;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
 import org.junit.jupiter.api.Test;
@@ -28,16 +29,16 @@ class GetProfileUseCaseTest {
     private GetProfileUseCase getProfileUseCase;
 
     @Test
-    void execute_existing_profile_returns_customer_response() {
+    void execute_existing_profile_returns_profile() {
         var account = createCustomerAccount();
         var customer = account.getCustomer();
 
         when(customerRepository.findByAccountId(account.getId())).thenReturn(Optional.of(customer));
 
-        var output = getProfileUseCase.execute(account.getId());
+        var result = getProfileUseCase.execute(new GetProfileQuery(account.getId()));
 
-        assertThat(output.id()).isEqualTo(customer.getId());
-        assertThat(output.email()).isEqualTo("contact+customer@lunisoft.fr");
+        assertThat(result.id()).isEqualTo(customer.getId());
+        assertThat(result.email()).isEqualTo("contact+customer@lunisoft.fr");
     }
 
     @Test
@@ -45,7 +46,7 @@ class GetProfileUseCaseTest {
         var accountId = UUID.randomUUID();
         when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> getProfileUseCase.execute(accountId))
+        assertThatThrownBy(() -> getProfileUseCase.execute(new GetProfileQuery(accountId)))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getMessage()).isEqualTo("Customer profile not found.");
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);

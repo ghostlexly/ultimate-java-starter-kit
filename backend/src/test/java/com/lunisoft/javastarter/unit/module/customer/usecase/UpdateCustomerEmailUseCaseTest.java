@@ -1,6 +1,7 @@
 package com.lunisoft.javastarter.unit.module.customer.usecase;
 
 import com.lunisoft.javastarter.module.customer.usecase.UpdateCustomerEmailUseCase ;
+import com.lunisoft.javastarter.module.customer.usecase.UpdateCustomerEmailUseCase.UpdateCustomerEmailCommand;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
@@ -43,15 +44,15 @@ class UpdateCustomerEmailUseCaseTest {
         Account account = createCustomerAccount();
         var accountId = account.getId();
         Customer customer = account.getCustomer();
-        var input = new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com");
+        var command = new UpdateCustomerEmailCommand(accountId, "new@example.com");
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
         when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.of(customer));
 
-        var output = updateCustomerEmailUseCase.execute(input);
+        var result = updateCustomerEmailUseCase.execute(command);
 
-        // Verify that the account's email was updated'
-        assertThat(output.email()).isEqualTo("new@example.com");
+        // Verify that the account's email was updated
+        assertThat(result.id()).isEqualTo(customer.getId());
         assertThat(account.getEmail()).isEqualTo("new@example.com");
 
         // Verify that the CustomerEmailUpdated event was published
@@ -69,7 +70,7 @@ class UpdateCustomerEmailUseCaseTest {
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> updateCustomerEmailUseCase.execute(
-                        new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
+                        new UpdateCustomerEmailCommand(accountId, "new@example.com")))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
                     assertThat(exception.getCode()).isEqualTo("NOT_FOUND");
@@ -87,7 +88,7 @@ class UpdateCustomerEmailUseCaseTest {
         when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> updateCustomerEmailUseCase.execute(
-                        new UpdateCustomerEmailUseCase.Input(accountId, "new@example.com")))
+                        new UpdateCustomerEmailCommand(accountId, "new@example.com")))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
                 });

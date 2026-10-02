@@ -51,20 +51,20 @@ public class PaginateCustomersUseCase {
 
     private final DemoCustomerRepository demoCustomerRepository;
 
-    public record Input(Pageable pageable, String email) {}
+    public record PaginateCustomersQuery(Pageable pageable, String email) {}
 
-    public record Output(UUID id, String email, String role) {}
+    public record PaginateCustomersResult(UUID id, String email, String role) {}
 
     @Transactional(readOnly = true)
-    public PaginatedResponse<Output> execute(Input input) {
-        Assert.notNull(input, "Input cannot be null");
-        Assert.notNull(input.pageable(), "Pageable cannot be null");
+    public PaginatedResponse<PaginateCustomersResult> execute(PaginateCustomersQuery query) {
+        Assert.notNull(query, "Query cannot be null");
+        Assert.notNull(query.pageable(), "Pageable cannot be null");
 
-        Pageable pageable = SortWhitelist.apply(input.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
+        Pageable pageable = SortWhitelist.apply(query.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
 
-        Specification<Customer> specs = buildSpecs(input);
+        Specification<Customer> specs = buildSpecs(query);
 
-        Page<Output> page = demoCustomerRepository.findAll(specs, pageable).map(this::toOutput);
+        Page<PaginateCustomersResult> page = demoCustomerRepository.findAll(specs, pageable).map(this::toResult);
 
         return PaginatedResponse.from(page);
     }
@@ -72,18 +72,18 @@ public class PaginateCustomersUseCase {
     /**
      * Builds the specification by chaining optional filters onto the base spec.
      */
-    private Specification<Customer> buildSpecs(Input input) {
+    private Specification<Customer> buildSpecs(PaginateCustomersQuery query) {
         List<Specification<Customer>> specs = new ArrayList<>();
 
-        if (StringUtils.hasText(input.email())) {
-            specs.add(DemoCustomerSpecification.emailContaining(input.email()));
+        if (StringUtils.hasText(query.email())) {
+            specs.add(DemoCustomerSpecification.emailContaining(query.email()));
         }
 
         return Specification.allOf(specs);
     }
 
-    private Output toOutput(Customer customer) {
-        return new Output(
+    private PaginateCustomersResult toResult(Customer customer) {
+        return new PaginateCustomersResult(
                 customer.getId(),
                 customer.getAccount() != null ? customer.getAccount().getEmail() : null,
                 customer.getAccount() != null ? customer.getAccount().getRole().name() : null);

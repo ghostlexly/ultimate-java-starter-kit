@@ -32,14 +32,14 @@ public class VerifyCodeUseCase {
     private final SessionRepository sessionRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public record Input(String email, String code, HttpServletRequest request) {}
+    public record VerifyCodeCommand(String email, String code, HttpServletRequest request) {}
 
-    public record Output(String role, String accessToken, String refreshToken) {}
+    public record VerifyCodeResult(String role, String accessToken, String refreshToken) {}
 
     @Transactional(noRollbackFor = BusinessRuleException.class)
-    public Output execute(Input input) {
+    public VerifyCodeResult execute(VerifyCodeCommand command) {
         Account account = accountRepository
-                .findByEmailIgnoreCase(input.email())
+                .findByEmailIgnoreCase(command.email())
                 .orElseThrow(() ->
                         new BusinessRuleException("Invalid email or code.", "INVALID_CODE", HttpStatus.BAD_REQUEST));
 
@@ -58,7 +58,7 @@ public class VerifyCodeUseCase {
 
         token.setAttempts(token.getAttempts() + 1);
 
-        if (!input.code.equals(token.getValue())) {
+        if (!command.code().equals(token.getValue())) {
             throw new BusinessRuleException("Invalid code.", "INVALID_CODE", HttpStatus.BAD_REQUEST);
         }
 
@@ -67,13 +67,13 @@ public class VerifyCodeUseCase {
 
         account.setEmailVerified(true);
 
-        Session session = createSession(account, input.request);
+        Session session = createSession(account, command.request());
 
         String accessToken = jwtTokenProvider.generateAccessToken(
                 session.getId(), account.getId(), account.getEmail(), account.getRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-        return new Output(account.getRole().name(), accessToken, refreshToken);
+        return new VerifyCodeResult(account.getRole().name(), accessToken, refreshToken);
     }
 
     private Session createSession(Account account, HttpServletRequest request) {

@@ -34,14 +34,16 @@ public class SendCodeUseCase {
     private final VerificationTokenRepository verificationTokenRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    public record SendCodeCommand(String email) {}
+
     /**
      * Generates a 4-digit login code and stores it as a VerificationToken. Creates the account if it
      * doesn't exist (defaults to CUSTOMER role).
      */
     @Transactional
-    public void execute(String email) {
+    public void execute(SendCodeCommand command) {
         // Normalize the email so lookups and storage are case insensitive
-        String normalizedEmail = email.toLowerCase();
+        String normalizedEmail = command.email().toLowerCase();
 
         Account account = accountRepository
                 .findByEmailIgnoreCase(normalizedEmail)

@@ -1,6 +1,7 @@
 package com.lunisoft.javastarter.unit.module.demo.usecase;
 
 import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase ;
+import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase.PaginateCustomersQuery;
 import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import org.junit.jupiter.api.Test;
@@ -42,16 +43,16 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(PageRequest.of(0, 10), null);
-        var output = paginateCustomersUseCase.execute(input);
+        var query = new PaginateCustomersQuery(PageRequest.of(0, 10), null);
+        var result = paginateCustomersUseCase.execute(query);
 
-        assertThat(output.content()).hasSize(1);
-        assertThat(output.content().getFirst().email()).isEqualTo("contact+customer@lunisoft.fr");
-        assertThat(output.content().getFirst().role()).isEqualTo("CUSTOMER");
-        assertThat(output.totalItems()).isEqualTo(1);
-        assertThat(output.totalPages()).isEqualTo(1);
-        assertThat(output.isFirst()).isTrue();
-        assertThat(output.isLast()).isTrue();
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().getFirst().email()).isEqualTo("contact+customer@lunisoft.fr");
+        assertThat(result.content().getFirst().role()).isEqualTo("CUSTOMER");
+        assertThat(result.totalItems()).isEqualTo(1);
+        assertThat(result.totalPages()).isEqualTo(1);
+        assertThat(result.isFirst()).isTrue();
+        assertThat(result.isLast()).isTrue();
     }
 
     @Test
@@ -62,14 +63,14 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(PageRequest.of(0, 10), null);
-        var output = paginateCustomersUseCase.execute(input);
+        var query = new PaginateCustomersQuery(PageRequest.of(0, 10), null);
+        var result = paginateCustomersUseCase.execute(query);
 
-        assertThat(output.content()).isEmpty();
-        assertThat(output.totalItems()).isZero();
-        assertThat(output.totalPages()).isZero();
-        assertThat(output.isFirst()).isTrue();
-        assertThat(output.isLast()).isTrue();
+        assertThat(result.content()).isEmpty();
+        assertThat(result.totalItems()).isZero();
+        assertThat(result.totalPages()).isZero();
+        assertThat(result.isFirst()).isTrue();
+        assertThat(result.isLast()).isTrue();
     }
 
     @Test
@@ -80,10 +81,10 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(PageRequest.of(0, 5), "test@example.com");
-        var output = paginateCustomersUseCase.execute(input);
+        var query = new PaginateCustomersQuery(PageRequest.of(0, 5), "test@example.com");
+        var result = paginateCustomersUseCase.execute(query);
 
-        assertThat(output.content()).isEmpty();
+        assertThat(result.content()).isEmpty();
     }
 
     @Test
@@ -96,13 +97,13 @@ class PaginateCustomersUseCaseTest {
         when(demoCustomerRepository.findAll(any(Specification.class), eq(pageable)))
                 .thenReturn(page);
 
-        var input = new PaginateCustomersUseCase.Input(PageRequest.of(2, 5), null);
-        var output = paginateCustomersUseCase.execute(input);
+        var query = new PaginateCustomersQuery(PageRequest.of(2, 5), null);
+        var result = paginateCustomersUseCase.execute(query);
 
-        assertThat(output.totalItems()).isEqualTo(11);
-        assertThat(output.totalPages()).isEqualTo(3);
-        assertThat(output.isFirst()).isFalse();
-        assertThat(output.isLast()).isTrue();
+        assertThat(result.totalItems()).isEqualTo(11);
+        assertThat(result.totalPages()).isEqualTo(3);
+        assertThat(result.isFirst()).isFalse();
+        assertThat(result.isLast()).isTrue();
     }
 
     @Test
@@ -116,10 +117,10 @@ class PaginateCustomersUseCaseTest {
                 .thenReturn(page);
 
         var requestedPageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "name"));
-        var input = new PaginateCustomersUseCase.Input(requestedPageable, null);
-        var output = paginateCustomersUseCase.execute(input);
+        var query = new PaginateCustomersQuery(requestedPageable, null);
+        var result = paginateCustomersUseCase.execute(query);
 
-        assertThat(output.content()).isEmpty();
+        assertThat(result.content()).isEmpty();
     }
 
     @Test
@@ -131,9 +132,9 @@ class PaginateCustomersUseCaseTest {
                 .thenReturn(page);
 
         var requestedPageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "notAWhitelistedKey"));
-        var input = new PaginateCustomersUseCase.Input(requestedPageable, null);
-        var output = paginateCustomersUseCase.execute(input);
+        var query = new PaginateCustomersQuery(requestedPageable, null);
+        var result = paginateCustomersUseCase.execute(query);
 
-        assertThat(output.content()).isEmpty();
+        assertThat(result.content()).isEmpty();
     }
 }

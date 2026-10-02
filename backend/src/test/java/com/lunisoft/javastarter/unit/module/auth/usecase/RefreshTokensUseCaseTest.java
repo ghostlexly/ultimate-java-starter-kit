@@ -1,6 +1,7 @@
 package com.lunisoft.javastarter.unit.module.auth.usecase;
 
 import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase ;
+import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase.RefreshTokensCommand;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
@@ -58,11 +59,11 @@ class RefreshTokensUseCaseTest {
                 .thenReturn("new-access-token");
         when(jwtTokenProvider.generateRefreshToken(sessionId)).thenReturn("new-refresh-token");
 
-        var output = refreshTokensUseCase.execute(refreshToken);
+        var result = refreshTokensUseCase.execute(new RefreshTokensCommand(refreshToken));
 
-        assertThat(output.role()).isEqualTo("CUSTOMER");
-        assertThat(output.accessToken()).isEqualTo("new-access-token");
-        assertThat(output.refreshToken()).isEqualTo("new-refresh-token");
+        assertThat(result.role()).isEqualTo("CUSTOMER");
+        assertThat(result.accessToken()).isEqualTo("new-access-token");
+        assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
 
         // Session expiry should be extended
         assertThat(session.getExpiresAt())
@@ -74,7 +75,7 @@ class RefreshTokensUseCaseTest {
     void execute_invalid_token_throws_business_rule_exception() {
         when(jwtTokenProvider.parseToken("bad-token")).thenThrow(new RuntimeException("Invalid"));
 
-        assertThatThrownBy(() -> refreshTokensUseCase.execute("bad-token"))
+        assertThatThrownBy(() -> refreshTokensUseCase.execute(new RefreshTokensCommand("bad-token")))
                 .isInstanceOf(BusinessRuleException.class)
                 .satisfies(ex -> {
                     var bre = (BusinessRuleException) ex;
@@ -92,7 +93,8 @@ class RefreshTokensUseCaseTest {
         when(sessionRepository.findByIdAndExpiresAtAfter(eq(sessionId), any(Instant.class)))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> refreshTokensUseCase.execute("expired-session-token"))
+        assertThatThrownBy(() ->
+                        refreshTokensUseCase.execute(new RefreshTokensCommand("expired-session-token")))
                 .isInstanceOf(BusinessRuleException.class)
                 .satisfies(ex -> {
                     var bre = (BusinessRuleException) ex;

@@ -1,6 +1,6 @@
 package com.lunisoft.javastarter.config;
 
-import com.lunisoft.javastarter.module.demo.usecase.GetCachedTimeUseCase;
+import com.lunisoft.javastarter.module.demo.usecase.GetCachedTimeUseCase.GetCachedTimeResult;
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.CacheErrorHandler;
@@ -46,7 +46,7 @@ public class CacheConfig implements CachingConfigurer {
     private Map<String, RedisCacheConfiguration> cacheConfigurations() {
         return Map.of(
                 DEMO_CACHED_TIME,
-                cacheConfiguration(GetCachedTimeUseCase.Output.class, Duration.ofSeconds(10)),
+                cacheConfiguration(GetCachedTimeResult.class, Duration.ofSeconds(10)),
                 S3_PRESIGNED_GET_URL,
                 cacheConfiguration(String.class, Duration.ofHours(24)));
     }

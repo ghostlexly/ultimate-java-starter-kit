@@ -19,14 +19,14 @@ public class SearchCustomersUseCase {
 
     private final DemoCustomerRepository demoCustomerRepository;
 
-    public record Input(Role role) {}
+    public record SearchCustomersQuery(Role role) {}
 
-    public record Output(UUID id, String email, String role) {}
+    public record SearchCustomersResult(UUID id, String email, String role) {}
 
     @Transactional(readOnly = true)
-    public List<Output> execute(Input input) {
-        return demoCustomerRepository.findByAccountRole(input.role()).stream()
-                .map(customer -> new Output(
+    public List<SearchCustomersResult> execute(SearchCustomersQuery query) {
+        return demoCustomerRepository.findByAccountRole(query.role()).stream()
+                .map(customer -> new SearchCustomersResult(
                         customer.getId(),
                         customer.getAccount().getEmail(),
                         customer.getAccount().getRole().name()))

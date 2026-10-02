@@ -13,6 +13,7 @@ import software.amazon.awssdk.services.s3.model.StorageClass;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,30 +26,32 @@ public class UploadMediaUseCase {
     private final MediaRepository mediaRepository;
     private final MediaService mediaService;
 
-    public record Input(Resource resource, String fileName, String contentType, long size) {}
+    public record UploadMediaCommand(Resource resource, String fileName, String contentType, long size) {}
+
+    public record UploadMediaResult(UUID id, String key) {}
 
     /**
      * Stores the provided file in S3 and persists its metadata. Generic on purpose: callers from any
      * module can supply a resource from any source (multipart upload, in-memory bytes, a file, ...).
      * Validation (mime type, size, ...) is the caller's responsibility.
      */
-    public Media execute(Input input) {
-        var key = mediaService.buildKey(STORAGE_PATH, input.fileName());
+    public UploadMediaResult execute(UploadMediaCommand command) {
+        var key = mediaService.buildKey(STORAGE_PATH, command.fileName());
 
-        uploadToStorage(key, input);
+        uploadToStorage(key, command);
 
-        var media = new Media(input.fileName(), key, input.contentType(), input.size());
+        var media = mediaRepository.save(new Media(command.fileName(), key, command.contentType(), command.size()));
 
-        return mediaRepository.save(media);
+        return new UploadMediaResult(media.getId(), media.getKey());
     }
 
     /**
      * Streams the resource to S3. The use case opens its own stream and closes it once the upload
      * is complete, so callers never have to manage it.
      */
-    private void uploadToStorage(String key, Input input) {
-        try (InputStream inputStream = input.resource().getInputStream()) {
-            s3Service.upload(key, inputStream, input.contentType(), STORAGE_CLASS);
+    private void uploadToStorage(String key, UploadMediaCommand command) {
+        try (InputStream inputStream = command.resource().getInputStream()) {
+            s3Service.upload(key, inputStream, command.contentType(), STORAGE_CLASS);
         } catch (IOException ex) {
             throw new BusinessRuleException(
                     "Failed to read uploaded file: %s".formatted(ex.getMessage()),

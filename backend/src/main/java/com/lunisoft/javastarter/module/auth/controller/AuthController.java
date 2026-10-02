@@ -9,9 +9,16 @@ import com.lunisoft.javastarter.module.auth.dto.SendCodeRequest;
 import com.lunisoft.javastarter.module.auth.dto.VerifyCodeRequest;
 import com.lunisoft.javastarter.module.auth.service.AuthCookieService;
 import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase.GetMeQuery;
+import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase.GetMeResult;
 import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase.RefreshTokensCommand;
+import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase.RefreshTokensResult;
 import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase.SendCodeCommand;
 import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase;
+import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase.VerifyCodeCommand;
+import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase.VerifyCodeResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -35,29 +42,30 @@ public class AuthController {
     @PublicEndpoint
     @PostMapping("send-code")
     public ResponseEntity<MessageResponse> sendCode(@Valid @RequestBody SendCodeRequest request) {
-        this.sendCodeUseCase.execute(request.email());
+        var command = new SendCodeCommand(request.email());
+        this.sendCodeUseCase.execute(command);
 
         return ResponseEntity.ok(new MessageResponse("Login code sent successfully."));
     }
 
     @PublicEndpoint
     @PostMapping("verify-code")
-    public ResponseEntity<VerifyCodeUseCase.Output> verifyCode(
+    public ResponseEntity<VerifyCodeResult> verifyCode(
             @Valid @RequestBody VerifyCodeRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
 
-        var input = new VerifyCodeUseCase.Input(request.email(), request.code(), httpRequest);
-        var output = this.verifyCodeUseCase.execute(input);
+        var command = new VerifyCodeCommand(request.email(), request.code(), httpRequest);
+        var result = this.verifyCodeUseCase.execute(command);
 
-        this.authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
+        this.authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
 
-        return ResponseEntity.ok(output);
+        return ResponseEntity.ok(result);
     }
 
     @PublicEndpoint
     @PostMapping("refresh")
-    public ResponseEntity<RefreshTokensUseCase.Output> refreshTokens(
+    public ResponseEntity<RefreshTokensResult> refreshTokens(
             @Valid @RequestBody(required = false) RefreshTokenRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
@@ -68,17 +76,20 @@ public class AuthController {
             throw new BusinessRuleException("Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
         }
 
-        var output = this.refreshTokensUseCase.execute(refreshToken);
-        this.authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
+        var command = new RefreshTokensCommand(refreshToken);
+        var result = this.refreshTokensUseCase.execute(command);
 
-        return ResponseEntity.ok(output);
+        this.authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
+
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("me")
-    public ResponseEntity<GetMeUseCase.Output> me(@AuthenticationPrincipal UserPrincipal principal) {
-        GetMeUseCase.Output response = this.getMeUseCase.execute(principal.accountId());
+    public ResponseEntity<GetMeResult> me(@AuthenticationPrincipal UserPrincipal principal) {
+        var query = new GetMeQuery(principal.accountId());
+        var result = this.getMeUseCase.execute(query);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("logout")

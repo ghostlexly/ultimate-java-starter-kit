@@ -1,6 +1,7 @@
 package com.lunisoft.javastarter.unit.module.demo.usecase;
 
 import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase ;
+import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase.SearchCustomersQuery;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import org.junit.jupiter.api.Test;
@@ -36,22 +37,22 @@ class SearchCustomersUseCaseTest {
 
         when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER)).thenReturn(List.of(customer1, customer2));
 
-        var input = new SearchCustomersUseCase.Input(Role.CUSTOMER);
-        var output = searchCustomersUseCase.execute(input);
+        var query = new SearchCustomersQuery(Role.CUSTOMER);
+        var result = searchCustomersUseCase.execute(query);
 
-        assertThat(output).hasSize(2);
-        assertThat(output.get(0).email()).isEqualTo("alice@example.com");
-        assertThat(output.get(0).role()).isEqualTo("CUSTOMER");
-        assertThat(output.get(1).email()).isEqualTo("bob@example.com");
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).email()).isEqualTo("alice@example.com");
+        assertThat(result.get(0).role()).isEqualTo("CUSTOMER");
+        assertThat(result.get(1).email()).isEqualTo("bob@example.com");
     }
 
     @Test
     void execute_no_results_returns_empty_list() {
         when(demoCustomerRepository.findByAccountRole(Role.ADMIN)).thenReturn(List.of());
 
-        var input = new SearchCustomersUseCase.Input(Role.ADMIN);
-        var output = searchCustomersUseCase.execute(input);
+        var query = new SearchCustomersQuery(Role.ADMIN);
+        var result = searchCustomersUseCase.execute(query);
 
-        assertThat(output).isEmpty();
+        assertThat(result).isEmpty();
     }
 }

@@ -5,8 +5,6 @@ import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 public class GetStatsUseCase {
@@ -14,10 +12,12 @@ public class GetStatsUseCase {
     private final AccountRepository accountRepository;
     private final SessionRepository sessionRepository;
 
-    public Map<String, Long> execute() {
+    public record GetStatsQuery() {}
 
-        return Map.of(
-                "accounts", accountRepository.count(),
-                "activeSessions", sessionRepository.count());
+    public record GetStatsResult(long accounts, long activeSessions) {}
+
+    public GetStatsResult execute(GetStatsQuery query) {
+
+        return new GetStatsResult(accountRepository.count(), sessionRepository.count());
     }
 }
