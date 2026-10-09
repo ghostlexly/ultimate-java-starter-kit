@@ -1,8 +1,8 @@
 package com.lunisoft.javastarter.integration.module.customer.controller;
 
-import com.lunisoft.javastarter.module.customer.controller.CustomerController ;
-import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.integration.support.AbstractIntegrationTest;
+import com.lunisoft.javastarter.module.account.repository.AccountRepository;
+import com.lunisoft.javastarter.module.customer.controller.CustomerController;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +35,8 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_200_with_customer_data_when_authenticated_as_customer() throws Exception {
-            var account = fixtures.givenCustomer("customer-profile@example.com");
-            var customer = account.getCustomer();
+            var customer = fixtures.givenCustomer("customer-profile@example.com");
+            var account = customer.getAccount();
 
             mockMvc.perform(get(URL).header("Authorization", bearer(account)))
                     .andExpect(status().isOk())
@@ -46,7 +46,8 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_403_when_authenticated_as_admin() throws Exception {
-            var account = fixtures.givenAdmin("admin@example.com");
+            var admin = fixtures.givenAdmin("admin@example.com");
+            var account = admin.getAccount();
 
             // Admin role doesn't satisfy hasRole('CUSTOMER').
             mockMvc.perform(get(URL).header("Authorization", bearer(account))).andExpect(status().isForbidden());
@@ -61,8 +62,8 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_200_and_persists_new_email_when_authenticated_as_customer() throws Exception {
-            var account = fixtures.givenCustomer("update-email@example.com");
-            var customer = account.getCustomer();
+            var customer = fixtures.givenCustomer("update-email@example.com");
+            var account = customer.getAccount();
 
             var body = jsonMapper.writeValueAsString(Map.of("email", "changed@example.com"));
 
@@ -80,7 +81,8 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_400_when_email_is_invalid() throws Exception {
-            var account = fixtures.givenCustomer("invalid-email@example.com");
+            var customer = fixtures.givenCustomer("invalid-email@example.com");
+            var account = customer.getAccount();
 
             var body = jsonMapper.writeValueAsString(Map.of("email", "not-an-email"));
 
@@ -105,7 +107,8 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_403_when_authenticated_as_admin() throws Exception {
-            var account = fixtures.givenAdmin("admin-update-email@example.com");
+            var admin = fixtures.givenAdmin("admin-update-email@example.com");
+            var account = admin.getAccount();
 
             var body = jsonMapper.writeValueAsString(Map.of("email", "changed@example.com"));
 

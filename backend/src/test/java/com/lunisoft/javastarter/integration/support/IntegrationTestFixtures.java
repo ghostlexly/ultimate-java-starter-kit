@@ -57,7 +57,7 @@ public class IntegrationTestFixtures {
     /**
      * Customer account with the matching {@link Customer} row, both persisted and linked back.
      */
-    public Account givenCustomer(String email) {
+    public Customer givenCustomer(String email) {
 
         return givenCustomer(email, _ -> {});
     }
@@ -65,7 +65,7 @@ public class IntegrationTestFixtures {
     /**
      * Same as {@link #givenCustomer(String)} but lets the test mutate the {@link Account} first.
      */
-    public Account givenCustomer(String email, Consumer<Account> customizer) {
+    public Customer givenCustomer(String email, Consumer<Account> customizer) {
         var account = new Account(email, Role.CUSTOMER);
         account.setEmailVerified(true);
 
@@ -77,20 +77,20 @@ public class IntegrationTestFixtures {
         accountRepository.save(account);
         customerRepository.save(customer);
 
-        return account;
+        return customer;
     }
 
     /**
      * Admin account with the matching {@link Admin} row, both persisted and linked back.
      */
-    public Account givenAdmin(String email) {
+    public Admin givenAdmin(String email) {
         return givenAdmin(email, _ -> {});
     }
 
     /**
      * Same as {@link #givenAdmin(String)} but lets the test mutate the {@link Account} first.
      */
-    public Account givenAdmin(String email, Consumer<Account> customizer) {
+    public Admin givenAdmin(String email, Consumer<Account> customizer) {
         var account = new Account(email, Role.ADMIN);
         account.setEmailVerified(true);
 
@@ -102,7 +102,7 @@ public class IntegrationTestFixtures {
         accountRepository.save(account);
         adminRepository.save(admin);
 
-        return account;
+        return admin;
     }
 
     // ── Auth state ───────────────────────────────────────────────────────────
@@ -165,8 +165,7 @@ public class IntegrationTestFixtures {
      * Same as {@link #givenMedia()} but lets the test override file name / key / mime type / size.
      */
     public Media givenMedia(Consumer<Media> customizer) {
-        var media = new Media(
-                "profile.png", "media/2026/01/01/%s.png".formatted(UUID.randomUUID()), "image/png", 1024);
+        var media = new Media("profile.png", "media/2026/01/01/%s.png".formatted(UUID.randomUUID()), "image/png", 1024);
         customizer.accept(media);
 
         return mediaRepository.save(media);

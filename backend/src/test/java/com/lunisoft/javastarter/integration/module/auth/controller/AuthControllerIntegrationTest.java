@@ -1,13 +1,13 @@
 package com.lunisoft.javastarter.integration.module.auth.controller;
 
-import com.lunisoft.javastarter.module.auth.controller.AuthController ;
+import com.lunisoft.javastarter.integration.support.AbstractIntegrationTest;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
+import com.lunisoft.javastarter.module.auth.controller.AuthController;
 import com.lunisoft.javastarter.module.auth.entity.VerificationType;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
-import com.lunisoft.javastarter.integration.support.AbstractIntegrationTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +72,8 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_429_when_requested_within_cooldown() throws Exception {
-            var account = fixtures.givenCustomer("cooldown-user@example.com");
+            var customer = fixtures.givenCustomer("cooldown-user@example.com");
+            var account = customer.getAccount();
             fixtures.givenLoginCode(account, "123456");
 
             var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail()));
@@ -91,7 +92,8 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_tokens_and_sets_cookies_on_valid_code() throws Exception {
-            var account = fixtures.givenCustomer("verify-success@example.com");
+            var customer = fixtures.givenCustomer("verify-success@example.com");
+            var account = customer.getAccount();
             fixtures.givenLoginCode(account, "654321");
 
             var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "654321"));
@@ -115,7 +117,9 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_400_on_wrong_code() throws Exception {
-            var account = fixtures.givenCustomer("wrong-code@example.com");
+            var customer = fixtures.givenCustomer("wrong-code@example.com");
+            var account = customer.getAccount();
+
             fixtures.givenLoginCode(account, "111111");
 
             var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "999999"));
@@ -133,7 +137,9 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_429_when_max_attempts_reached() throws Exception {
-            var account = fixtures.givenCustomer("max-attempts@example.com");
+            var customer = fixtures.givenCustomer("max-attempts@example.com");
+            var account = customer.getAccount();
+
             fixtures.givenLoginCode(account, "111111", t -> t.setAttempts(5));
 
             var body = jsonMapper.writeValueAsString(Map.of("email", account.getEmail(), "code", "111111"));
@@ -145,7 +151,9 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_400_when_code_expired() throws Exception {
-            var account = fixtures.givenCustomer("expired-code@example.com");
+            var customer = fixtures.givenCustomer("expired-code@example.com");
+            var account = customer.getAccount();
+
             fixtures.givenLoginCode(
                     account, "222222", t -> t.setExpiresAt(Instant.now().minus(1, ChronoUnit.MINUTES)));
 
@@ -165,8 +173,8 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_new_tokens_given_valid_refresh_token() throws Exception {
-            var account = fixtures.givenCustomer("refresh@example.com");
-            var session = fixtures.givenSession(account);
+            var customer = fixtures.givenCustomer("refresh@example.com");
+            var session = fixtures.givenSession(customer.getAccount());
             var refreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
             var body = jsonMapper.writeValueAsString(Map.of("refreshToken", refreshToken));
@@ -208,7 +216,8 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_authenticated_user_when_jwt_is_valid() throws Exception {
-            var account = fixtures.givenCustomer("me@example.com");
+            var customer = fixtures.givenCustomer("me@example.com");
+            var account = customer.getAccount();
 
             mockMvc.perform(get(URL).header("Authorization", bearer(account)))
                     .andExpect(status().isOk())
@@ -226,7 +235,8 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void clears_auth_cookies() throws Exception {
-            var account = fixtures.givenCustomer("logout@example.com");
+            var customer = fixtures.givenCustomer("logout@example.com");
+            var account = customer.getAccount();
 
             mockMvc.perform(post(URL).header("Authorization", bearer(account)))
                     .andExpect(status().isOk())

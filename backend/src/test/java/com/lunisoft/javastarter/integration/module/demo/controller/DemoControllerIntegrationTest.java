@@ -1,8 +1,8 @@
 package com.lunisoft.javastarter.integration.module.demo.controller;
 
-import com.lunisoft.javastarter.module.demo.controller.DemoController ;
-import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.integration.support.AbstractIntegrationTest;
+import com.lunisoft.javastarter.module.account.entity.Role;
+import com.lunisoft.javastarter.module.demo.controller.DemoController ;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.LinkedMultiValueMap;
@@ -23,7 +23,8 @@ class DemoControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_searched_customers_list() throws Exception {
-            var account = fixtures.givenCustomer("me@example.com");
+            var customer = fixtures.givenCustomer("me@example.com");
+            var account = customer.getAccount();
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("role", "CUSTOMER");
