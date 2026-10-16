@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.core.ratelimit;
 
 import com.lunisoft.javastarter.core.security.UserPrincipal;
-import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,16 +11,21 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Enforces @RateLimit via AOP. Because Spring resolves and validates controller arguments
  * (including @Valid @RequestBody) BEFORE invoking the method, this advice only runs for requests
- * that pass validation — invalid payloads do not consume a token.
+ * that pass validation — invalid payloads do not count against the quota.
  */
 @Aspect
 @Component
@@ -34,51 +38,67 @@ public class RateLimitAspect {
     public Object around(ProceedingJoinPoint pjp, RateLimit rateLimit) throws Throwable {
         HttpServletRequest request = currentRequest();
         HttpServletResponse response = currentResponse();
-        String key = buildKey(pjp, request);
+        String limitName = resolveLimitName(pjp, rateLimit);
+        Duration window = Duration.ofSeconds(rateLimit.periodSeconds());
 
-        ConsumptionProbe probe =
-                rateLimitService.tryConsume(key, rateLimit.requests(), Duration.ofSeconds(rateLimit.periodSeconds()));
+        // Every client dimension is counted, so the quota holds per IP AND per account.
+        List<RateLimitResult> results = resolveClientKeys(request).stream()
+                .map(clientKey -> rateLimitService.hit(
+                        "%s:%s".formatted(limitName, clientKey), rateLimit.requests(), window))
+                .toList();
 
-        if (!probe.isConsumed()) {
-            rateLimitService.writeRateLimitResponse(response, probe);
+        Optional<RateLimitResult> exceeded =
+                results.stream().filter(RateLimitResult::isExceeded).findFirst();
+
+        if (exceeded.isPresent()) {
+            rateLimitService.writeRateLimitResponse(response, exceeded.get());
 
             // Short-circuit the controller — Spring will not write another body
             // because the response is already committed.
             return null;
         }
 
-        response.setHeader("X-Rate-Limit-Remaining", String.valueOf(probe.getRemainingTokens()));
+        long remaining = results.stream()
+                .mapToLong(RateLimitResult::remaining)
+                .min()
+                .orElse(rateLimit.requests());
+        response.setHeader("X-Rate-Limit-Remaining", String.valueOf(remaining));
 
-        // Proceed with the controller method; if it throws, the token stays consumed
+        // Proceed with the controller method; if it throws, the hit stays counted
         // (business failures still count against the limit — only arg-resolution
         // failures like @Valid never reach this advice).
         return pjp.proceed();
     }
 
     /**
-     * Builds a unique key per endpoint per client.
+     * Explicit {@link RateLimit#name()} when given, otherwise "Class#method" so each endpoint
+     * gets its own counter.
      */
-    private String buildKey(ProceedingJoinPoint pjp, HttpServletRequest request) {
+    private String resolveLimitName(ProceedingJoinPoint pjp, RateLimit rateLimit) {
+        if (StringUtils.hasText(rateLimit.name())) {
+            return rateLimit.name();
+        }
+
         MethodSignature signature = (MethodSignature) pjp.getSignature();
         Method method = signature.getMethod();
 
-        String endpoint = method.getDeclaringClass().getSimpleName() + "#" + method.getName();
-        String clientId = resolveClientId(request);
-
-        return endpoint + ":" + clientId;
+        return method.getDeclaringClass().getSimpleName() + "#" + method.getName();
     }
 
     /**
-     * Returns "user:<accountId>" if authenticated, otherwise "ip:<address>".
+     * Returns "ip:<address>" always, plus "email:<email>" when the request is authenticated.
      */
-    private String resolveClientId(HttpServletRequest request) {
+    private List<String> resolveClientKeys(HttpServletRequest request) {
+        List<String> clientKeys = new ArrayList<>();
+        clientKeys.add("ip:" + rateLimitService.resolveIpAddress(request));
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
-            return "user:" + principal.accountId();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal && principal.email() != null) {
+            clientKeys.add("email:" + principal.email().toLowerCase(Locale.ROOT));
         }
 
-        return "ip:" + rateLimitService.resolveIpAddress(request);
+        return clientKeys;
     }
 
     private HttpServletRequest currentRequest() {

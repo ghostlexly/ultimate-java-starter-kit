@@ -17,7 +17,6 @@
     <properties>
         <java.version>25</java.version>
         <jjwt.version>0.13.0</jjwt.version>
-        <bucket4j.version>8.18.0</bucket4j.version>
         <aws-sdk.version>2.44.4</aws-sdk.version>
         <playwright.version>1.59.0</playwright.version>
         <libphonenumber.version>9.0.30</libphonenumber.version>
@@ -134,13 +133,6 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
-        </dependency>
-
-        <!-- Rate Limiting -->
-        <dependency>
-            <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j_jdk17-core</artifactId>
-            <version>${bucket4j.version}</version>
         </dependency>
 
         <!-- Thymeleaf (HTML template rendering for PDFs) -->

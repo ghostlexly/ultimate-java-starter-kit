@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.core.ratelimit;
 
 import com.lunisoft.javastarter.property.RateLimitProperties;
-import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,14 +50,14 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
         }
 
         String key = "global:ip:%s".formatted(rateLimitService.resolveIpAddress(request));
-        ConsumptionProbe probe = rateLimitService.tryConsume(
+        RateLimitResult result = rateLimitService.hit(
                 key,
                 rateLimitProperties.global().requests(),
                 Duration.ofSeconds(rateLimitProperties.global().periodSeconds()));
 
-        if (!probe.isConsumed()) {
+        if (result.isExceeded()) {
             // Short-circuit the chain — the request never reaches Spring Security or a controller.
-            rateLimitService.writeRateLimitResponse(response, probe);
+            rateLimitService.writeRateLimitResponse(response, result);
 
             return;
         }
