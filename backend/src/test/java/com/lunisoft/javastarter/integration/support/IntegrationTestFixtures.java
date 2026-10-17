@@ -57,22 +57,21 @@ public class IntegrationTestFixtures {
     /**
      * Customer account with the matching {@link Customer} row, both persisted and linked back.
      */
-    public Customer givenCustomer(String email) {
-
-        return givenCustomer(email, _ -> {});
+    public Customer givenCustomer() {
+        return givenCustomer(_ -> {});
     }
 
     /**
-     * Same as {@link #givenCustomer(String)} but lets the test mutate the {@link Account} first.
+     * Same as givenCustomer(String) but lets the test mutate the {@link Account} first.
      */
-    public Customer givenCustomer(String email, Consumer<Account> customizer) {
-        var account = new Account(email, Role.CUSTOMER);
+    public Customer givenCustomer(Consumer<Customer> customizer) {
+        var account = new Account("customer@example.com", Role.CUSTOMER);
         account.setEmailVerified(true);
 
         var customer = new Customer(account);
         account.setCustomer(customer);
 
-        customizer.accept(account);
+        customizer.accept(customer);
 
         accountRepository.save(account);
         customerRepository.save(customer);
@@ -83,21 +82,21 @@ public class IntegrationTestFixtures {
     /**
      * Admin account with the matching {@link Admin} row, both persisted and linked back.
      */
-    public Admin givenAdmin(String email) {
-        return givenAdmin(email, _ -> {});
+    public Admin givenAdmin() {
+        return givenAdmin(_ -> {});
     }
 
     /**
-     * Same as {@link #givenAdmin(String)} but lets the test mutate the {@link Account} first.
+     * Same as givenAdmin(String) but lets the test mutate the {@link Account} first.
      */
-    public Admin givenAdmin(String email, Consumer<Account> customizer) {
-        var account = new Account(email, Role.ADMIN);
+    public Admin givenAdmin(Consumer<Admin> customizer) {
+        var account = new Account("admin@example.com", Role.ADMIN);
         account.setEmailVerified(true);
 
         var admin = new Admin(account);
         account.setAdmin(admin);
 
-        customizer.accept(account);
+        customizer.accept(admin);
 
         accountRepository.save(account);
         adminRepository.save(admin);

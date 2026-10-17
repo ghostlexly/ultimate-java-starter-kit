@@ -35,7 +35,7 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_200_with_customer_data_when_authenticated_as_customer() throws Exception {
-            var customer = fixtures.givenCustomer("customer-profile@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             mockMvc.perform(get(URL).header("Authorization", bearer(account)))
@@ -46,7 +46,7 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_403_when_authenticated_as_admin() throws Exception {
-            var admin = fixtures.givenAdmin("admin@example.com");
+            var admin = fixtures.givenAdmin();
             var account = admin.getAccount();
 
             // Admin role doesn't satisfy hasRole('CUSTOMER').
@@ -62,7 +62,7 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_200_and_persists_new_email_when_authenticated_as_customer() throws Exception {
-            var customer = fixtures.givenCustomer("update-email@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             var body = jsonMapper.writeValueAsString(Map.of("email", "changed@example.com"));
@@ -81,7 +81,7 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_400_when_email_is_invalid() throws Exception {
-            var customer = fixtures.givenCustomer("invalid-email@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             var body = jsonMapper.writeValueAsString(Map.of("email", "not-an-email"));
@@ -94,7 +94,7 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
             // The invalid request leaves the stored email untouched.
             var reloaded = accountRepository.findById(account.getId()).orElseThrow();
-            assertThat(reloaded.getEmail()).isEqualTo("invalid-email@example.com");
+            assertThat(reloaded.getEmail()).isEqualTo("customer@example.com");
         }
 
         @Test
@@ -107,7 +107,7 @@ class CustomerControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_403_when_authenticated_as_admin() throws Exception {
-            var admin = fixtures.givenAdmin("admin-update-email@example.com");
+            var admin = fixtures.givenAdmin();
             var account = admin.getAccount();
 
             var body = jsonMapper.writeValueAsString(Map.of("email", "changed@example.com"));

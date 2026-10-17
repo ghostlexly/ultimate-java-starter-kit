@@ -72,7 +72,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_429_when_requested_within_cooldown() throws Exception {
-            var customer = fixtures.givenCustomer("cooldown-user@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
             fixtures.givenLoginCode(account, "123456");
 
@@ -92,7 +92,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_tokens_and_sets_cookies_on_valid_code() throws Exception {
-            var customer = fixtures.givenCustomer("verify-success@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
             fixtures.givenLoginCode(account, "654321");
 
@@ -117,7 +117,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_400_on_wrong_code() throws Exception {
-            var customer = fixtures.givenCustomer("wrong-code@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             fixtures.givenLoginCode(account, "111111");
@@ -137,7 +137,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_429_when_max_attempts_reached() throws Exception {
-            var customer = fixtures.givenCustomer("max-attempts@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             fixtures.givenLoginCode(account, "111111", t -> t.setAttempts(5));
@@ -151,7 +151,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_400_when_code_expired() throws Exception {
-            var customer = fixtures.givenCustomer("expired-code@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             fixtures.givenLoginCode(
@@ -173,7 +173,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_new_tokens_given_valid_refresh_token() throws Exception {
-            var customer = fixtures.givenCustomer("refresh@example.com");
+            var customer = fixtures.givenCustomer();
             var session = fixtures.givenSession(customer.getAccount());
             var refreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
@@ -216,7 +216,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_authenticated_user_when_jwt_is_valid() throws Exception {
-            var customer = fixtures.givenCustomer("me@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             mockMvc.perform(get(URL).header("Authorization", bearer(account)))
@@ -235,7 +235,7 @@ class AuthControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void clears_auth_cookies() throws Exception {
-            var customer = fixtures.givenCustomer("logout@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             mockMvc.perform(post(URL).header("Authorization", bearer(account)))

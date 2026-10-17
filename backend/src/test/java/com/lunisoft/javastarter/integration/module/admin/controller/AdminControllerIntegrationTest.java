@@ -25,7 +25,7 @@ class AdminControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_403_when_authenticated_as_customer() throws Exception {
-            var customer = fixtures.givenCustomer("not-admin@example.com");
+            var customer = fixtures.givenCustomer();
             var account = customer.getAccount();
 
             mockMvc.perform(get(URL).header("Authorization", bearer(account))).andExpect(status().isForbidden());
@@ -33,11 +33,11 @@ class AdminControllerIntegrationTest extends AbstractIntegrationTest {
 
         @Test
         void returns_200_with_counts_when_authenticated_as_admin() throws Exception {
-            var admin = fixtures.givenAdmin("admin-stats@example.com");
+            var admin = fixtures.givenAdmin();
             var account = admin.getAccount();
 
-            fixtures.givenCustomer("c1@example.com");
-            fixtures.givenCustomer("c2@example.com");
+            fixtures.givenCustomer(cus -> cus.getAccount().setEmail("c1@example.com"));
+            fixtures.givenCustomer(cus -> cus.getAccount().setEmail("c2@example.com"));
 
             mockMvc.perform(get(URL).header("Authorization", bearer(account)))
                     .andExpect(status().isOk())
