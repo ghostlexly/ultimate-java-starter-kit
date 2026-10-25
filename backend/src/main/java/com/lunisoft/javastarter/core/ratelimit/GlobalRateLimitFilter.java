@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.Duration;
 
 /**
  * Global safety net protecting the whole application from abuse: limits every request to a maximum
@@ -51,13 +50,11 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
 
         String key = "global:ip:%s".formatted(rateLimitService.resolveIpAddress(request));
         RateLimitResult result = rateLimitService.hit(
-                key,
-                rateLimitProperties.global().requests(),
-                Duration.ofSeconds(rateLimitProperties.global().periodSeconds()));
+                key, rateLimitProperties.global().requests(), rateLimitProperties.global().period());
 
         if (result.isExceeded()) {
             // Short-circuit the chain — the request never reaches Spring Security or a controller.
-            rateLimitService.writeRateLimitResponse(response, result);
+            rateLimitService.writeRateLimitResponse(response, result, rateLimitProperties.global().message());
 
             return;
         }

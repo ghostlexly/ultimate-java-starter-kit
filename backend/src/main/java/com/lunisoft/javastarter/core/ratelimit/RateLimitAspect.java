@@ -8,6 +8,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.boot.convert.DurationStyle;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -39,29 +40,27 @@ public class RateLimitAspect {
         HttpServletRequest request = currentRequest();
         HttpServletResponse response = currentResponse();
         String limitName = resolveLimitName(pjp, rateLimit);
-        Duration window = Duration.ofSeconds(rateLimit.periodSeconds());
+        Duration window = DurationStyle.detectAndParse(rateLimit.window());
 
         // Every client dimension is counted, so the quota holds per IP AND per account.
         List<RateLimitResult> results = resolveClientKeys(request).stream()
-                .map(clientKey -> rateLimitService.hit(
-                        "%s:%s".formatted(limitName, clientKey), rateLimit.requests(), window))
+                .map(clientKey ->
+                        rateLimitService.hit("%s:%s".formatted(limitName, clientKey), rateLimit.requests(), window))
                 .toList();
 
         Optional<RateLimitResult> exceeded =
                 results.stream().filter(RateLimitResult::isExceeded).findFirst();
 
         if (exceeded.isPresent()) {
-            rateLimitService.writeRateLimitResponse(response, exceeded.get());
+            rateLimitService.writeRateLimitResponse(response, exceeded.get(), rateLimit.message());
 
             // Short-circuit the controller — Spring will not write another body
             // because the response is already committed.
             return null;
         }
 
-        long remaining = results.stream()
-                .mapToLong(RateLimitResult::remaining)
-                .min()
-                .orElse(rateLimit.requests());
+        long remaining =
+                results.stream().mapToLong(RateLimitResult::remaining).min().orElse(rateLimit.requests());
         response.setHeader("X-Rate-Limit-Remaining", String.valueOf(remaining));
 
         // Proceed with the controller method; if it throws, the hit stays counted

@@ -73,7 +73,7 @@ public class DemoController {
      * Validate the body of the request. The rate limiter run only when the request is valid.
      */
     @PostMapping("body-validation")
-    @RateLimit(requests = 1, periodSeconds = 60)
+    @RateLimit(requests = 1, window = "1m")
     public ResponseEntity<Map<String, String>> bodyValidationExample(
             @Valid @RequestBody BodyValidationExampleRequest request) {
         return ResponseEntity.ok(Map.of("message", "Success", "validation", request.toString()));
@@ -138,7 +138,7 @@ public class DemoController {
     }
 
     @GetMapping("rate-limited")
-    @RateLimit(requests = 5, periodSeconds = 60)
+    @RateLimit(requests = 5, window = "1m")
     public ResponseEntity<MessageResponse> rateLimited() {
         return ResponseEntity.ok(
                 new MessageResponse("Send multiple requests to this endpoint to see rate limiting in action."));

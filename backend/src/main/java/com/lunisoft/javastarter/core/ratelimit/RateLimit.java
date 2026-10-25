@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * account email when the request is authenticated. One IP therefore cannot multiply its quota by
  * rotating accounts, and one account cannot multiply it by rotating IPs.
  *
- * <p>Example: @RateLimit(requests = 5, periodSeconds = 60) — 5 requests per minute.
+ * <p>Example: @RateLimit(requests = 5, window = "1m") — 5 requests per minute.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
@@ -24,7 +24,20 @@ public @interface RateLimit {
      */
     String name() default "";
 
+    /** Maximum number of requests allowed per window. */
     int requests();
 
-    int periodSeconds();
+    /**
+     * Length of the fixed window, in the same format Spring Boot accepts for {@code Duration}
+     * properties: a simple value with unit ("30s", "5m", "1h", "1d") or ISO-8601 ("PT1H").
+     */
+    String window();
+
+    /**
+     * User-facing message returned in the 429 body when the quota is exceeded. Supports the
+     * {@code {minutes}} and {@code {seconds}} placeholders, replaced by the time left before the
+     * window resets (minutes is never below 1). Blank falls back to
+     * {@link RateLimitService#DEFAULT_MESSAGE}.
+     */
+    String message() default "";
 }

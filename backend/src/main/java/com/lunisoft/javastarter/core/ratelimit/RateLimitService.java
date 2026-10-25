@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -40,6 +41,13 @@ public class RateLimitService {
     private static final String CLOUDFLARE_IP_HEADER = "CF-Connecting-IP";
     private static final String FORWARDED_FOR_HEADER = "X-Forwarded-For";
     private static final String KEY_PREFIX = "rate-limit:";
+
+    /** Generic 429 message used when neither {@link RateLimit#message()} nor the global config sets one. */
+    public static final String DEFAULT_MESSAGE =
+            "Vous allez trop vite. Patientez {minutes} minute(s) avant de réessayer.";
+
+    private static final String MINUTES_PLACEHOLDER = "{minutes}";
+    private static final String SECONDS_PLACEHOLDER = "{seconds}";
 
     /**
      * Atomically increments the counter, starts the window on the first hit, and returns
@@ -96,23 +104,33 @@ public class RateLimitService {
 
     /**
      * Writes a 429 Too Many Requests response with a Retry-After header.
+     *
+     * @param message user-facing message template; {@code {minutes}} and {@code {seconds}} are replaced
+     *                by the time left before the window resets. Blank falls back to {@link #DEFAULT_MESSAGE}.
      */
-    public void writeRateLimitResponse(HttpServletResponse response, RateLimitResult result) throws IOException {
+    public void writeRateLimitResponse(HttpServletResponse response, RateLimitResult result, String message)
+            throws IOException {
         long waitSeconds = Math.max(1, result.resetAfterSeconds());
-        long waitMinutes =
-                Math.max(1, Duration.ofSeconds(result.resetAfterSeconds()).toMinutes());
 
         ErrorResponse errorResponse = new ErrorResponse(
-                "RateLimitException",
-                "Vous scannez un peu trop vite. Patientez %s minute(s) avant de pouvoir scanner à nouveau."
-                        .formatted(waitMinutes),
-                "RATE_LIMIT_EXCEEDED",
-                null);
+                "RateLimitException", resolveMessage(message, waitSeconds), "RATE_LIMIT_EXCEEDED", null);
 
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(waitSeconds));
         objectMapper.writeValue(response.getWriter(), errorResponse);
+    }
+
+    /**
+     * Picks the custom message or the default one, then fills in the wait-time placeholders.
+     * Minutes are rounded up so a 30-second wait reads "1 minute", never "0 minute".
+     */
+    private String resolveMessage(String message, long waitSeconds) {
+        String template = StringUtils.hasText(message) ? message : DEFAULT_MESSAGE;
+        long waitMinutes = Math.max(1, Math.ceilDiv(waitSeconds, 60));
+
+        return template.replace(MINUTES_PLACEHOLDER, String.valueOf(waitMinutes))
+                .replace(SECONDS_PLACEHOLDER, String.valueOf(waitSeconds));
     }
 
     /**

@@ -104,7 +104,9 @@ app:
   rate-limit:
     global:
       requests: 100
-      period-seconds: 60
+      period: 1m
+      # {minutes} / {seconds} are replaced by the time left before the window resets.
+      message: "Vous allez trop vite. Patientez {minutes} minute(s) avant de réessayer."
   s3:
     endpoint: ${APP_S3_ENDPOINT}
     region: ${APP_S3_REGION:auto}
