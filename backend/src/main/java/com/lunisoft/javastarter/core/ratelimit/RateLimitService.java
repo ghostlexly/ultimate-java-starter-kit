@@ -16,8 +16,13 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Redis-backed fixed-window rate limiter, same model as express-rate-limit: one counter per key,
@@ -94,9 +99,13 @@ public class RateLimitService {
      */
     public void writeRateLimitResponse(HttpServletResponse response, RateLimitResult result) throws IOException {
         long waitSeconds = Math.max(1, result.resetAfterSeconds());
+        long waitMinutes =
+                Math.max(1, Duration.ofSeconds(result.resetAfterSeconds()).toMinutes());
+
         ErrorResponse errorResponse = new ErrorResponse(
                 "RateLimitException",
-                "Rate limit exceeded. Try again in %s seconds.".formatted(waitSeconds),
+                "Vous scannez un peu trop vite. Patientez %s minute(s) avant de pouvoir scanner à nouveau."
+                        .formatted(waitMinutes),
                 "RATE_LIMIT_EXCEEDED",
                 null);
 
@@ -107,9 +116,14 @@ public class RateLimitService {
     }
 
     /**
-     * Reads the client IP from header or falls back to remoteAddr.
+     * Reads the client IP from header or falls back to remoteAddr. IPv6 addresses are reduced to
+     * their /64 prefix (see {@link #normalizeIpAddress}).
      */
     public String resolveIpAddress(HttpServletRequest request) {
+        return normalizeIpAddress(readRawIpAddress(request));
+    }
+
+    private String readRawIpAddress(HttpServletRequest request) {
         // Secure Customer's IP Address sent by Cloudflare
         String cfIp = request.getHeader(CLOUDFLARE_IP_HEADER);
 
@@ -127,6 +141,43 @@ public class RateLimitService {
 
         // IP Address sent by the client
         return request.getRemoteAddr();
+    }
+
+    /**
+     * Groups IPv6 clients by their /64 prefix: ISPs hand a whole /64 to each subscriber and the
+     * host part rotates (privacy extensions), so counting on the full address would let one device
+     * reset its quota at every rotation. IPv4 addresses are returned unchanged.
+     */
+    public String normalizeIpAddress(String ipAddress) {
+        if (ipAddress == null || !ipAddress.contains(":")) {
+            return ipAddress;
+        }
+
+        // Drop a scope/zone id ("fe80::1%eth0") so the literal parses.
+        int zoneIndex = ipAddress.indexOf('%');
+        String literal = zoneIndex >= 0 ? ipAddress.substring(0, zoneIndex) : ipAddress;
+
+        try {
+            // A literal containing ':' is parsed, never resolved — no DNS lookup happens here.
+            InetAddress address = InetAddress.getByName(literal);
+
+            // IPv4-mapped addresses ("::ffff:1.2.3.4") come back as Inet4Address: keep them as is.
+            if (!(address instanceof Inet6Address)) {
+                return address.getHostAddress();
+            }
+
+            byte[] bytes = address.getAddress();
+            String prefix = IntStream.range(0, 4)
+                    .mapToObj(group ->
+                            Integer.toHexString(((bytes[group * 2] & 0xff) << 8) | (bytes[group * 2 + 1] & 0xff)))
+                    .collect(Collectors.joining(":"));
+
+            return prefix + "::/64";
+        } catch (UnknownHostException _) {
+            log.warn("Could not parse client IP {}, using it verbatim", ipAddress);
+
+            return ipAddress;
+        }
     }
 
     /**
