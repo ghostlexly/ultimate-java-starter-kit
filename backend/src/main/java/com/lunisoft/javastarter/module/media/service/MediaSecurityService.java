@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.module.media.service;
 
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
-import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.tika.Tika;
 import org.springframework.core.io.Resource;
@@ -14,7 +13,6 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class MediaSecurityService {
-    private final MediaRepository mediaRepository;
     private final Tika tika = new Tika();
 
     /**
