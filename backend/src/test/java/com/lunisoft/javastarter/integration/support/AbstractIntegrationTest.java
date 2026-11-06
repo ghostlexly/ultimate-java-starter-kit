@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -68,6 +69,9 @@ public abstract class AbstractIntegrationTest {
     // deterministic keys within a single run, not across runs.
     private static final KeyPair JWT_KEY_PAIR = generateRsaKeyPair();
 
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add(
@@ -118,12 +122,22 @@ public abstract class AbstractIntegrationTest {
     private PlatformTransactionManager transactionManager;
 
     /**
-     * Truncate every application table after each test so cases stay isolated even though the
-     * container (and Spring context) are shared. JobRunr's own tables are left alone — wiping them
-     * would break its scheduler state across the suite.
+     * Resets the shared state before each test: the application tables and the rate-limit counters.
+     * JUnit runs several {@code @BeforeEach} methods in an unspecified order, so the two steps are
+     * chained from a single hook.
      */
     @BeforeEach
-    void cleanDatabase() {
+    void resetSharedState() {
+        cleanDatabase();
+        cleanRateLimitCounters();
+    }
+
+    /**
+     * Truncate every application table so cases stay isolated even though the container (and
+     * Spring context) are shared. JobRunr's own tables are left alone — wiping them would break its
+     * scheduler state across the suite.
+     */
+    private void cleanDatabase() {
         var jdbc = new JdbcTemplate(dataSource);
         jdbc.execute("""
             TRUNCATE TABLE
@@ -136,6 +150,18 @@ public abstract class AbstractIntegrationTest {
                 account
             RESTART IDENTITY CASCADE
             """);
+    }
+
+    /**
+     * Rate-limit counters live in the shared Redis container and would otherwise leak from one test
+     * to the next (every MockMvc request comes from the same client IP).
+     */
+    private void cleanRateLimitCounters() {
+        var keys = stringRedisTemplate.keys("rate-limit:*");
+
+        if (keys != null && !keys.isEmpty()) {
+            stringRedisTemplate.delete(keys);
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
