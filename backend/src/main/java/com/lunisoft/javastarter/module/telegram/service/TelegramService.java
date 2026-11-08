@@ -4,6 +4,7 @@ import com.lunisoft.javastarter.module.telegram.dto.SendMessageRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
@@ -16,6 +17,9 @@ public class TelegramService {
     private static final Logger log = LoggerFactory.getLogger(TelegramService.class);
     private final TelegramClient telegramClient;
     private final Environment environment;
+
+    @Value("${spring.application.name}")
+    private String applicationName;
 
     /**
      * To find the chatId, send a message to the bot from your phone and then call this request : GET https://api.telegram.org/botTON_BOT_TOKEN/getUpdates
@@ -32,7 +36,7 @@ public class TelegramService {
                 .post()
                 .uri("/sendMessage")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new SendMessageRequest("1904642890", message))
+                .body(new SendMessageRequest("1904642890", "[%s] %s".formatted(applicationName, message)))
                 .retrieve()
                 .body(JsonNode.class);
 

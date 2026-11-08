@@ -23,6 +23,15 @@ public abstract class BaseEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    /**
+     * Optimistic locking counter, managed by Hibernate. Incremented on every update: a flush whose
+     * row version no longer matches throws {@code OptimisticLockException}, preventing lost updates
+     * when two transactions modify the same entity concurrently.
+     */
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;

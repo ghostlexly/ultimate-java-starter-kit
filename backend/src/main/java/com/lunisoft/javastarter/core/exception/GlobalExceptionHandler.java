@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.catalina.connector.ClientAbortException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -44,9 +44,6 @@ public class GlobalExceptionHandler {
     private final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final TelegramService telegramService;
 
-    @Value("${spring.application.name}")
-    private String applicationName;
-
     /**
      * Handles custom business rule violations thrown from services/use cases.
      */
@@ -55,6 +52,25 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse("BusinessRuleException", ex.getMessage(), ex.getCode(), null);
 
         return ResponseEntity.status(ex.getStatus()).body(response);
+    }
+
+    /**
+     * Handles optimistic locking conflicts raised by the {@code @Version} column on {@code BaseEntity}:
+     * two requests modified the same row concurrently and the second flush was rejected (409). The
+     * client should reload the resource and retry its change.
+     */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimisticLocking(OptimisticLockingFailureException ex) {
+        log.warn("Optimistic locking conflict: {}", ex.getMessage());
+        telegramService.sendMessage("Optimistic locking conflict: %s %s".formatted(ex.getMessage(), ex));
+
+        ErrorResponse response = new ErrorResponse(
+                "OptimisticLockingFailureException",
+                "The resource was modified by another request. Please reload and try again.",
+                "CONCURRENT_MODIFICATION",
+                null);
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     /**
@@ -317,8 +333,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
-
-        telegramService.sendMessage("[%s] Unhandled exception: %s".formatted(applicationName, ex.getMessage()));
+        telegramService.sendMessage("Unhandled exception: %s %s".formatted(ex.getMessage(), ex));
 
         ErrorResponse response =
                 new ErrorResponse("InternalServerError", "Internal server error", "INTERNAL_ERROR", null);
