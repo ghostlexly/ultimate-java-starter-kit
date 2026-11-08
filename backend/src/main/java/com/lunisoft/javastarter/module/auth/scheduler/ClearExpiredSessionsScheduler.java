@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.auth.cron;
+package com.lunisoft.javastarter.module.auth.scheduler;
 
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,25 +15,25 @@ import java.time.Instant;
  */
 @Component
 @RequiredArgsConstructor
-public class ClearExpiredSessionsCron {
+public class ClearExpiredSessionsScheduler {
 
-    private final Logger log = LoggerFactory.getLogger(ClearExpiredSessionsCron.class);
+    private final Logger log = LoggerFactory.getLogger(ClearExpiredSessionsScheduler.class);
 
     private final SessionRepository sessionRepository;
 
     @Scheduled(fixedDelayString = "PT1H") // every hour
     @Transactional
     public void execute() {
-        log.info("[⏰ CRON] Started ✅");
+        log.info("[⏰ SCHEDULER] Started ✅");
 
         try {
             long clearedSessionsCount = sessionRepository.deleteAllByExpiresAtBefore(Instant.now());
 
-            log.info("[⏰ CRON] Removed {} sessions", clearedSessionsCount);
+            log.info("[⏰ SCHEDULER] Removed {} sessions", clearedSessionsCount);
         } catch (RuntimeException e) {
-            log.error("[⏰ CRON] Error ❌ : {}", e.getMessage(), e);
+            log.error("[⏰ SCHEDULER] Error ❌ : {}", e.getMessage(), e);
         } finally {
-            log.info("[⏰ CRON] Finished ✅");
+            log.info("[⏰ SCHEDULER] Finished ✅");
         }
     }
 }

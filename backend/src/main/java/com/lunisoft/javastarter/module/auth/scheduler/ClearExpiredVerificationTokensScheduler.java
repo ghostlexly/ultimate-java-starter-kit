@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.auth.cron;
+package com.lunisoft.javastarter.module.auth.scheduler;
 
 import com.lunisoft.javastarter.module.auth.repository.VerificationTokenRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,25 +15,25 @@ import java.time.Instant;
  */
 @Component
 @RequiredArgsConstructor
-public class ClearExpiredVerificationTokensCron {
+public class ClearExpiredVerificationTokensScheduler {
 
-    private final Logger log = LoggerFactory.getLogger(ClearExpiredVerificationTokensCron.class);
+    private final Logger log = LoggerFactory.getLogger(ClearExpiredVerificationTokensScheduler.class);
 
     private final VerificationTokenRepository verificationTokenRepository;
 
     @Scheduled(fixedDelayString = "PT1H") // every hour
     @Transactional
     public void execute() {
-        log.info("[⏰ CRON] Started ✅");
+        log.info("[⏰ SCHEDULER] Started ✅");
 
         try {
             long clearedVerificationTokensCount = verificationTokenRepository.deleteAllByExpiresAtBefore(Instant.now());
 
-            log.info("[⏰ CRON] Removed {} verification tokens", clearedVerificationTokensCount);
+            log.info("[⏰ SCHEDULER] Removed {} verification tokens", clearedVerificationTokensCount);
         } catch (RuntimeException e) {
-            log.error("[⏰ CRON] Error ❌ : {}", e.getMessage(), e);
+            log.error("[⏰ SCHEDULER] Error ❌ : {}", e.getMessage(), e);
         } finally {
-            log.info("[⏰ CRON] Finished ✅");
+            log.info("[⏰ SCHEDULER] Finished ✅");
         }
     }
 }
