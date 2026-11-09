@@ -17,7 +17,7 @@ module/
     controller/    # REST endpoints
     entity/        # JPA entities
     repository/    # Spring Data repositories + Specifications
-    usecase/       # Business logic (one class = one action) — declares its Query/Command/Result records
+    usecase/       # Business logic (one class = one action) — declares its Output records
     dto/           # Web-layer payloads: request bodies, endpoint response records, shared payloads
     event/         # Domain events + listeners
 core/
@@ -35,8 +35,7 @@ shared/
 ## Naming Conventions
 
 - **Packages**: singular lowercase (`usecase`, `repository`, `controller`)
-- **Use cases**: `[Verb][Entity]UseCase`, declaring its `[Verb][Entity]Query` (read) or `[Verb][Entity]Command`
-  (write) parameter record and its `[Verb][Entity]Result` return record — see **Use Case Pattern**
+- **Use cases**: `[Verb][Entity]UseCase`, declaring its `Output` return record — see **Use Case Pattern**
 - **Controllers**: `[Entity]Controller`
 - **Repositories**: `[Entity]Repository`
 - **Specifications**: `[Entity]Specification` (static methods, private constructor)
@@ -95,7 +94,7 @@ shared/
   so admin and customer endpoints can share one use case.
 - **Simple writes (insert / update / delete) return only the id**: `record Output(UUID id) {}`. Return
   more only when the action itself produces data the caller needs (e.g. tokens).
-- The same shape returned by 2+ use cases → one shared `XxxView` record in `dto/`, not duplicated `Result`s.
+- The same shape returned by 2+ use cases → one shared `XxxView` record in `dto/`, not duplicated `Output`s.
 - Extract helper logic into private methods (e.g. `checkCooldown`, `buildSpecs`)
 
 ```java
@@ -119,13 +118,13 @@ public class GetTownsUseCase {
         Specification<Town> spec = this.buildSpecs(search);
         Pageable pageable = SortWhitelist.apply(pageable, SORTABLE_PROPERTIES, DEFAULT_SORT);
 
-        Page<GetTownsResult> page = townRepository.findAll(spec, pageable).map(this::toResult);
+        Page<Output> page = townRepository.findAll(spec, pageable).map(this::toOutput);
 
         return PaginatedResponse.from(page);
     }
 
-    private GetTownsResult toResult(Town town) {
-        return new GetTownsResult(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
+    private Output toOutput(Town town) {
+        return new Output(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
     }
 
     // One guarded block per filter; Specification.allOf (empty list -> match all).
@@ -143,21 +142,21 @@ public class GetTownsUseCase {
 
 ### Mapping
 
-- Entity → `Result` / `XxxView` mapping is **always an injectable instance method, never a `static from(Entity)`** on
+- Entity → `Output` / `XxxView` mapping is **always an injectable instance method, never a `static from(Entity)`** on
   the record: a static can't reach injected dependencies (repositories, presigned URLs, …).
-    - `Result` → `private XxxResult toResult(Entity e)` on the use case, referenced with `this::toResult`
+    - `Output` → `private Output toOutput(Entity e)` on the use case, referenced with `this::toOutput`
     - shared `XxxView` → a `@Component XxxViewMapper` with `toView(Entity e)`, injected into each use case
 - Naming: `to<Target>(source)` on a mapper; `from(source)` only for a `static` factory on the target type itself.
   Never `mapper.from(...)`.
-- **Web-layer reshaping**: when an endpoint needs a wire shape different from the `Result` / `XxxView`, declare a
+- **Web-layer reshaping**: when an endpoint needs a wire shape different from the `Output` / `XxxView`, declare a
   record in `dto/` named after the endpoint (`GetBookingsResponse`, not `BookingResponse`) with a
-  `static from(result)` factory. A `static from` is allowed there (and in `PaginatedResponse.from(Page)`): it is a
-  pure record → record reshape. Otherwise the controller returns the `Result` as-is.
+  `static from(output)` factory. A `static from` is allowed there (and in `PaginatedResponse.from(Page)`): it is a
+  pure record → record reshape. Otherwise the controller returns the `Output` as-is.
 
 ## Controller Pattern
 
-- Return `ResponseEntity<T>` always, typed with the use case's result: `ResponseEntity<GetTownsResult>`,
-  `ResponseEntity<PaginatedResponse<GetTownsResult>>`.
+- Return `ResponseEntity<T>` always, typed with the use case's output: `ResponseEntity<GetTownsUseCase.Output>`,
+  `ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>>`.
 - Controller calls `execute(...)`; it holds no business logic. Locals are named `output`.
 - `@Valid @RequestBody` for body validation
 - `@Validated` on class for `@RequestParam` / `@PathVariable` validation (add `@Size`/etc. to params)
@@ -176,7 +175,7 @@ public class TownController {
     private final GetTownsUseCase getTownsUseCase;
 
     @GetMapping
-    public ResponseEntity<PaginatedResponse<GetTownsResult>> getTowns(
+    public ResponseEntity<PaginatedResponse<GetTownsUseCase.Output>> getTowns(
             @PageableDefault(size = 10) Pageable pageable,
             @RequestParam(required = false) @Size(max = 191) String search) {
 
@@ -313,7 +312,7 @@ public record SendCodeRequest(
   sort, so clients can never sort on arbitrary columns. When the sort must be decided conditionally (e.g. unsorted
   for a relevance-ordered search), use `SortWhitelist.resolve(requestedSort, SORTABLE_PROPERTIES, DEFAULT_SORT)` and
   rebuild the `PageRequest` yourself (see `PaginateAnalysesUseCase.resolvePageable`).
-- List endpoints return `core/dto/PaginatedResponse<XxxResult>` built via
+- List endpoints return `core/dto/PaginatedResponse<Output>` built via
   `PaginatedResponse.from(page)`. Shape: `{ content, totalItems, totalPages, isFirst, isLast }`. The frontend reads
   `data.content`.
 
@@ -380,7 +379,7 @@ Run a single tier with `./mvnw test -Dtest='com.lunisoft.javastarter.unit.**'` (
 - **Assert the status** with `assertThat(result).hasStatus(HttpStatus.XXX)` — the `HttpStatus` enum, not
   `hasStatusOk()` or a raw int.
 - **Read the JSON body into an object** with
-  `assertThat(result).bodyJson().convertTo(XxxResult.class).actual()` (the use case's `Result`/`View`, or the
+  `assertThat(result).bodyJson().convertTo(BlablaUseCase.Output.class).actual()` (the use case's `Output`/`View`, or the
   endpoint's response record). No `getContentAsString()` + `jsonMapper.readValue(...)`.
 - **Assert the persisted DB state, always inside `assertPersistedState(() -> { ... })`** — every repository read and
   every assertion on an entity goes in the block, even when it only reads an id or a scalar column and no lazy
@@ -427,7 +426,7 @@ public class CustomerCleaningRequestControllerIntegrationTest extends AbstractIn
 
             var response = assertThat(result)
                     .bodyJson()
-                    .convertTo(CreateCleaningRequestResult.class)
+                    .convertTo(CreateCleaningRequestUseCase.Output.class)
                     .actual();
 
             assertPersistedState(() -> {
