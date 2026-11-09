@@ -4,7 +4,7 @@
 
 - Java 25, Spring Boot 4.x, Spring Framework 7.x, Spring Security 7.x, Maven
 - PostgreSQL + Flyway migrations
-- Bucket4j, JJWT (RSA256)
+- JJWT (RSA256)
 - Stateless REST API with JWT authentication
 - You can only use these Lombok annotations: `@Getter`, `@Setter`, `@RequiredArgsConstructor`
 - Use Java 25 features: unnamed variables (`_`), pattern matching, records, etc.
@@ -83,48 +83,23 @@ shared/
 
 - All dependencies are `private final` fields
 - Logging via `private final Logger log = LoggerFactory.getLogger(ClassName.class)`
-
-```java
-
-@Service
-public class CreateProfileUseCase {
-
-    private final CustomerRepository customerRepository;
-    private final AccountRepository accountRepository;
-
-    public CreateProfileUseCase(
-            CustomerRepository customerRepository,
-            AccountRepository accountRepository) {
-        this.customerRepository = customerRepository;
-        this.accountRepository = accountRepository;
-    }
-}
-```
+- Prefer lombok's @RequiredArgsConstructor
 
 ## Use Case Pattern
 
 - One class per business action, `@Service @RequiredArgsConstructor`, single public method `execute(...)`
-- **CQRS naming**: each use case declares its own records **inside its class**, prefixed with the use case name
-  (`GetBookingQuery`, not `Query`). No separate record files, never `Input` / `Output`. Callers import the record
-  (`import ….GetBookingUseCase.GetBookingQuery;`) and write `new GetBookingQuery(...)`.
-
-  | Kind                    | Parameter (`query` / `command`) | Returns                                                         | Transaction                       |
-  |-------------------------|---------------------------------|-----------------------------------------------------------------|-----------------------------------|
-  | Query — reads only      | `GetBookingQuery`               | `GetBookingResult` (or `List<…>` / `PaginatedResponse<…>` of it) | `@Transactional(readOnly = true)` |
-  | Command — changes state | `CancelBookingCommand`          | `CancelBookingResult`, or `void`                                | `@Transactional`                  |
-
-- **The `Query` / `Command` is mandatory, even with 0 or 1 parameter** (`record GetStatsQuery() {}`). Never
-  `execute(UUID id)` or `execute()`: call sites stay uniform, arguments are named, and adding a field never changes
-  the signature.
+- Each use case declares its own records **inside its class**. No separate record files. Callers import the record if
+  needed.
+- **Never return a JPA entity**, always a `Output` the use case owns.
 - It is a flat record of domain fields. Never pass a controller `XxxRequest` into a use case: the controller maps it,
   so admin and customer endpoints can share one use case.
-- **Never return a JPA entity**, always a `Result` the use case owns.
-- **Simple writes (insert / update / delete) return only the id**: `record UpdateBookingResult(UUID id) {}`. Return
+- **Simple writes (insert / update / delete) return only the id**: `record Output(UUID id) {}`. Return
   more only when the action itself produces data the caller needs (e.g. tokens).
 - The same shape returned by 2+ use cases → one shared `XxxView` record in `dto/`, not duplicated `Result`s.
 - Extract helper logic into private methods (e.g. `checkCooldown`, `buildSpecs`)
 
 ```java
+
 @Service
 @RequiredArgsConstructor
 public class GetTownsUseCase {
@@ -136,14 +111,13 @@ public class GetTownsUseCase {
 
     private final TownRepository townRepository;
 
-    public record GetTownsQuery(Pageable pageable, String id, String search) {}
-
-    public record GetTownsResult(UUID id, String inseeCode, String name, int population) {}
+    public record Output(UUID id, String inseeCode, String name, int population) {
+    }
 
     @Transactional(readOnly = true)
-    public PaginatedResponse<GetTownsResult> execute(GetTownsQuery query) {
-        Specification<Town> spec = buildSpecs(query);
-        Pageable pageable = SortWhitelist.apply(query.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
+    public PaginatedResponse<Output> execute(Pageable pageable, String id, String search) {
+        Specification<Town> spec = this.buildSpecs(search);
+        Pageable pageable = SortWhitelist.apply(pageable, SORTABLE_PROPERTIES, DEFAULT_SORT);
 
         Page<GetTownsResult> page = townRepository.findAll(spec, pageable).map(this::toResult);
 
@@ -151,16 +125,15 @@ public class GetTownsUseCase {
     }
 
     private GetTownsResult toResult(Town town) {
-
         return new GetTownsResult(town.getId(), town.getInseeCode(), town.getName(), town.getPopulation());
     }
 
     // One guarded block per filter; Specification.allOf (empty list -> match all).
-    private Specification<Town> buildSpecs(GetTownsQuery query) {
+    private Specification<Town> buildSpecs(String search) {
         List<Specification<Town>> specs = new ArrayList<>();
 
-        if (StringUtils.hasText(query.search())) {
-            specs.add(TownSpecification.matchesSearch(query.search()));
+        if (StringUtils.hasText(search)) {
+            specs.add(TownSpecification.matchesSearch(search));
         }
 
         return Specification.allOf(specs);
@@ -185,13 +158,11 @@ public class GetTownsUseCase {
 
 - Return `ResponseEntity<T>` always, typed with the use case's result: `ResponseEntity<GetTownsResult>`,
   `ResponseEntity<PaginatedResponse<GetTownsResult>>`.
-- Controller builds the `Query` / `Command` and calls `execute(...)`; it holds no business logic. Locals are named
-  `query` / `command` and `result`.
+- Controller calls `execute(...)`; it holds no business logic. Locals are named `output`.
 - `@Valid @RequestBody` for body validation
 - `@Validated` on class for `@RequestParam` / `@PathVariable` validation (add `@Size`/etc. to params)
 - `@AuthenticationPrincipal UserPrincipal principal` for authenticated user
-- Pagination params are `page` (1-based), `size` and `sort`, received as a single `@PageableDefault(size = …) Pageable
-  pageable` argument and passed as-is into the use case `Query` — see **Pagination**
+- Pagination: see **Pagination**
 
 ```java
 
@@ -209,17 +180,16 @@ public class TownController {
             @PageableDefault(size = 10) Pageable pageable,
             @RequestParam(required = false) @Size(max = 191) String search) {
 
-        var query = new GetTownsQuery(pageable, null, search);
-        var result = getTownsUseCase.execute(query);
+        var output = this.getTownsUseCase.execute(pageable, null, search);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(output);
     }
 }
 ```
 
 ## Entity Pattern
 
-- Always extend `BaseEntity` (provides `id`, `createdAt`, `updatedAt`)
+- Always extend `BaseEntity` (provides `id`, `version`, `createdAt`, `updatedAt`)
 - Use `FetchType.LAZY` for all relationships
 - Use `@Enumerated(EnumType.STRING)` for enums
 - Use `CascadeType.ALL` + `orphanRemoval = true` on parent collections
@@ -260,8 +230,8 @@ public final class CustomerSpecification {
 ## DTOs
 
 - `dto/` holds the web-layer records: request bodies, endpoint response records (only when the wire shape differs
-  from the use case's `Result`, see **Mapping**) and shared `XxxView`s. Never a Response class that merely mirrors a
-  `Result`.
+  from the use case's `Output`, see **Mapping**) and shared `XxxView`s. Never a Response class that merely mirrors a
+  `Output`.
 - Always Java records (immutable), validation annotations directly on the fields.
 
 ```java
@@ -278,20 +248,8 @@ public record SendCodeRequest(
 - `GlobalExceptionHandler` catches all exceptions and returns `ErrorResponse`
 - Error codes are `UPPER_SNAKE_CASE` strings
 - All error responses follow the same structure: `{ type, message, code, violations }`
-- End user-facing `BusinessRuleException` messages with a period (they are surfaced to the frontend via
-  `ErrorResponse`). Omit the period only when the message ends in an interpolated value (e.g.
-  `"Failed to load resource: %s"`) or is a pure internal/diagnostic string (e.g. `INTERNAL_SERVER_ERROR`). A `%s`
-  mid-string still gets a period if the message ends in static text (e.g. `"... maximum allowed size of %s MB."`).
-
-## Rate Limiting
-
-```java
-@RateLimit(requests = 5, periodSeconds = 60)
-@GetMapping("/endpoint")
-public ResponseEntity<...>
-
-method() { ...}
-```
+- End user-facing `BusinessRuleException` messages (they are surfaced to the frontend via
+  `ErrorResponse`).
 
 ## Code Style
 
@@ -305,6 +263,7 @@ method() { ...}
 - Prefer streams and functional style over imperative loops when it improves readability
 - Avoid duplicated overloaded methods — find a generic approach instead
 - Use `"text %s".formatted(var)` instead of string concatenation (`+`) for building strings with variables
+- Prefer simple code and focus on DX
 
 ## Spring Boot 4 / Spring Security 7 / Java 25
 
@@ -358,20 +317,11 @@ method() { ...}
   `PaginatedResponse.from(page)`. Shape: `{ content, totalItems, totalPages, isFirst, isLast }`. The frontend reads
   `data.content`.
 
-## Validation
-
-- `@Valid` on `@RequestBody` -> `MethodArgumentNotValidException`
-- `@Validated` on controller class for `@RequestParam` -> `ConstraintViolationException`
-- Missing `@RequestParam` -> `MissingServletRequestParameterException`
-- Wrong type (e.g. invalid enum) -> `MethodArgumentTypeMismatchException`
-- All handled by `GlobalExceptionHandler` -> 400 Bad Request
-
 ## Security
 
 - JWT with RSA256 (private/public key pair)
 - Access token (short-lived) + Refresh token (long-lived)
 - `UserPrincipal` record implements `UserDetails`
-- `@PreAuthorize("hasRole('ROLE')")` for role-based access on class or method level
 - `@PublicEndpoint` for public routes (no authentication required), on class or method level
 - Public routes are auto-discovered at startup by `PublicEndpointScanner` — never hardcode routes in
   `SecurityConfig`
@@ -380,9 +330,6 @@ method() { ...}
 ## Events
 
 - Event as record: `public record LoginCodeRequestedEvent(String email, String code) {}`
-- Listener with `@Async @EventListener` for non-blocking execution
-- Listener with `@EventListener` (no `@Async`) for synchronous execution within the same transaction (rollback on
-  failure)
 - Publish via `ApplicationEventPublisher.publishEvent(...)`
 
 ## Database
@@ -390,7 +337,6 @@ method() { ...}
 - Flyway migrations in `src/main/resources/db/migration/`
 - Naming: `V{version}__{description}.sql`
 - `spring.jpa.hibernate.ddl-auto=validate` (Flyway handles schema)
-- JPA auditing enabled via `@EnableJpaAuditing`
 
 ## Testing
 
