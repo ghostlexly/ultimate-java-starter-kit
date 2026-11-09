@@ -1,5 +1,5 @@
 # -- BUILDER
-FROM node:24-bullseye-slim AS builder
+FROM node:24-bookworm-slim AS builder
 WORKDIR /usr/src/app
 
 # Install dependencies
@@ -10,7 +10,7 @@ RUN npm install
 RUN npm run build
 
 # -- RUNNER
-FROM node:24-bullseye-slim AS base
+FROM node:24-bookworm-slim AS base
 WORKDIR /usr/src/app
 ENV NODE_ENV=production
 ENV NODE_TLS_REJECT_UNAUTHORIZED=0
