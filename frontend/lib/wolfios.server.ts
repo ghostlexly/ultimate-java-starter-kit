@@ -25,6 +25,21 @@ interface ServerFetchOptions extends RequestInit {
   cache?: RequestCache;
 }
 
+/**
+ * Thrown when the backend answered with a non-2xx status. Carries the HTTP
+ * status so callers can tell an auth failure (401/403) apart from an outage
+ * (5xx, Caddy's 503 when the backend is down).
+ */
+export class WolfiosServerError extends Error {
+  readonly status: number;
+
+  constructor(path: string, status: number) {
+    super(`wolfiosServer ${path} failed: ${status}`);
+    this.name = "WolfiosServerError";
+    this.status = status;
+  }
+}
+
 export async function wolfiosServer<T>(
   path: string,
   options: ServerFetchOptions = {},
@@ -45,9 +60,7 @@ export async function wolfiosServer<T>(
   });
 
   if (!response.ok) {
-    const error = new Error(`wolfiosServer ${path} failed: ${response.status}`);
-    (error as Error & { status?: number }).status = response.status;
-    throw error;
+    throw new WolfiosServerError(path, response.status);
   }
 
   const data = (await response.json()) as T;

@@ -1,8 +1,4 @@
-import type {
-  AxiosError,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import axios from "axios";
 
 /**
@@ -33,6 +29,24 @@ const wolfios = axios.create({
   },
 });
 
+/**
+ * True only when the refresh endpoint itself answered 401: the refresh token is
+ * invalid or the session was revoked/expired server-side. Network errors,
+ * timeouts and 5xx (backend down) return false — the session may still be valid.
+ */
+const isSessionInvalid = (refreshError: unknown): boolean => {
+  return (
+    axios.isAxiosError(refreshError) && refreshError.response?.status === 401
+  );
+};
+
+/** Clears the session cookies (best effort) and reloads the page. */
+const logoutAndReload = async (): Promise<void> => {
+  await wolfios.post("/api/auth/logout", {}).catch(() => undefined);
+
+  globalThis.location.reload();
+};
+
 wolfios.interceptors.request.use(
   async (request: InternalAxiosRequestConfig) => {
     // disable subsequent setting the default header by Axios
@@ -47,32 +61,33 @@ wolfios.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    if (
-      error.response?.status === 401 &&
-      error.config &&
-      !error.config.url?.includes("/auth/refresh") &&
-      !error.config.url?.includes("/auth/logout")
-    ) {
-      try {
-        // Refresh the JWT tokens
-        await wolfios.post("/api/auth/refresh", {});
+    // Original request config (url, method, data, headers, etc.)
+    const originalRequest = error.config;
+    const isUnauthorized = error.response?.status === 401;
+    const isAuthEndpoint =
+      originalRequest?.url?.includes("/auth/refresh") ||
+      originalRequest?.url?.includes("/auth/logout");
 
-        // Retry the original request and return the response
-        // (error.config contains the original request config (url, method, data, headers, etc.))
-        return wolfios(error.config);
-      } catch (refreshError) {
-        console.error("Failed to refresh JWT tokens.", refreshError);
-
-        // Clear cookies
-        await wolfios.post("/api/auth/logout", {}).catch();
-
-        // Refresh the page to clear the session
-        globalThis.location.reload();
-        throw error;
-      }
+    if (!isUnauthorized || !originalRequest || isAuthEndpoint) {
+      throw error; // important to propagate the error
     }
 
-    throw error; // important to propagate the error
+    try {
+      await wolfios.post("/api/auth/refresh", {});
+    } catch (refreshError) {
+      console.error("Failed to refresh JWT tokens.", refreshError);
+
+      // Only a 401 from the refresh endpoint means the session is really over.
+      // Otherwise (backend down, network issue) keep the cookies and just fail this request.
+      if (isSessionInvalid(refreshError)) {
+        await logoutAndReload();
+      }
+
+      throw error;
+    }
+
+    // Retry the original request with the fresh tokens
+    return wolfios(originalRequest);
   },
 );
 
