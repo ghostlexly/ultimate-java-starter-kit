@@ -5,9 +5,8 @@ import com.lunisoft.javastarter.core.dto.Violation;
 import com.lunisoft.javastarter.module.telegram.service.TelegramService;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,9 +38,9 @@ import java.util.List;
  */
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
 
-    private final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     private final TelegramService telegramService;
 
     /**
@@ -61,8 +60,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(OptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLocking(OptimisticLockingFailureException ex) {
-        log.warn("Optimistic locking conflict: {}", ex.getMessage());
-        telegramService.sendMessage("Optimistic locking conflict: %s %s".formatted(ex.getMessage(), ex));
+        log.warn("Optimistic locking conflict", ex);
 
         ErrorResponse response = new ErrorResponse(
                 "OptimisticLockingFailureException",
