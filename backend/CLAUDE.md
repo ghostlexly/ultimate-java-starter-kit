@@ -116,9 +116,9 @@ public class GetTownsUseCase {
     @Transactional(readOnly = true)
     public PaginatedResponse<Output> execute(Pageable pageable, String id, String search) {
         Specification<Town> spec = this.buildSpecs(search);
-        Pageable pageable = SortWhitelist.apply(pageable, SORTABLE_PROPERTIES, DEFAULT_SORT);
+        Pageable sortedPageable = SortWhitelist.apply(pageable, SORTABLE_PROPERTIES, DEFAULT_SORT);
 
-        Page<Output> page = townRepository.findAll(spec, pageable).map(this::toOutput);
+        Page<Output> page = townRepository.findAll(spec, sortedPageable).map(this::toOutput);
 
         return PaginatedResponse.from(page);
     }
