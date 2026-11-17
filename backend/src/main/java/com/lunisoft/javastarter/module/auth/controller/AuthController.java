@@ -4,21 +4,14 @@ import com.lunisoft.javastarter.core.dto.MessageResponse;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
 import com.lunisoft.javastarter.core.security.UserPrincipal;
-import com.lunisoft.javastarter.module.auth.dto.RefreshTokenRequest;
-import com.lunisoft.javastarter.module.auth.dto.SendCodeRequest;
-import com.lunisoft.javastarter.module.auth.dto.VerifyCodeRequest;
+import com.lunisoft.javastarter.module.auth.dto.request.RefreshTokenRequest;
+import com.lunisoft.javastarter.module.auth.dto.request.SendCodeRequest;
+import com.lunisoft.javastarter.module.auth.dto.request.VerifyCodeRequest;
 import com.lunisoft.javastarter.module.auth.service.AuthCookieService;
 import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase.GetMeQuery;
-import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase.GetMeResult;
 import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase.RefreshTokensCommand;
-import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase.RefreshTokensResult;
 import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase.SendCodeCommand;
 import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase;
-import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase.VerifyCodeCommand;
-import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase.VerifyCodeResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -42,30 +35,28 @@ public class AuthController {
     @PublicEndpoint
     @PostMapping("send-code")
     public ResponseEntity<MessageResponse> sendCode(@Valid @RequestBody SendCodeRequest request) {
-        var command = new SendCodeCommand(request.email());
-        this.sendCodeUseCase.execute(command);
+        this.sendCodeUseCase.execute(request.email());
 
         return ResponseEntity.ok(new MessageResponse("Login code sent successfully."));
     }
 
     @PublicEndpoint
     @PostMapping("verify-code")
-    public ResponseEntity<VerifyCodeResult> verifyCode(
+    public ResponseEntity<VerifyCodeUseCase.Output> verifyCode(
             @Valid @RequestBody VerifyCodeRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
 
-        var command = new VerifyCodeCommand(request.email(), request.code(), httpRequest);
-        var result = this.verifyCodeUseCase.execute(command);
+        var output = this.verifyCodeUseCase.execute(request.email(), request.code(), httpRequest);
 
-        this.authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
+        this.authCookieService.setAuthCookies(httpResponse, output.accessToken(), output.refreshToken());
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(output);
     }
 
     @PublicEndpoint
     @PostMapping("refresh")
-    public ResponseEntity<RefreshTokensResult> refreshTokens(
+    public ResponseEntity<RefreshTokensUseCase.Output> refreshTokens(
             @Valid @RequestBody(required = false) RefreshTokenRequest request,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
@@ -76,8 +67,7 @@ public class AuthController {
             throw new BusinessRuleException("Refresh token is required.", "MISSING_TOKEN", HttpStatus.BAD_REQUEST);
         }
 
-        var command = new RefreshTokensCommand(refreshToken);
-        var result = this.refreshTokensUseCase.execute(command);
+        var result = this.refreshTokensUseCase.execute(refreshToken);
 
         this.authCookieService.setAuthCookies(httpResponse, result.accessToken(), result.refreshToken());
 
@@ -85,9 +75,8 @@ public class AuthController {
     }
 
     @GetMapping("me")
-    public ResponseEntity<GetMeResult> me(@AuthenticationPrincipal UserPrincipal principal) {
-        var query = new GetMeQuery(principal.accountId());
-        var result = this.getMeUseCase.execute(query);
+    public ResponseEntity<GetMeUseCase.Output> me(@AuthenticationPrincipal UserPrincipal principal) {
+        var result = this.getMeUseCase.execute(principal.accountId());
 
         return ResponseEntity.ok(result);
     }

@@ -3,6 +3,7 @@ package com.lunisoft.javastarter.module.demo.usecase;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,18 +16,17 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@NullMarked
 public class SearchCustomersUseCase {
 
     private final DemoCustomerRepository demoCustomerRepository;
 
-    public record SearchCustomersQuery(Role role) {}
-
-    public record SearchCustomersResult(UUID id, String email, String role) {}
+    public record Output(UUID id, String email, String role) {}
 
     @Transactional(readOnly = true)
-    public List<SearchCustomersResult> execute(SearchCustomersQuery query) {
-        return demoCustomerRepository.findByAccountRole(query.role()).stream()
-                .map(customer -> new SearchCustomersResult(
+    public List<Output> execute(Role role) {
+        return demoCustomerRepository.findByAccountRole(role).stream()
+                .map(customer -> new Output(
                         customer.getId(),
                         customer.getAccount().getEmail(),
                         customer.getAccount().getRole().name()))

@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.unit.module.auth.usecase;
 
-import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase ;
-import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase.SendCodeCommand;
+import com.lunisoft.javastarter.module.auth.usecase.SendCodeUseCase;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.entity.Role;
@@ -56,7 +55,7 @@ class SendCodeUseCaseTest {
                         account.getId(), VerificationType.LOGIN_CODE))
                 .thenReturn(Optional.empty());
 
-        sendCodeUseCase.execute(new SendCodeCommand(account.getEmail()));
+        sendCodeUseCase.execute(account.getEmail());
 
         verify(verificationTokenRepository).save(any(VerificationToken.class));
         verify(eventPublisher).publishEvent(any(LoginCodeRequestedEvent.class));
@@ -74,7 +73,7 @@ class SendCodeUseCaseTest {
                         any(), eq(VerificationType.LOGIN_CODE)))
                 .thenReturn(Optional.empty());
 
-        sendCodeUseCase.execute(new SendCodeCommand(account.getEmail()));
+        sendCodeUseCase.execute(account.getEmail());
 
         // Verify account created with CUSTOMER role
         verify(accountRepository).save(assertArg(createdAccount -> {
@@ -103,7 +102,7 @@ class SendCodeUseCaseTest {
                         account.getId(), VerificationType.LOGIN_CODE))
                 .thenReturn(Optional.of(recentToken));
 
-        assertThatThrownBy(() -> sendCodeUseCase.execute(new SendCodeCommand(email)))
+        assertThatThrownBy(() -> sendCodeUseCase.execute(email))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getCode()).isEqualTo("LOGIN_CODE_COOLDOWN");
                 });
@@ -125,7 +124,7 @@ class SendCodeUseCaseTest {
                         account.getId(), VerificationType.LOGIN_CODE))
                 .thenReturn(Optional.of(oldToken));
 
-        sendCodeUseCase.execute(new SendCodeCommand(account.getEmail()));
+        sendCodeUseCase.execute(account.getEmail());
 
         verify(verificationTokenRepository).save(any(VerificationToken.class));
         verify(eventPublisher).publishEvent(any(LoginCodeRequestedEvent.class));
@@ -139,7 +138,7 @@ class SendCodeUseCaseTest {
                         account.getId(), VerificationType.LOGIN_CODE))
                 .thenReturn(Optional.empty());
 
-        sendCodeUseCase.execute(new SendCodeCommand(account.getEmail()));
+        sendCodeUseCase.execute(account.getEmail());
 
         verify(verificationTokenRepository).save(assertArg(token -> {
             assertThat(token.getAccount()).isEqualTo(account);

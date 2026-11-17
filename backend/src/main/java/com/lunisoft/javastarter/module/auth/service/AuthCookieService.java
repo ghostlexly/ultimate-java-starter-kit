@@ -1,6 +1,6 @@
 package com.lunisoft.javastarter.module.auth.service;
 
-import com.lunisoft.javastarter.module.auth.dto.RefreshTokenRequest;
+import com.lunisoft.javastarter.module.auth.dto.request.RefreshTokenRequest;
 import com.lunisoft.javastarter.property.JwtProperties;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

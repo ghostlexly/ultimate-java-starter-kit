@@ -1,3 +1,3 @@
-package com.lunisoft.javastarter.module.auth.dto;
+package com.lunisoft.javastarter.module.auth.dto.request;
 
 public record RefreshTokenRequest(String refreshToken) {}

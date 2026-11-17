@@ -9,20 +9,16 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
 @NullMarked
 public class Session extends BaseEntity {
-
-    protected Session() {}
-
-    public Session(Account account, Instant expiresAt) {
-        this.account = Objects.requireNonNull(account);
-        this.expiresAt = Objects.requireNonNull(expiresAt);
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)

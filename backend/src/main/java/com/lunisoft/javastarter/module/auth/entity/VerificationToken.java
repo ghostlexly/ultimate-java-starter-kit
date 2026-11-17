@@ -9,22 +9,16 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.time.Instant;
-import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
 @NullMarked
 public class VerificationToken extends BaseEntity {
-
-    protected VerificationToken() {}
-
-    public VerificationToken(String token, VerificationType type, Account account, Instant expiresAt) {
-        this.token = Objects.requireNonNull(token);
-        this.type = Objects.requireNonNull(type);
-        this.account = Objects.requireNonNull(account);
-        this.expiresAt = Objects.requireNonNull(expiresAt);
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String token;

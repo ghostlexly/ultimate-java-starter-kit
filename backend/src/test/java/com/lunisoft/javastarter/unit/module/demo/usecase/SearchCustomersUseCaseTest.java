@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.unit.module.demo.usecase;
 
-import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase ;
-import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase.SearchCustomersQuery;
+import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase;
 import com.lunisoft.javastarter.module.account.entity.Role;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import org.junit.jupiter.api.Test;
@@ -37,8 +36,7 @@ class SearchCustomersUseCaseTest {
 
         when(demoCustomerRepository.findByAccountRole(Role.CUSTOMER)).thenReturn(List.of(customer1, customer2));
 
-        var query = new SearchCustomersQuery(Role.CUSTOMER);
-        var result = searchCustomersUseCase.execute(query);
+        var result = searchCustomersUseCase.execute(Role.CUSTOMER);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).email()).isEqualTo("alice@example.com");
@@ -50,8 +48,7 @@ class SearchCustomersUseCaseTest {
     void execute_no_results_returns_empty_list() {
         when(demoCustomerRepository.findByAccountRole(Role.ADMIN)).thenReturn(List.of());
 
-        var query = new SearchCustomersQuery(Role.ADMIN);
-        var result = searchCustomersUseCase.execute(query);
+        var result = searchCustomersUseCase.execute(Role.ADMIN);
 
         assertThat(result).isEmpty();
     }

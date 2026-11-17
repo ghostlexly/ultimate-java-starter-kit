@@ -34,24 +34,25 @@ public class SendCodeUseCase {
     private final VerificationTokenRepository verificationTokenRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public record SendCodeCommand(String email) {}
-
     /**
      * Generates a 4-digit login code and stores it as a VerificationToken. Creates the account if it
      * doesn't exist (defaults to CUSTOMER role).
      */
     @Transactional
-    public void execute(SendCodeCommand command) {
+    public void execute(String email) {
         // Normalize the email so lookups and storage are case insensitive
-        String normalizedEmail = command.email().toLowerCase();
+        String normalizedEmail = email.toLowerCase();
 
         Account account = accountRepository
                 .findByEmailIgnoreCase(normalizedEmail)
                 .orElseGet(() -> {
-                    Account newAccount = new Account(normalizedEmail, Role.CUSTOMER);
+                    Account newAccount = new Account();
+                    newAccount.setEmail(normalizedEmail);
+                    newAccount.setRole(Role.CUSTOMER);
                     accountRepository.save(newAccount);
 
-                    Customer newCustomer = new Customer(newAccount);
+                    Customer newCustomer = new Customer();
+                    newCustomer.setAccount(newAccount);
                     customerRepository.save(newCustomer);
 
                     return newAccount;
@@ -66,8 +67,11 @@ public class SendCodeUseCase {
 
         Instant expiresAt = Instant.now().plus(AuthConstants.LOGIN_CODE_EXPIRATION_MINUTES, ChronoUnit.MINUTES);
 
-        VerificationToken token =
-                new VerificationToken(UUID.randomUUID().toString(), VerificationType.LOGIN_CODE, account, expiresAt);
+        VerificationToken token = new VerificationToken();
+        token.setAccount(account);
+        token.setExpiresAt(expiresAt);
+        token.setType(VerificationType.LOGIN_CODE);
+        token.setToken(UUID.randomUUID().toString());
         token.setValue(code);
         verificationTokenRepository.save(token);
 

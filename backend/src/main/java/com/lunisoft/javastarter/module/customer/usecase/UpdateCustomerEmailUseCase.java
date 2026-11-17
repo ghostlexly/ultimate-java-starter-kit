@@ -22,27 +22,25 @@ public class UpdateCustomerEmailUseCase {
     private final AccountRepository accountRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    public record UpdateCustomerEmailCommand(UUID accountId, String email) {}
-
-    public record UpdateCustomerEmailResult(UUID id) {}
+    public record Output(UUID id) {}
 
     @Transactional
-    public UpdateCustomerEmailResult execute(UpdateCustomerEmailCommand command) {
+    public Output execute(UUID accountId, String email) {
         Account account = accountRepository
-                .findById(command.accountId())
+                .findById(accountId)
                 .orElseThrow(() -> new BusinessRuleException("Account not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
         Customer customer = customerRepository
-                .findByAccountId(command.accountId())
+                .findByAccountId(accountId)
                 .orElseThrow(() ->
                         new BusinessRuleException("Customer profile not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
         // Update the email
-        account.setEmail(command.email());
+        account.setEmail(email);
 
         // Publish event so listeners can react (e.g. auto-detect country code)
-        eventPublisher.publishEvent(new CustomerEmailUpdatedEvent(customer, command.email()));
+        eventPublisher.publishEvent(new CustomerEmailUpdatedEvent(customer, email));
 
-        return new UpdateCustomerEmailResult(customer.getId());
+        return new Output(customer.getId());
     }
 }

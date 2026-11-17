@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.unit.module.auth.usecase;
 
-import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase ;
-import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase.VerifyCodeCommand;
+import com.lunisoft.javastarter.module.auth.usecase.VerifyCodeUseCase;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
@@ -69,7 +68,7 @@ class VerifyCodeUseCaseTest {
         when(jwtTokenProvider.generateRefreshToken(session.getId())).thenReturn("refresh-token");
         when(jwtTokenProvider.getRefreshTokenExpirationMinutes()).thenReturn(10080);
 
-        var result = verifyCodeUseCase.execute(new VerifyCodeCommand(email, code, request));
+        var result = verifyCodeUseCase.execute(email, code, request);
 
         assertThat(result.role()).isEqualTo("CUSTOMER");
         assertThat(result.accessToken()).isEqualTo("access-token");
@@ -83,7 +82,7 @@ class VerifyCodeUseCaseTest {
         when(accountRepository.findByEmailIgnoreCase("unknown@example.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                        verifyCodeUseCase.execute(new VerifyCodeCommand("unknown@example.com", "1234", request)))
+                        verifyCodeUseCase.execute("unknown@example.com", "1234", request))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
@@ -100,7 +99,7 @@ class VerifyCodeUseCaseTest {
                         eq(account.getId()), eq(VerificationType.LOGIN_CODE), any(Instant.class)))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> verifyCodeUseCase.execute(new VerifyCodeCommand(email, "1234", request)))
+        assertThatThrownBy(() -> verifyCodeUseCase.execute(email, "1234", request))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(exception.getCode()).isEqualTo("INVALID_CODE");
@@ -118,7 +117,7 @@ class VerifyCodeUseCaseTest {
                 .thenReturn(Optional.of(token));
 
         assertThatThrownBy(() ->
-                        verifyCodeUseCase.execute(new VerifyCodeCommand(account.getEmail(), "1234", request)))
+                        verifyCodeUseCase.execute(account.getEmail(), "1234", request))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
                     assertThat(exception.getCode()).isEqualTo("MAX_ATTEMPTS_REACHED");
@@ -136,7 +135,7 @@ class VerifyCodeUseCaseTest {
                 .thenReturn(Optional.of(token));
 
         assertThatThrownBy(() ->
-                        verifyCodeUseCase.execute(new VerifyCodeCommand(account.getEmail(), "9999", request)))
+                        verifyCodeUseCase.execute(account.getEmail(), "9999", request))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(exception.getCode()).isEqualTo("INVALID_CODE");

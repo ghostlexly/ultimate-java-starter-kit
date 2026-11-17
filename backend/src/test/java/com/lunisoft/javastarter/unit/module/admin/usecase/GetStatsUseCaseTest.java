@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.unit.module.admin.usecase;
 
-import com.lunisoft.javastarter.module.admin.usecase.GetStatsUseCase ;
-import com.lunisoft.javastarter.module.admin.usecase.GetStatsUseCase.GetStatsQuery;
+import com.lunisoft.javastarter.module.admin.usecase.GetStatsUseCase;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,7 @@ class GetStatsUseCaseTest {
         when(accountRepository.count()).thenReturn(42L);
         when(sessionRepository.count()).thenReturn(7L);
 
-        var result = getStatsUseCase.execute(new GetStatsQuery());
+        var result = getStatsUseCase.execute();
 
         assertThat(result.accounts()).isEqualTo(42L);
         assertThat(result.activeSessions()).isEqualTo(7L);
@@ -41,7 +40,7 @@ class GetStatsUseCaseTest {
         when(accountRepository.count()).thenReturn(0L);
         when(sessionRepository.count()).thenReturn(0L);
 
-        var result = getStatsUseCase.execute(new GetStatsQuery());
+        var result = getStatsUseCase.execute();
 
         assertThat(result.accounts()).isZero();
         assertThat(result.activeSessions()).isZero();

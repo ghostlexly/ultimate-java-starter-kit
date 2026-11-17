@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.auth.dto;
+package com.lunisoft.javastarter.module.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

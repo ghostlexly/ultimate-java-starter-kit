@@ -12,12 +12,9 @@ public class GetStatsUseCase {
     private final AccountRepository accountRepository;
     private final SessionRepository sessionRepository;
 
-    public record GetStatsQuery() {}
+    public record Output(long accounts, long activeSessions) {}
 
-    public record GetStatsResult(long accounts, long activeSessions) {}
-
-    public GetStatsResult execute(GetStatsQuery query) {
-
-        return new GetStatsResult(accountRepository.count(), sessionRepository.count());
+    public Output execute() {
+        return new Output(accountRepository.count(), sessionRepository.count());
     }
 }

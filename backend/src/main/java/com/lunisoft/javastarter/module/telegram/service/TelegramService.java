@@ -1,9 +1,9 @@
 package com.lunisoft.javastarter.module.telegram.service;
 
+import com.lunisoft.javastarter.module.telegram.client.TelegramClient;
 import com.lunisoft.javastarter.module.telegram.dto.SendMessageRequest;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
@@ -13,8 +13,8 @@ import tools.jackson.databind.JsonNode;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TelegramService {
-    private static final Logger log = LoggerFactory.getLogger(TelegramService.class);
     private final TelegramClient telegramClient;
     private final Environment environment;
 

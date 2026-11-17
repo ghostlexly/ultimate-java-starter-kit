@@ -18,15 +18,13 @@ public class GetMeUseCase {
 
     private final AccountRepository accountRepository;
 
-    public record GetMeQuery(UUID accountId) {}
+    public record Output(UUID accountId, String email, String role) {}
 
-    public record GetMeResult(UUID accountId, String email, String role) {}
-
-    public GetMeResult execute(GetMeQuery query) {
+    public Output execute(UUID accountId) {
         Account account = accountRepository
-                .findById(query.accountId())
+                .findById(accountId)
                 .orElseThrow(() -> new BusinessRuleException("Account not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
-        return new GetMeResult(account.getId(), account.getEmail(), account.getRole().name());
+        return new Output(account.getId(), account.getEmail(), account.getRole().name());
     }
 }

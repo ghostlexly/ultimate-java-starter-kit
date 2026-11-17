@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.unit.module.auth.usecase;
 
-import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase ;
-import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase.GetMeQuery;
+import com.lunisoft.javastarter.module.auth.usecase.GetMeUseCase;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.account.repository.AccountRepository;
@@ -35,7 +34,7 @@ class GetMeUseCaseTest {
 
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(account));
 
-        var result = getMeUseCase.execute(new GetMeQuery(accountId));
+        var result = getMeUseCase.execute(accountId);
 
         assertThat(result.accountId()).isEqualTo(accountId);
         assertThat(result.email()).isEqualTo(account.getEmail());
@@ -47,7 +46,7 @@ class GetMeUseCaseTest {
         var accountId = UUID.randomUUID();
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> getMeUseCase.execute(new GetMeQuery(accountId)))
+        assertThatThrownBy(() -> getMeUseCase.execute(accountId))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessage("Account not found.");
     }

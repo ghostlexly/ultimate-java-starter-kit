@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -22,13 +22,9 @@ import java.util.Objects;
 @NullMarked
 @Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"provider_id", "provider_account_id", "role"})})
 public class Account extends BaseEntity {
-
-    protected Account() {}
-
-    public Account(String email, Role role) {
-        this.email = Objects.requireNonNull(email).toLowerCase();
-        this.role = Objects.requireNonNull(role);
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String email;

@@ -1,28 +1,21 @@
 package com.lunisoft.javastarter.module.media.entity;
 
 import com.lunisoft.javastarter.shared.entity.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.Objects;
+import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
 @NullMarked
 public class Media extends BaseEntity {
-
-    protected Media() {}
-
-    public Media(String fileName, String key, String mimeType, long size) {
-        this.fileName = Objects.requireNonNull(fileName);
-        this.key = Objects.requireNonNull(key);
-        this.mimeType = Objects.requireNonNull(mimeType);
-        this.size = size;
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(nullable = false)
     private String fileName;

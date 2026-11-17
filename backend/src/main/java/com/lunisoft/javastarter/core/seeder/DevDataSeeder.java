@@ -56,13 +56,16 @@ public class DevDataSeeder implements ApplicationRunner {
         }
 
         // Account
-        var account = new Account(email, Role.CUSTOMER);
+        var account = new Account();
+        account.setEmail(email);
+        account.setRole(Role.CUSTOMER);
         account.setPassword(HASHED_BCRYPT);
         account.setEmailVerified(true);
         accountRepository.save(account);
 
         // Customer
-        var customer = new Customer(account);
+        var customer = new Customer();
+        customer.setAccount(account);
         customerRepository.save(customer);
 
         log.info("Seeded customer account: {}", email);

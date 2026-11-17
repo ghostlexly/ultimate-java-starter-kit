@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.telegram.service;
+package com.lunisoft.javastarter.module.telegram.client;
 
 import com.lunisoft.javastarter.property.TelegramProperties;
 import lombok.Getter;

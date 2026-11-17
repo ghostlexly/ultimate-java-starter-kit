@@ -2,10 +2,9 @@ package com.lunisoft.javastarter.module.media.controller;
 
 import com.lunisoft.javastarter.core.security.PublicEndpoint;
 import com.lunisoft.javastarter.core.storage.S3Service;
-import com.lunisoft.javastarter.module.media.dto.UploadMediaResponse;
+import com.lunisoft.javastarter.module.media.dto.response.UploadMediaResponse;
 import com.lunisoft.javastarter.module.media.service.MediaSecurityService;
 import com.lunisoft.javastarter.module.media.usecase.UploadMediaUseCase;
-import com.lunisoft.javastarter.module.media.usecase.UploadMediaUseCase.UploadMediaCommand;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -33,13 +32,10 @@ public class MediaController {
 
         this.mediaSecurityService.validateImageMedia(contentType, file.getSize());
 
-        var command =
-                new UploadMediaCommand(resource, file.getOriginalFilename(), contentType, file.getSize());
+        var output = this.uploadMediaUseCase.execute(resource, file.getOriginalFilename(), contentType, file.getSize());
 
-        var result = this.uploadMediaUseCase.execute(command);
+        var url = this.s3Service.generatePresignedGetUrl(output.key());
 
-        var url = this.s3Service.generatePresignedGetUrl(result.key());
-
-        return ResponseEntity.ok(new UploadMediaResponse(result.id(), url));
+        return ResponseEntity.ok(new UploadMediaResponse(output.id(), url));
     }
 }

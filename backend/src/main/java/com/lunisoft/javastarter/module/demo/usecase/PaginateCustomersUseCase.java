@@ -6,13 +6,14 @@ import com.lunisoft.javastarter.module.customer.entity.Customer;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerRepository;
 import com.lunisoft.javastarter.module.demo.repository.DemoCustomerSpecification;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@NullMarked
 public class PaginateCustomersUseCase {
 
     private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
@@ -51,20 +53,16 @@ public class PaginateCustomersUseCase {
 
     private final DemoCustomerRepository demoCustomerRepository;
 
-    public record PaginateCustomersQuery(Pageable pageable, String email) {}
-
-    public record PaginateCustomersResult(UUID id, String email, String role) {}
+    public record Output(UUID id, String email, String role) {}
 
     @Transactional(readOnly = true)
-    public PaginatedResponse<PaginateCustomersResult> execute(PaginateCustomersQuery query) {
-        Assert.notNull(query, "Query cannot be null");
-        Assert.notNull(query.pageable(), "Pageable cannot be null");
+    public PaginatedResponse<Output> execute(Pageable pageable, @Nullable String email) {
+        Pageable sortedPageable = SortWhitelist.apply(pageable, SORTABLE_PROPERTIES, DEFAULT_SORT);
 
-        Pageable pageable = SortWhitelist.apply(query.pageable(), SORTABLE_PROPERTIES, DEFAULT_SORT);
+        Specification<Customer> specs = this.buildSpecs(email);
 
-        Specification<Customer> specs = buildSpecs(query);
-
-        Page<PaginateCustomersResult> page = demoCustomerRepository.findAll(specs, pageable).map(this::toResult);
+        Page<Output> page =
+                demoCustomerRepository.findAll(specs, sortedPageable).map(this::toOutput);
 
         return PaginatedResponse.from(page);
     }
@@ -72,20 +70,20 @@ public class PaginateCustomersUseCase {
     /**
      * Builds the specification by chaining optional filters onto the base spec.
      */
-    private Specification<Customer> buildSpecs(PaginateCustomersQuery query) {
+    private Specification<Customer> buildSpecs(@Nullable String email) {
         List<Specification<Customer>> specs = new ArrayList<>();
 
-        if (StringUtils.hasText(query.email())) {
-            specs.add(DemoCustomerSpecification.emailContaining(query.email()));
+        if (StringUtils.hasText(email)) {
+            specs.add(DemoCustomerSpecification.emailContaining(email));
         }
 
         return Specification.allOf(specs);
     }
 
-    private PaginateCustomersResult toResult(Customer customer) {
-        return new PaginateCustomersResult(
+    private Output toOutput(Customer customer) {
+        return new Output(
                 customer.getId(),
-                customer.getAccount() != null ? customer.getAccount().getEmail() : null,
-                customer.getAccount() != null ? customer.getAccount().getRole().name() : null);
+                customer.getAccount().getEmail(),
+                customer.getAccount().getRole().name());
     }
 }

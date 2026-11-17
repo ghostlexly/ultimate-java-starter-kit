@@ -13,14 +13,8 @@ import com.lunisoft.javastarter.module.demo.dto.BodyValidationExampleRequest;
 import com.lunisoft.javastarter.module.demo.dto.DemoPreviewUploadedMediasResponse;
 import com.lunisoft.javastarter.module.demo.usecase.DemoJobRunrEnqueueJob;
 import com.lunisoft.javastarter.module.demo.usecase.GetCachedTimeUseCase;
-import com.lunisoft.javastarter.module.demo.usecase.GetCachedTimeUseCase.GetCachedTimeQuery;
-import com.lunisoft.javastarter.module.demo.usecase.GetCachedTimeUseCase.GetCachedTimeResult;
 import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase;
-import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase.PaginateCustomersQuery;
-import com.lunisoft.javastarter.module.demo.usecase.PaginateCustomersUseCase.PaginateCustomersResult;
 import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase;
-import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase.SearchCustomersQuery;
-import com.lunisoft.javastarter.module.demo.usecase.SearchCustomersUseCase.SearchCustomersResult;
 import com.lunisoft.javastarter.module.media.repository.MediaRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -61,12 +55,10 @@ public class DemoController {
      * /api/demo/customers?role=CUSTOMER
      */
     @GetMapping("customers")
-    public ResponseEntity<List<SearchCustomersResult>> searchCustomers(@RequestParam Role role) {
+    public ResponseEntity<List<SearchCustomersUseCase.Output>> searchCustomers(@RequestParam Role role) {
+        var output = this.searchCustomersUseCase.execute(role != null ? role : Role.CUSTOMER);
 
-        var query = new SearchCustomersQuery(Role.CUSTOMER);
-        List<SearchCustomersResult> results = this.searchCustomersUseCase.execute(query);
-
-        return ResponseEntity.ok(results);
+        return ResponseEntity.ok(output);
     }
 
     /**
@@ -86,14 +78,12 @@ public class DemoController {
      * /api/demo/customers/paginated?email=john&page=1&size=5
      */
     @GetMapping("customers/paginated")
-    public ResponseEntity<PaginatedResponse<PaginateCustomersResult>> paginateCustomers(
+    public ResponseEntity<PaginatedResponse<PaginateCustomersUseCase.Output>> paginateCustomers(
             @PageableDefault(size = 20) Pageable pageable, @RequestParam(required = false) String email) {
 
-        var query = new PaginateCustomersQuery(pageable, email);
+        var output = this.paginateCustomersUseCase.execute(pageable, email);
 
-        var response = this.paginateCustomersUseCase.execute(query);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(output);
     }
 
     @GetMapping("simple-json-response")
@@ -224,11 +214,10 @@ public class DemoController {
     }
 
     @GetMapping("cached")
-    public ResponseEntity<GetCachedTimeResult> cached() {
-        var query = new GetCachedTimeQuery();
-        var result = this.getCachedTimeUseCase.execute(query);
+    public ResponseEntity<GetCachedTimeUseCase.Output> cached() {
+        var output = this.getCachedTimeUseCase.execute();
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(output);
     }
 
     @GetMapping("evict-cache")

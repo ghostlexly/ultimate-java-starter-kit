@@ -16,17 +16,15 @@ public class GetProfileUseCase {
 
     private final CustomerRepository customerRepository;
 
-    public record GetProfileQuery(UUID accountId) {}
-
-    public record GetProfileResult(UUID id, String email) {}
+    public record Output(UUID id, String email) {}
 
     @Transactional(readOnly = true)
-    public GetProfileResult execute(GetProfileQuery query) {
+    public Output execute(UUID accountId) {
         Customer customer = customerRepository
-                .findByAccountId(query.accountId())
+                .findByAccountId(accountId)
                 .orElseThrow(() ->
                         new BusinessRuleException("Customer profile not found.", "NOT_FOUND", HttpStatus.NOT_FOUND));
 
-        return new GetProfileResult(customer.getId(), customer.getAccount().getEmail());
+        return new Output(customer.getId(), customer.getAccount().getEmail());
     }
 }

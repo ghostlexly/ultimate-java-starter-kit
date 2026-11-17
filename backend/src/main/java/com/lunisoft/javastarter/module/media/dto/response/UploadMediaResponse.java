@@ -1,4 +1,4 @@
-package com.lunisoft.javastarter.module.media.dto;
+package com.lunisoft.javastarter.module.media.dto.response;
 
 import java.util.UUID;
 

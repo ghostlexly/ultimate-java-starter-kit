@@ -5,6 +5,7 @@ import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
 import com.lunisoft.javastarter.module.auth.entity.Session;
 import com.lunisoft.javastarter.module.auth.repository.SessionRepository;
+import com.lunisoft.javastarter.shared.util.DateTimeUtil;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 /** Validates the refresh token, extends the session, and returns new JWT tokens. */
@@ -23,36 +23,36 @@ public class RefreshTokensUseCase {
     private final SessionRepository sessionRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public record RefreshTokensCommand(String refreshToken) {}
-
-    public record RefreshTokensResult(String role, String accessToken, String refreshToken) {}
+    public record Output(String role, String accessToken, String refreshToken) {}
 
     @Transactional
-    public RefreshTokensResult execute(RefreshTokensCommand command) {
+    public Output execute(String refreshToken) {
         Claims claims;
         try {
-            claims = jwtTokenProvider.parseToken(command.refreshToken());
+            claims = jwtTokenProvider.parseToken(refreshToken);
         } catch (Exception _) {
-            throw new BusinessRuleException("Invalid refresh token.", "INVALID_TOKEN", HttpStatus.UNAUTHORIZED);
+            throw new BusinessRuleException("Invalid refresh token", "INVALID_TOKEN", HttpStatus.UNAUTHORIZED);
         }
 
         UUID sessionId = UUID.fromString(claims.getSubject());
 
         Session session = sessionRepository
                 .findByIdAndExpiresAtAfter(sessionId, Instant.now())
-                .orElseThrow(() ->
-                        new BusinessRuleException("Session expired.", "SESSION_EXPIRED", HttpStatus.UNAUTHORIZED));
+                .orElseThrow(
+                        () -> new BusinessRuleException("Session expired", "SESSION_EXPIRED", HttpStatus.UNAUTHORIZED));
 
         // Extend session expiry on refresh
-        session.setExpiresAt(
-                Instant.now().plus(jwtTokenProvider.getRefreshTokenExpirationMinutes(), ChronoUnit.MINUTES));
+        session.setExpiresAt(DateTimeUtil.now()
+                .plusMinutes(jwtTokenProvider.getRefreshTokenExpirationMinutes())
+                .toInstant());
 
         Account account = session.getAccount();
 
         String newAccessToken = jwtTokenProvider.generateAccessToken(
                 session.getId(), account.getId(), account.getEmail(), account.getRole());
+
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(session.getId());
 
-        return new RefreshTokensResult(account.getRole().name(), newAccessToken, newRefreshToken);
+        return new Output(account.getRole().name(), newAccessToken, newRefreshToken);
     }
 }

@@ -1,7 +1,6 @@
 package com.lunisoft.javastarter.unit.module.auth.usecase;
 
-import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase ;
-import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase.RefreshTokensCommand;
+import com.lunisoft.javastarter.module.auth.usecase.RefreshTokensUseCase;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.core.security.JwtTokenProvider;
 import com.lunisoft.javastarter.module.account.entity.Account;
@@ -59,7 +58,7 @@ class RefreshTokensUseCaseTest {
                 .thenReturn("new-access-token");
         when(jwtTokenProvider.generateRefreshToken(sessionId)).thenReturn("new-refresh-token");
 
-        var result = refreshTokensUseCase.execute(new RefreshTokensCommand(refreshToken));
+        var result = refreshTokensUseCase.execute(refreshToken);
 
         assertThat(result.role()).isEqualTo("CUSTOMER");
         assertThat(result.accessToken()).isEqualTo("new-access-token");
@@ -75,7 +74,7 @@ class RefreshTokensUseCaseTest {
     void execute_invalid_token_throws_business_rule_exception() {
         when(jwtTokenProvider.parseToken("bad-token")).thenThrow(new RuntimeException("Invalid"));
 
-        assertThatThrownBy(() -> refreshTokensUseCase.execute(new RefreshTokensCommand("bad-token")))
+        assertThatThrownBy(() -> refreshTokensUseCase.execute("bad-token"))
                 .isInstanceOf(BusinessRuleException.class)
                 .satisfies(ex -> {
                     var bre = (BusinessRuleException) ex;
@@ -94,7 +93,7 @@ class RefreshTokensUseCaseTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                        refreshTokensUseCase.execute(new RefreshTokensCommand("expired-session-token")))
+                        refreshTokensUseCase.execute("expired-session-token"))
                 .isInstanceOf(BusinessRuleException.class)
                 .satisfies(ex -> {
                     var bre = (BusinessRuleException) ex;

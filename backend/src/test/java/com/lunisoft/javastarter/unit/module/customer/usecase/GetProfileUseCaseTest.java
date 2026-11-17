@@ -1,9 +1,8 @@
 package com.lunisoft.javastarter.unit.module.customer.usecase;
 
-import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase ;
-import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase.GetProfileQuery;
 import com.lunisoft.javastarter.core.exception.BusinessRuleException;
 import com.lunisoft.javastarter.module.customer.repository.CustomerRepository;
+import com.lunisoft.javastarter.module.customer.usecase.GetProfileUseCase;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,10 +34,10 @@ class GetProfileUseCaseTest {
 
         when(customerRepository.findByAccountId(account.getId())).thenReturn(Optional.of(customer));
 
-        var result = getProfileUseCase.execute(new GetProfileQuery(account.getId()));
+        var result = getProfileUseCase.execute(account.getId());
 
         assertThat(result.id()).isEqualTo(customer.getId());
-        assertThat(result.email()).isEqualTo("contact+customer@lunisoft.fr");
+        assertThat(result.email()).isEqualTo("customer@lunisoft.fr");
     }
 
     @Test
@@ -46,7 +45,7 @@ class GetProfileUseCaseTest {
         var accountId = UUID.randomUUID();
         when(customerRepository.findByAccountId(accountId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> getProfileUseCase.execute(new GetProfileQuery(accountId)))
+        assertThatThrownBy(() -> getProfileUseCase.execute(accountId))
                 .isInstanceOfSatisfying(BusinessRuleException.class, exception -> {
                     assertThat(exception.getMessage()).isEqualTo("Customer profile not found.");
                     assertThat(exception.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);

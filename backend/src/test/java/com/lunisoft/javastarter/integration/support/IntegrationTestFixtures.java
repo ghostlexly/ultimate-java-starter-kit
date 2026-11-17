@@ -65,10 +65,13 @@ public class IntegrationTestFixtures {
      * Same as givenCustomer(String) but lets the test mutate the {@link Account} first.
      */
     public Customer givenCustomer(Consumer<Customer> customizer) {
-        var account = new Account("customer@example.com", Role.CUSTOMER);
+        var account = new Account();
+        account.setEmail("customer@example.com");
+        account.setRole(Role.CUSTOMER);
         account.setEmailVerified(true);
 
-        var customer = new Customer(account);
+        var customer = new Customer();
+        customer.setAccount(account);
         account.setCustomer(customer);
 
         customizer.accept(customer);
@@ -90,10 +93,13 @@ public class IntegrationTestFixtures {
      * Same as givenAdmin(String) but lets the test mutate the {@link Account} first.
      */
     public Admin givenAdmin(Consumer<Admin> customizer) {
-        var account = new Account("admin@example.com", Role.ADMIN);
+        var account = new Account();
+        account.setEmail("admin@example.com");
+        account.setRole(Role.ADMIN);
         account.setEmailVerified(true);
 
-        var admin = new Admin(account);
+        var admin = new Admin();
+        admin.setAccount(account);
         account.setAdmin(admin);
 
         customizer.accept(admin);
@@ -120,11 +126,11 @@ public class IntegrationTestFixtures {
      */
     public VerificationToken givenLoginCode(Account account, String code, Consumer<VerificationToken> customizer) {
 
-        var token = new VerificationToken(
-                UUID.randomUUID().toString(),
-                VerificationType.LOGIN_CODE,
-                account,
-                Instant.now().plus(15, ChronoUnit.MINUTES));
+        var token = new VerificationToken();
+        token.setToken(UUID.randomUUID().toString());
+        token.setType(VerificationType.LOGIN_CODE);
+        token.setAccount(account);
+        token.setExpiresAt(Instant.now().plus(15, ChronoUnit.MINUTES));
         token.setValue(code);
         token.setAttempts(0);
         customizer.accept(token);
@@ -144,7 +150,9 @@ public class IntegrationTestFixtures {
      * Same as {@link #givenSession(Account)} but lets the test override expiry / ip / user-agent.
      */
     public Session givenSession(Account account, Consumer<Session> customizer) {
-        var session = new Session(account, Instant.now().plus(1, ChronoUnit.DAYS));
+        var session = new Session();
+        session.setAccount(account);
+        session.setExpiresAt(Instant.now().plus(1, ChronoUnit.DAYS));
         customizer.accept(session);
 
         return sessionRepository.save(session);
@@ -164,7 +172,11 @@ public class IntegrationTestFixtures {
      * Same as {@link #givenMedia()} but lets the test override file name / key / mime type / size.
      */
     public Media givenMedia(Consumer<Media> customizer) {
-        var media = new Media("profile.png", "media/2026/01/01/%s.png".formatted(UUID.randomUUID()), "image/png", 1024);
+        var media = new Media();
+        media.setFileName("profile.png");
+        media.setKey("media/2026/01/01/%s.png".formatted(UUID.randomUUID()));
+        media.setMimeType("image/png");
+        media.setSize(1024);
         customizer.accept(media);
 
         return mediaRepository.save(media);

@@ -4,12 +4,10 @@ import com.lunisoft.javastarter.module.email.dto.EmailAttachment;
 import com.lunisoft.javastarter.module.email.dto.EmailRequest;
 import com.lunisoft.javastarter.module.email.exception.EmailSendException;
 import com.lunisoft.javastarter.property.BrevoProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NullMarked;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -25,25 +23,26 @@ import java.util.Map;
  */
 @Service
 @Primary
+@Slf4j
+@NullMarked
 public class BrevoEmailService implements EmailService {
 
-    private static final Logger log = LoggerFactory.getLogger(BrevoEmailService.class);
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
     private final RestClient restClient;
     private final BrevoProperties brevoProperties;
 
     public BrevoEmailService(BrevoProperties brevoProperties) {
-        this.brevoProperties = brevoProperties;
         this.restClient = RestClient.builder()
                 .baseUrl(BREVO_API_URL)
                 .defaultHeader("api-key", brevoProperties.apiKey())
                 .defaultHeader("Accept", MediaType.APPLICATION_JSON_VALUE)
                 .build();
+
+        this.brevoProperties = brevoProperties;
     }
 
     @Override
-    @Retryable(backoff = @Backoff(delay = 2000), maxAttempts = 10)
     public void send(EmailRequest request) {
         var body = buildBody(request);
 
